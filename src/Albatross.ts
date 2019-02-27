@@ -1,4 +1,3 @@
-import AlbatrossRouter from "./router/AlbatrossRouter";
 import Logger from "./logging/Logger";
 import StringHelper from "./utils/StringHelper";
 import LoginHandler from "./handlers/LoginHandler";
