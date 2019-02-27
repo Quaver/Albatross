@@ -82,7 +82,7 @@ export default class Albatross {
         console.log("         | `))");
         console.log("         |");
         console.log("- Albatross (Flamingo v2.0)");
-        console.log("- Multiplayer server & chat protocol developed by The Quaver Team");
+        console.log("- Multiplayer & chat server protocol developed by The Quaver Team");
         console.log("- Licensed under the GNU Affero General Public License version 3 (AGPL-3.0)");
         console.log("- Play Quaver at: https://quavergame.com");
         console.log(`- Started on port: ${this.Port}`);
