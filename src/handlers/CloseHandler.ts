@@ -1,4 +1,5 @@
 import Logger from "../logging/Logger";
+import Albatross from "../Albatross";
 
 export default class CloseHandler {
     /**
@@ -8,7 +9,7 @@ export default class CloseHandler {
      */
     public static async Handle(socket: any): Promise<void> {
         try {
-            
+            Albatross.Instance.OnlineUsers.RemoveUser(Albatross.Instance.OnlineUsers.GetUserBySocket(socket));
         } catch (err) {
             Logger.Error(err);
         }

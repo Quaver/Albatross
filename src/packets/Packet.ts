@@ -2,7 +2,7 @@ import PacketId from "./PacketId";
 import {JsonProperty, JsonObject, JsonConvert} from "json2typescript";
 
 @JsonObject("Packet")
-export default abstract class Packet {
+export default abstract class Packet implements IStringifyable {
     /**
      * The id of the packet, first byte sent
      */

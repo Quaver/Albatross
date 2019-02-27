@@ -1,0 +1,3 @@
+interface IStringifyable {
+    ToString(): string
+}

@@ -6,6 +6,8 @@ import PacketHandler from "./handlers/PacketHandler";
 import CloseHandler from "./handlers/CloseHandler";
 import ServerPacketPing from "./packets/server/ServerPacketPing";
 import {setInterval} from "timers";
+import OnlineUserStore from "./sessions/OnlineUserStore";
+import AlbatrossBot from "./bot/AlbatrossBot";
 
 const express = require("express");
 const WebSocketServer = require("uws").Server;
@@ -22,11 +24,22 @@ export default class Albatross {
     public Port: number;
     
     /**
+     * Contains all of the users connected to the server.
+     */
+    public OnlineUsers: OnlineUserStore;
+
+    /**
      * @param port
      */
     constructor(port: number) {
         this.Port = port;
         Albatross.Instance = this;
+ 
+        this.OnlineUsers = new OnlineUserStore();
+        AlbatrossBot.Initialize();
+
+        Logger.Info(this.OnlineUsers.GetUserById(0).ToString());
+        Logger.Info(this.OnlineUsers.Count.toString());
     }
     
     /**
@@ -38,6 +51,10 @@ export default class Albatross {
         
         ws.on("connection", async (socket: any) => {
             await LoginHandler.Handle(socket);
+            
+            console.log(this.OnlineUsers.GetUserBySocket(socket).ToString());
+            this.OnlineUsers.GetUserByUsername("Swan").Kick();
+
             socket.on("message", async (message: any) => await PacketHandler.Handle(socket,  message));
             socket.on("close",async  () => await CloseHandler.Handle(socket));
         });
@@ -66,7 +83,7 @@ export default class Albatross {
         console.log("         | `))");
         console.log("         |");
         console.log("- Albatross (Flamingo v2.0)");
-        console.log("- Multiplayer server & chat protocol developed by the Quaver Team");
+        console.log("- Multiplayer server & chat protocol developed by The Quaver Team");
         console.log("- Licensed under the GNU Affero General Public License version 3 (AGPL-3.0)");
         console.log("- Play Quaver at: https://quavergame.com");
         console.log(`- Started on port: ${this.Port}`);
