@@ -9,6 +9,7 @@ import RedisHelper from "../database/RedisHelper";
 import ServerPacketNotification from "../packets/server/ServerPacketNotification";
 import ServerNotificationType from "../enums/ServerNotificationType";
 import AsyncHelper from "../utils/AsyncHelper";
+import Albatross from "../Albatross";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -112,7 +113,7 @@ export default class User implements IPacketWritable, IStringifyable {
      */
     public async Kick(notify: boolean = true): Promise<void> {
         if (notify)
-            this.Socket.send(new ServerPacketNotification(ServerNotificationType.Error, "You have been kicked from the server.").ToString());
+            await Albatross.SendToUser(this, new ServerPacketNotification(ServerNotificationType.Error, "You have been kicked from the server."));
 
         return await AsyncHelper.Sleep(100, () => this.Socket.close());
     }

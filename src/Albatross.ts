@@ -10,6 +10,8 @@ import AlbatrossBot from "./bot/AlbatrossBot";
 import RedisHelper from "./database/RedisHelper";
 import ServerPacketUsersOnline from "./packets/server/ServerPacketUsersOnline";
 import Packet from "./packets/Packet";
+import User from "./sessions/User";
+import ChatManager from "./chat/ChatManager";
 
 const express = require("express");
 const WebSocketServer = require("uws").Server;
@@ -41,6 +43,7 @@ export default class Albatross {
     constructor(port: number) {
         this.Port = port;
         Albatross.Instance = this;
+        ChatManager.Initialize();
         this.OnlineUsers = new OnlineUserStore();
     }
     
@@ -94,6 +97,22 @@ export default class Albatross {
      */
     public static async Broadcast(packet: Packet): Promise<void> {
         Albatross.Instance.Server.broadcast(packet.ToString());
+    }
+
+    /**
+     * Sends a packet to a specific user
+     */
+    public static async SendToUser(user: User, packet: Packet): Promise<void> {
+        user.Socket.send(packet.ToString());
+    }
+
+    /**
+     * Sends a packet to a specific socket
+     * @param socket 
+     * @param packet 
+     */
+    public static async SendToSocket(socket: any, packet: Packet): Promise<void> {
+        socket.send(packet.ToString());
     }
 
     /**

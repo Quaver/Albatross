@@ -27,5 +27,21 @@
     "country": "US",
     "avatarUrl": "https://pbs.twimg.com/profile_images/1003731743990374400/QZjgWGlk_400x400.jpg"
   },
-  "testClientKey": ""
+  "testClientKey": "",
+  "chatChannels": [
+    {
+      "name": "#admin",
+      "description": "Super secret channel for the evil dictators.",
+      "allowedUserGroups": 16,
+      "isModerated": false,
+      "autojoin": true
+    },
+    {
+      "name": "#quaver",
+      "description": "General discussion about Quaver. Type /help for more information!",
+      "allowedUserGroups": 1,
+      "isModerated": false,
+      "autojoin": true
+    }
+  ]
 }
