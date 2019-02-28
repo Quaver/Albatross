@@ -103,6 +103,9 @@ export default class Albatross {
      * Sends a packet to a specific user
      */
     public static async SendToUser(user: User, packet: Packet): Promise<void> {
+        if (!user || !user.Socket)
+            return;
+            
         user.Socket.send(packet.ToString());
     }
 
@@ -122,6 +125,9 @@ export default class Albatross {
      * @param packet 
      */
     public static async SendToSocket(socket: any, packet: Packet): Promise<void> {
+        if (!socket)
+            return;
+            
         socket.send(packet.ToString());
     }
 
