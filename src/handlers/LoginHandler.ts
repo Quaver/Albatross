@@ -103,7 +103,6 @@ export default class LoginHandler {
             LoginHandler.GenerateSessionToken(socket, user);
             Albatross.Instance.OnlineUsers.AddUser(user);
 
-
             await Albatross.SendToUser(user, new ServerPacketLoginReply(user));
             await Albatross.SendToUser(user, Albatross.BuildUsersOnlinePacket());
             await LoginHandler.SendAndAutojoinChatChannels(user);
