@@ -1,5 +1,7 @@
 import Logger from "../logging/Logger";
 import Albatross from "../Albatross";
+import ServerPacketUserDisconected from "../packets/server/ServerPacketUserDisconnected";
+import User from "../sessions/User";
 
 export default class CloseHandler {
     /**
@@ -9,7 +11,10 @@ export default class CloseHandler {
      */
     public static async Handle(socket: any): Promise<void> {
         try {
-            Albatross.Instance.OnlineUsers.RemoveUser(Albatross.Instance.OnlineUsers.GetUserBySocket(socket));
+            const user: User = Albatross.Instance.OnlineUsers.GetUserBySocket(socket);
+            
+            Albatross.Instance.OnlineUsers.RemoveUser(user);
+            Albatross.Broadcast(new ServerPacketUserDisconected(user.Id));
         } catch (err) {
             Logger.Error(err);
         }

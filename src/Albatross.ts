@@ -8,6 +8,8 @@ import {setInterval} from "timers";
 import OnlineUserStore from "./sessions/OnlineUserStore";
 import AlbatrossBot from "./bot/AlbatrossBot";
 import RedisHelper from "./database/RedisHelper";
+import ServerPacketUsersOnline from "./packets/server/ServerPacketUsersOnline";
+import Packet from "./packets/Packet";
 
 const express = require("express");
 const WebSocketServer = require("uws").Server;
@@ -29,6 +31,11 @@ export default class Albatross {
     public OnlineUsers: OnlineUserStore;
 
     /**
+     * The websocket server itself
+     */
+    public Server: any;
+
+    /**
      * @param port
      */
     constructor(port: number) {
@@ -45,15 +52,15 @@ export default class Albatross {
         await this.CleanPreviousSessions();
         await AlbatrossBot.Initialize();
 
-        const ws = new WebSocketServer({ port: this.Port });
+        this.Server = new WebSocketServer({ port: this.Port });
         
-        ws.on("connection", async (socket: any) => {
+        this.Server.on("connection", async (socket: any) => {
             await LoginHandler.Handle(socket);
-            socket.on("message", async (message: any) => await PacketHandler.Handle(socket,  message));
+            socket.on("message", async (message: any) => await PacketHandler.Handle(socket, message));
             socket.on("close",async  () => await CloseHandler.Handle(socket));
         });
         
-        ws.on("error", async (err: any) => {
+        this.Server.on("error", async (err: any) => {
             Logger.Error(err);
         });
 
@@ -80,6 +87,20 @@ export default class Albatross {
             await RedisHelper.del(statusKeys[i]);
 
         Logger.Success(`Successfully deleted all previous ${statusKeys.length} user status keys from Redis!`);
+    }
+
+    /**
+     * Broadcasts a packet to all online users.
+     */
+    public static async Broadcast(packet: Packet): Promise<void> {
+        Albatross.Instance.Server.broadcast(packet.ToString());
+    }
+
+    /**
+     * Builds a packet which contains the list of all online user ids
+     */
+    public static BuildUsersOnlinePacket(): ServerPacketUsersOnline {
+        return new ServerPacketUsersOnline(Albatross.Instance.OnlineUsers.Users.map(x => x.Id));
     }
 
     /**

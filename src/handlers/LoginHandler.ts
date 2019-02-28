@@ -6,6 +6,13 @@ import SqlDatabase from "../database/SqlDatabase";
 import SteamWebAPI from "../steam/SteamWebAPI";
 import ServerPacketLoginReply from "../packets/server/ServerPacketLoginReply";
 import ServerPacketPing from "../packets/server/ServerPacketPing";
+import ServerPacketChooseUsername from "../packets/server/ServerPacketChooseUsername";
+import AsyncHelper from "../utils/AsyncHelper";
+import ServerPacketNotification from "../packets/server/ServerPacketNotification";
+import ServerNotificationType from "../enums/ServerNotificationType";
+import ServerPacketUsersOnline from "../packets/server/ServerPacketUsersOnline";
+import ServerPacketUserConnected from "../packets/server/ServerPacketUserConnected";
+import ServerPacketUserDisconected from "../packets/server/ServerPacketUserDisconnected";
 const axios = require("axios");
 const config = require("../config/config.json");
 const randomstring = require("randomstring");
@@ -65,35 +72,43 @@ export default class LoginHandler {
             // User doesn't exist, so a packet needs to be sent that alerts them to choose a username.
             // Close the connection as well, as username creation is handled by the API server.
             if (!user) {
-                Logger.Info(`Received invalid login request from: ${steamLogin.steamid}, but they do not have an account yet!`);
-                return socket.close();
+                Logger.Warning(`Received login request from: ${steamLogin.steamid}. (they do not have an account yet!)`);
+                socket.send(new ServerPacketChooseUsername().ToString());
+                return await AsyncHelper.Sleep(100, () => socket.close());            
             }
 
             // Check if the user is banned
             if (!user.Allowed) {
-                // TODO: send banned notification
-                Logger.Info(`Received invalid login request from: ${steamLogin.steamid}, but they are banned!`);
-                return socket.close();
+                Logger.Warning(`Received invalid login request from: ${steamLogin.steamid} (they are banned!)`);
+
+                // Send a notification to the user letting them know that they're ban
+                const banned: ServerPacketNotification = new ServerPacketNotification(ServerNotificationType.Error, "You are banned. Email support@quavergame.com.");
+                socket.send(banned.ToString());
+
+                return await AsyncHelper.Sleep(100, () => socket.close());
             }
 
             await LoginHandler.VerifyGameBuild(socket, user, loginDetails);
             await LoginHandler.LogIpAddress(socket, user);
             await LoginHandler.UpdateLatestActivityAndAvatar(socket, user);
             await user.UpdateStats();
-            LoginHandler.RemoveMultipleLoginSessions(user);
+            await LoginHandler.RemoveMultipleLoginSessions(user);
             LoginHandler.GenerateSessionToken(socket, user);
             Albatross.Instance.OnlineUsers.AddUser(user);
 
             // Send successful login reply
-            const packet: ServerPacketLoginReply = new ServerPacketLoginReply(user);
-            user.Socket.send(packet.ToString());
+            const loginReplyPacket: ServerPacketLoginReply = new ServerPacketLoginReply(user);
+            user.Socket.send(loginReplyPacket.ToString());
 
-            // Send users connected
-            // Send avaialbale chat channels
-            // Ping client once
-            user.Socket.send(new ServerPacketPing().ToString());
+            // Send list of users connected
+            const usersOnlinePacket: ServerPacketUsersOnline = Albatross.BuildUsersOnlinePacket();
+            user.Socket.send(usersOnlinePacket.ToString())
+            
+            // TODO: Send available chat channels
+            // TODO: Join default chat channels such as #quaver and #admin
 
             // Send packet to all online users to make them aware of this user
+            await Albatross.Broadcast(new ServerPacketUserConnected(user));
 
             // Discord message
  
@@ -215,12 +230,15 @@ export default class LoginHandler {
     /**
      * Disconnects multiple login sessions from this user.
      */
-    private static RemoveMultipleLoginSessions(user: User): void {
+    private static async RemoveMultipleLoginSessions(user: User): Promise<void> {
         const alreadyOnline: User[] = Albatross.Instance.OnlineUsers.Users.filter(x => x.Id == user.Id);
 
         for (let i = 0; i < alreadyOnline.length; i++) {
             Logger.Info(`Detected multiple login session for user: ${user.Username} (#${user.Id}) <${alreadyOnline[i].Token}>.`);
-            Albatross.Instance.OnlineUsers.RemoveUser(alreadyOnline[i]);
+
+            const packet = new ServerPacketNotification(ServerNotificationType.Error, "Logged out due to signing in from another location.");
+            await AsyncHelper.Sleep(100, () => alreadyOnline[i].Socket.send(packet.ToString()));
+            alreadyOnline[i].Socket.close();
         }
 
         return;
