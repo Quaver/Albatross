@@ -5,7 +5,7 @@ export default class AsyncHelper {
      */
     public static async Sleep(time: number, fn: any): Promise<any> {
         return new Promise((resolve) => {
-            setTimeout(() => resolve(fn()), 3000)
+            setTimeout(() => resolve(fn()), time)
         });
     }
 }
