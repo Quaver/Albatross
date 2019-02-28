@@ -281,6 +281,9 @@ export default class LoginHandler {
 
             const channel: ChatChannel = ChatManager.Channels[name];
             ChatManager.SendAvailableChannel(user, channel);
+            
+            if (channel.Autojoin)
+                await user.JoinChatChannel(channel);
         }
     }
 }

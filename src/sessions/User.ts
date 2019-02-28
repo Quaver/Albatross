@@ -10,6 +10,9 @@ import ServerPacketNotification from "../packets/server/ServerPacketNotification
 import ServerNotificationType from "../enums/ServerNotificationType";
 import AsyncHelper from "../utils/AsyncHelper";
 import Albatross from "../Albatross";
+import ChatChannel from "../chat/ChatChannel";
+import Logger from "../logging/Logger";
+import ServerPacketJoinedChatChannel from "../packets/server/ServerPacketJoinedChatChannel";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -83,6 +86,11 @@ export default class User implements IPacketWritable, IStringifyable {
     public LastPongTime: number = Date.now();
 
     /**
+     * The channels that the user has currently joined.
+     */
+    public ChannelsJoined: ChatChannel[] = [];
+
+    /**
      * @param token 
      * @param steamId 
      * @param username 
@@ -116,6 +124,26 @@ export default class User implements IPacketWritable, IStringifyable {
             await Albatross.SendToUser(this, new ServerPacketNotification(ServerNotificationType.Error, "You have been kicked from the server."));
 
         return await AsyncHelper.Sleep(100, () => this.Socket.close());
+    }
+
+    /**
+     * Places the user in a chat channel if they aren't already in it.
+     */
+    public async JoinChatChannel(chan: ChatChannel): Promise<void> {
+        if (!ChatChannel.IsUserAllowed(chan, this)) {
+            Logger.Warning(`${this.Username} (#${this.Id}) has tried to join channel: ${chan.Name}, but they do not have permission`);
+            return;
+        }
+
+        if (this.ChannelsJoined.includes(chan)) {
+            Logger.Warning(`${this.Username} (#${this.Id}) has tried to join channel: ${chan.Name}, but they are already in it.`);
+            return;
+        }
+
+        chan.UsersInChannel.push(this);
+        this.ChannelsJoined.push(chan);
+        
+        await Albatross.SendToUser(this, new ServerPacketJoinedChatChannel(chan));
     }
 
     /**
