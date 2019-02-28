@@ -1,4 +1,10 @@
 import IPacketWritable from "../packets/IPacketWritable";
+import Privileges from "../enums/Privileges";
+import UserGroups from "../enums/UserGroups";
+import GameMode from "../enums/GameMode";
+import SqlDatabase from "../database/SqlDatabase";
+import UserStats from "./UserStats";
+import ModeToUserStatsMap from "./ModeToUserStatsMap";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -27,12 +33,58 @@ export default class User implements IPacketWritable, IStringifyable {
     public Username: string;
 
     /**
+     * If the user is allowed to connect to the server
+     */
+    public Allowed: boolean;
+
+    /**
+     * The time the user's mute expires.
+     */
+    public MuteEndTime: number;
+
+    /**
+     * The country (code) the user is from
+     */
+    public Country: string;
+
+    /**
+     * The administrative privileges the user has
+     */
+    public Privileges: Privileges;
+
+    /**
+     * The usergroups the user is apart of.
+     */
+    public UserGroups: UserGroups;
+
+    /**
+     * The URL of the user's Steam avatar.
+     */
+    public AvatarUrl: string;
+
+    /**
+     *  Statistics for the user.
+     */
+    public Stats: ModeToUserStatsMap = {};
+
+    /**
+     * The time the client was last pinged
+     */
+    public LastPingTime: number = Date.now();
+
+    /**
+     * The last time we've received a pong from the client.
+     */
+    public LastPongTime: number = Date.now();
+
+    /**
      * @param token 
      * @param steamId 
      * @param username 
      * @param socket 
      */
-    constructor(socket: any, userId: number, steamId: number, username: string) {
+    constructor(socket: any, userId: number, steamId: number, username: string, allowed: boolean, muteEndTime: number, country: string,
+        privileges: Privileges, usergroups: UserGroups, avatarUrl: string) {
         // For artifical users such as bots.
         if (socket)
             this.Token = socket.token;
@@ -43,6 +95,12 @@ export default class User implements IPacketWritable, IStringifyable {
         this.Id = userId;
         this.SteamId = steamId;
         this.Username = username;
+        this.Allowed = allowed;
+        this.MuteEndTime = muteEndTime;
+        this.Country = country;
+        this.Privileges = privileges;
+        this.UserGroups = usergroups;
+        this.AvatarUrl = avatarUrl;
     }
 
     /**
@@ -52,11 +110,49 @@ export default class User implements IPacketWritable, IStringifyable {
         this.Socket.close();
     }
 
+    /**
+     * Updates the user's stats from the database
+     */
+    public async UpdateStats(): Promise<void> {
+        for (let mode in GameMode) {
+            if (isNaN(Number(mode)))
+                continue;
+
+            const gameMode: number = Number(mode);
+
+            // Retrieve a stringified version of the mode thats a table in the DB.
+            let modeTableName: string | null = null;
+
+            switch (gameMode) {
+                case GameMode.Keys4:
+                    modeTableName = "keys4";
+                    break;
+                case GameMode.Keys7:
+                    modeTableName = "keys7";
+                    break;
+                default:
+                    throw new Error("GameMode string not implemented for User.UpdateStats()");
+            }
+
+            const stats = await SqlDatabase.Execute(`SELECT * FROM user_stats_${modeTableName} WHERE user_id = ? LIMIT 1`, [this.Id]);
+
+            // This should never ever happen, but we'll handle it regardless.
+            if (stats.length == 0)
+                throw new Error(`Couldn't update ${modeTableName} stats for user: ${this.Username} (#${this.Id}). No stats found?`);
+
+            this.Stats[gameMode] = new UserStats(gameMode, -1, -1, stats[0].total_score, stats[0].ranked_score, stats[0].overall_accuracy,
+                stats[0].overall_performance_rating, stats[0].play_count);
+        }
+    }
+
     public Serialize(): object {
         return {
             id: this.Id,
             sid: this.SteamId,
             u: this.Username,
+            ug: Number(this.UserGroups),
+            m: this.MuteEndTime,
+            c: this.Country
         }
     }
 

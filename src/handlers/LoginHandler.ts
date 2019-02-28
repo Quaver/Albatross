@@ -2,6 +2,13 @@ import StringHelper from "../utils/StringHelper";
 import Logger from "../logging/Logger";
 import User from "../sessions/User";
 import Albatross from "../Albatross";
+import SqlDatabase from "../database/SqlDatabase";
+import SteamWebAPI from "../steam/SteamWebAPI";
+import ServerPacketLoginReply from "../packets/server/ServerPacketLoginReply";
+import ServerPacketPing from "../packets/server/ServerPacketPing";
+const axios = require("axios");
+const config = require("../config/config.json");
+const randomstring = require("randomstring");
 
 export default class LoginHandler {
     /**
@@ -41,12 +48,57 @@ export default class LoginHandler {
             if (!client)
                 return LoginHandler.LogInvalidRequest(socket, "No client Info Given");
 
-            // Generate a random token for the user in this session
-            LoginHandler.AddSessionToken(socket);
+            // So we can pass around one object rather than a bunch.
+            const loginDetails: object = {
+                steamId,
+                steamName,
+                pTicket,
+                pcbTicket,
+                client,
+                testClientKey
+            };
 
-            const user: User = new User(socket, steamId, steamId, steamName);
+            // Make sure the user is the Steam user they say they are.
+            const steamLogin: any = await LoginHandler.HandleSteamAuthentication(socket, loginDetails);
+            const user: User | null = await LoginHandler.GetUser(socket, steamLogin);
+
+            // User doesn't exist, so a packet needs to be sent that alerts them to choose a username.
+            // Close the connection as well, as username creation is handled by the API server.
+            if (!user) {
+                Logger.Info(`Received invalid login request from: ${steamLogin.steamid}, but they do not have an account yet!`);
+                return socket.close();
+            }
+
+            // Check if the user is banned
+            if (!user.Allowed) {
+                // TODO: send banned notification
+                Logger.Info(`Received invalid login request from: ${steamLogin.steamid}, but they are banned!`);
+                return socket.close();
+            }
+
+            await LoginHandler.VerifyGameBuild(socket, user, loginDetails);
+            await LoginHandler.LogIpAddress(socket, user);
+            await LoginHandler.UpdateLatestActivityAndAvatar(socket, user);
+            await user.UpdateStats();
+            LoginHandler.RemoveMultipleLoginSessions(user);
+            LoginHandler.GenerateSessionToken(socket, user);
             Albatross.Instance.OnlineUsers.AddUser(user);
+
+            // Send successful login reply
+            const packet: ServerPacketLoginReply = new ServerPacketLoginReply(user);
+            user.Socket.send(packet.ToString());
+
+            // Send users connected
+            // Send avaialbale chat channels
+            // Ping client once
+            user.Socket.send(new ServerPacketPing().ToString());
+
+            // Send packet to all online users to make them aware of this user
+
+            // Discord message
+ 
         } catch (err) {
+            // TODO: Send login failure alert packet
             // TODO: Add required data to log.
             Logger.Error(`${err}`);
             socket.close();
@@ -54,13 +106,140 @@ export default class LoginHandler {
     }
 
     /**
+     * Handles authentication to Steam.
+     * @param loginDetails 
+     */
+    private static async HandleSteamAuthentication(socket: any, loginDetails: any): Promise<object> {
+        const authResponse = await axios.get("https://api.steampowered.com/ISteamUserAuth/AuthenticateUserTicket/v1/", {
+            params: {
+                key: config.steam.publisherKey,
+                appid: config.steam.appId,
+                ticket: loginDetails.pTicket.replace(/-/g, "")
+            }
+        });
+
+        // There was an error while authenticating to Steam!
+        if (authResponse.data.response.error || authResponse.data.response.params.result != "OK")
+            LoginHandler.LogInvalidRequest(socket, "Failed to authenticate with Steam");
+
+        // User is VAC banned
+        if (authResponse.data.response.params.vacbanned)
+            LoginHandler.LogInvalidRequest(socket, "VAC Banned");
+
+        // User was banned by us via Steam
+        if (authResponse.data.response.params.publisherbanned)
+            LoginHandler.LogInvalidRequest(socket, "Publisher Banned");
+            
+        // Check to see if the user actually owns the game.
+        const ownershipResponse = await axios.get("https://partner.steam-api.com/ISteamUser/CheckAppOwnership/v2/", {
+            params: {
+                key: config.steam.publisherKey,
+                appid: config.steam.appId,
+                steamid: authResponse.data.response.params.steamid
+            }
+        })
+
+        // User doesn't own Quaver
+        if (!ownershipResponse.data.appownership.ownsapp)
+            LoginHandler.LogInvalidRequest(socket, "Doesn't own Quaver on Steam!");
+
+        return authResponse.data.response.params;
+    }
+
+    /**
+     * Checks the user's game build to see if they need to update it.
+     * @param socket 
+     * @param user 
+     * @param loginDetails 
+     */
+    private static async VerifyGameBuild(socket: any, user: User, loginDetails: any): Promise<void> {
+        // Don't bother checking their game build if its a test client.
+        if (loginDetails.testClientKey == config.testClientKey)
+            return;
+
+            console.log("Need to check game build!");
+
+        const split = loginDetails.client.split("|");
+
+        if (split.length != 5)
+            return LoginHandler.LogInvalidRequest(socket, "Invalid client details");
+
+        const result = await SqlDatabase.Execute("SELECT id FROM game_builds WHERE quaver_dll = ? AND quaver_api_dll = ? AND quaver_server_client_dll = ? " + 
+                                                "AND quaver_server_common_dll = ? AND quaver_shared_dll = ? AND allowed = 1 LIMIT 1", 
+                                                [split[0], split[1], split[2], split[3], split[4]])
+
+        if (result.length == 0)
+            return LoginHandler.LogInvalidRequest(socket, "Outdated/Unrecognized Game Build");
+    }
+
+    /**
+     * Logs the user's IP address in the database
+     * @param socket 
+     */
+    private static async LogIpAddress(socket: any, user: User): Promise<void> {
+        const result = await SqlDatabase.Execute("SELECT ip FROM login_ips WHERE user_id = ? AND ip = ? LIMIT 1", [user.Id, socket._socket.remoteAddress])
+
+        if (result.length != 0)
+            return;
+
+        await SqlDatabase.Execute("INSERT INTO login_ips (user_id, ip) VALUES (?, ?)", [user.Id, socket._socket.remoteAddress]);
+    }
+
+    /**
+     * Updates the user's latest activity and Steam avatar URL in the database.
+     * @param user 
+     */
+    private static async UpdateLatestActivityAndAvatar(socket: any, user: User): Promise<void> {
+        const avatar = await SteamWebAPI.GetUserAvatarLink(user.SteamId.toString());
+        await SqlDatabase.Execute("UPDATE users SET avatar_url = ?, latest_activity = ? WHERE id = ?", [avatar, Date.now(), user.Id]);
+    }
+
+    /**
+     * Fetches the user from the database
+     * @param socket 
+     * @param steamLogin 
+     */
+    private static async GetUser(socket: any, steamLogin: any): Promise<User | null> {
+        const result = await SqlDatabase.Execute("SELECT * FROM users WHERE steam_id = ? LIMIT 1", [steamLogin.steamid]);
+
+        if (result.length == 0)
+            return null;
+
+        // Quick access to the user object
+        const dbUser: any = result[0];
+
+        return new User(socket, dbUser.id, dbUser.steam_id, dbUser.username, Boolean(dbUser.allowed), dbUser.mute_endtime, dbUser.country,
+            dbUser.privileges, dbUser.usergroups, dbUser.avatar_url);
+    }
+
+    /**
+     * Disconnects multiple login sessions from this user.
+     */
+    private static RemoveMultipleLoginSessions(user: User): void {
+        const alreadyOnline: User[] = Albatross.Instance.OnlineUsers.Users.filter(x => x.Id == user.Id);
+
+        for (let i = 0; i < alreadyOnline.length; i++) {
+            Logger.Info(`Detected multiple login session for user: ${user.Username} (#${user.Id}) <${alreadyOnline[i].Token}>.`);
+            Albatross.Instance.OnlineUsers.RemoveUser(alreadyOnline[i]);
+        }
+
+        return;
+    }
+
+    /**
      * Creates a session token and caches it in Redis for the user to use throughout their session
      * @param socket 
      */
-    private static AddSessionToken(socket: any): void {
-        socket.token = "dsjaksadjsadjkl321903213902109";
+    private static GenerateSessionToken(socket: any, user: User): void {
+        let token: string | null = null;
 
-        // TODO: Cache in redis
+        // Make sure the token generated is absolutely random and not in use.
+        while (token == null || Albatross.Instance.OnlineUsers.GetUserBySocket({ token }))
+            token = randomstring.generate({ length: 64 });
+
+        // Store the token on the socket object for quick access
+        socket.token = token;
+        user.Token = token;
     } 
 
     /**

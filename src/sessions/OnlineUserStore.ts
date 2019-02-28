@@ -3,6 +3,9 @@ import User from "./User";
 import Logger from "../logging/Logger";
 import IUsernameToUserMap from "./maps/IUsernameToUserMap";
 import ISocketTokenToUserMap from "./maps/ISocketTokenToUserMap";
+import RedisHelper from "../database/RedisHelper";
+import Albatross from "../Albatross";
+import AlbatrossBot from "../bot/AlbatrossBot";
 
 export default class OnlineUserStore {
     /**
@@ -26,35 +29,58 @@ export default class OnlineUserStore {
     private SocketToUser: ISocketTokenToUserMap = {};
 
     /**
+     * Array of all online users
+     */
+    public Users: User[] = [];
+
+    /**
      * Adds a user session to the store
      * @param user 
      */
-    public AddUser(user: User): void {
+    public async AddUser(user: User): Promise<void> {
         this.UserIdToUser[user.Id] = user;
         this.UsernameToUser[user.Username] = user;
+        this.Users.push(user);
 
         if (user.Socket)
             this.SocketToUser[user.Socket.token] = user;
 
         this.Count++;
 
+        // Update redis online users and add user session.
+        await RedisHelper.incr("quaver:server:online_users");
+
+        if (user != AlbatrossBot.User)
+            await RedisHelper.set(`quaver:server:session:${user.Token}`, user.Id.toString());
+
         Logger.Success(`${user.Username} (#${user.Id}) [${user.SteamId}] <${user.Token}> has successfully logged in!`);
+        Logger.Info(`There are now: ${this.Count} users online.`);
     }
 
     /**
      * Removes a session from the store
      * @param user 
      */
-    public RemoveUser(user: User): void {
+    public async RemoveUser(user: User): Promise<void> {
+        // Handle sockets that were never able to authenticate in the first place.
+        if (!user)
+            return;
+
         delete this.UserIdToUser[user.Id];
         delete this.UsernameToUser[user.Username];
 
         if (user.Socket)
             delete this.SocketToUser[user.Socket.token];
 
+        this.Users = this.Users.filter(x => x != user);
         this.Count--;
 
+        // Update redis online users and add user session.
+        await RedisHelper.set("quaver:server:online_users", this.Count.toString());
+        await RedisHelper.del(`quaver:server:session:${user.Token}`);
+
         Logger.Info(`${user.Username} (#${user.Id}) [${user.SteamId}] <${user.Token}> has disconnected from the server.`);
+        Logger.Info(`There are now: ${this.Count} users online.`);
     }
 
     /**

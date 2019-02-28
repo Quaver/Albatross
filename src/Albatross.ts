@@ -7,6 +7,7 @@ import ServerPacketPing from "./packets/server/ServerPacketPing";
 import {setInterval} from "timers";
 import OnlineUserStore from "./sessions/OnlineUserStore";
 import AlbatrossBot from "./bot/AlbatrossBot";
+import RedisHelper from "./database/RedisHelper";
 
 const express = require("express");
 const WebSocketServer = require("uws").Server;
@@ -33,12 +34,7 @@ export default class Albatross {
     constructor(port: number) {
         this.Port = port;
         Albatross.Instance = this;
- 
         this.OnlineUsers = new OnlineUserStore();
-        AlbatrossBot.Initialize();
-
-        Logger.Info(this.OnlineUsers.GetUserById(0).ToString());
-        Logger.Info(this.OnlineUsers.Count.toString());
     }
     
     /**
@@ -46,14 +42,13 @@ export default class Albatross {
      * @constructor
      */
     public async Start(): Promise<void> {
+        await this.CleanPreviousSessions();
+        await AlbatrossBot.Initialize();
+
         const ws = new WebSocketServer({ port: this.Port });
         
         ws.on("connection", async (socket: any) => {
             await LoginHandler.Handle(socket);
-            
-            console.log(this.OnlineUsers.GetUserBySocket(socket).ToString());
-            this.OnlineUsers.GetUserByUsername("Swan").Kick();
-
             socket.on("message", async (message: any) => await PacketHandler.Handle(socket,  message));
             socket.on("close",async  () => await CloseHandler.Handle(socket));
         });
@@ -65,6 +60,28 @@ export default class Albatross {
         this.LogStart();
     }
     
+    /**
+     * Cleans previous user sessions in Redis
+     */
+    private async CleanPreviousSessions(): Promise<void> {
+        await RedisHelper.set("quaver:server:online_users", "0");
+        Logger.Success(`Successfully reset Redis online user count to 0.`);
+
+        const sessionkeys = await RedisHelper.keys("quaver:server:session:*");
+
+        for (let i = 0; i < sessionkeys.length; i++)
+            await RedisHelper.del(sessionkeys[i]);
+        
+        Logger.Success(`Successfully deleted all previous ${sessionkeys.length} user session tokens from Redis!`);
+
+        const statusKeys = await RedisHelper.keys("quaver:server:user_status:*");
+
+        for (let i = 0; i < statusKeys.length; i++)
+            await RedisHelper.del(statusKeys[i]);
+
+        Logger.Success(`Successfully deleted all previous ${statusKeys.length} user status keys from Redis!`);
+    }
+
     /**
      * \o/
      * @constructor

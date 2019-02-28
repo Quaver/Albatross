@@ -5,5 +5,27 @@
       "id": "",
       "token": ""
     }
-  }
+  },
+  "steam": {
+    "appId": 480,
+    "publisherKey": "",
+    "webApiKey": ""
+  },
+  "databaseSql": {
+    "host": "",
+    "user": "",
+    "password": "",
+    "database": ""
+  },
+  "databaseRedis": {
+    "host": "localhost",
+    "port": 6379,
+    "password": ""
+  },
+  "chatBot": {
+    "username": "AlbatrossBot",
+    "country": "US",
+    "avatarUrl": "https://pbs.twimg.com/profile_images/1003731743990374400/QZjgWGlk_400x400.jpg"
+  },
+  "testClientKey": ""
 }
