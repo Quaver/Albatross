@@ -5,6 +5,7 @@ import GameMode from "../enums/GameMode";
 import SqlDatabase from "../database/SqlDatabase";
 import UserStats from "./UserStats";
 import ModeToUserStatsMap from "./ModeToUserStatsMap";
+import RedisHelper from "../database/RedisHelper";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -140,7 +141,22 @@ export default class User implements IPacketWritable, IStringifyable {
             if (stats.length == 0)
                 throw new Error(`Couldn't update ${modeTableName} stats for user: ${this.Username} (#${this.Id}). No stats found?`);
 
-            this.Stats[gameMode] = new UserStats(gameMode, -1, -1, stats[0].total_score, stats[0].ranked_score, stats[0].overall_accuracy,
+            // Get user leaderboard stats in Redis
+            let globalRank: any = await RedisHelper.zrevrank(`quaver:leaderboard:${gameMode}`, this.Id.toString());
+
+            if (globalRank == null)
+                globalRank = -1;
+            else
+                globalRank = Number(globalRank) + 1
+
+            let countryRank: any = await RedisHelper.zrevrank(`quaver:country_leaderboard:${this.Country.toLowerCase()}:${gameMode}`, this.Id.toString());
+
+            if (countryRank == null)
+                countryRank = -1;
+            else
+                countryRank = Number(countryRank) + 1;
+
+            this.Stats[gameMode] = new UserStats(gameMode, globalRank, countryRank, stats[0].total_score, stats[0].ranked_score, stats[0].overall_accuracy,
                 stats[0].overall_performance_rating, stats[0].play_count);
         }
     }
