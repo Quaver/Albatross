@@ -5,6 +5,8 @@ import UserGroups from "../enums/UserGroups";
 import User from "../sessions/User";
 import Albatross from "../Albatross";
 import ServerPacketAvailableChatchannel from "../packets/server/ServerPacketAvailableChatChannel";
+import AlbatrossBot from "../bot/AlbatrossBot";
+import ServerPacketChatMessage from "../packets/server/ServerPacketChatMessage";
 const config = require("../config/config.json");
 
 export default class ChatManager {
@@ -36,5 +38,90 @@ export default class ChatManager {
             return await Albatross.SendToUser(user, new ServerPacketAvailableChatchannel(chan));
 
         Logger.Warning(`Tried to send ${user.Username} (#${user.Id}) available channel: ${chan.Name}, but failed. (No permissions!)`);
+    }
+
+    /**
+     * Sends a message to client(s) from a specific user
+     * 
+     * - Handles both public and private and the # in the "to" dictates if its a channel
+     *   or a specific user they want to send the message to.
+     * @param sender 
+     * @param to 
+     * @param message 
+     */
+    public static async SendMessage(sender: User, to: string, message: string): Promise<void> {
+        if (!to)
+            return Logger.Warning(`${sender.Username} (#${sender.Id}) tried to send a message with an empty receiver`);
+
+        if (!message)
+            return Logger.Warning(`${sender.Username} (#${sender.Id}) tried to send an empty message`);
+
+        // The send is muted, but their client is allowing them to send messages.
+        // Stop execution and make them aware that they are muted.
+        if (sender.IsMuted()) {
+            Logger.Warning(`${sender.Username} (#${sender.Id}) tried to send a message, but they are muted!`);
+
+            // TODO: Send mute time packet
+            return;
+        }
+
+        sender.SpamRate++;
+
+        // Check if the user is spamming and mute them.
+        if (sender.SpamRate >= 10 && (!sender.IsAdmin() && !sender.IsBot())) {
+            Logger.Warning(`${sender.Username} (#${sender.Id}) has sent ${sender.SpamRate} messages in a short amount of time. Auto-muting!`);
+
+            // TODO: Mute
+            return;
+        }
+
+        if (to.startsWith("#"))
+            await ChatManager.SendPublicChannelMessage(sender, to, message);
+        else
+            await ChatManager.SendPrivateMessage(sender, to, message);
+    }
+
+    /**
+     * Sends a message to a public channel.
+     * @param sender 
+     * @param to 
+     * @param message 
+     */
+    private static async SendPublicChannelMessage(sender: User, to: string, message: string): Promise<void> {
+        // Check if the channel actually exists
+        if (!ChatManager.Channels[to])
+            return Logger.Warning(`${sender.Username} (#${sender.Id}) has tried to send a message to: ${to}, but it doesn't exist!`);
+
+        const channel: ChatChannel = ChatManager.Channels[to];
+
+        // Check if the user is actually in the channel (Note: We ignore the bot user, as we want it to be in every channel)
+        if (!channel.UsersInChannel.includes(sender) && sender != AlbatrossBot.User)
+            return Logger.Warning(`${sender.Username} (#${sender.Id}) has tried to send a message to: ${to}, but they aren't in the channel!`);
+
+        // Send packet to all receiving users
+        await Albatross.SendToUsers(channel.UsersInChannel, new ServerPacketChatMessage(sender, to, message));
+
+        // Handle bot commands
+
+        // Log to discord
+    }
+
+    /**
+     * Sends a private message to a user.
+     * @param sender 
+     * @param to 
+     * @param message 
+     */
+    private static async SendPrivateMessage(sender: User, to: string, message: string): Promise<void> {
+        const receiver: User = Albatross.Instance.OnlineUsers.GetUserByUsername(to);
+
+        if (!receiver)
+            return Logger.Warning(`${sender.Username} (#${sender.Id}) has tried to send a message to: ${to}, but they are offline`);
+
+        await Albatross.SendToUser(receiver, new ServerPacketChatMessage(sender, to, message));
+
+        // Handle Bot Commands
+
+        // Log to discord
     }
 }

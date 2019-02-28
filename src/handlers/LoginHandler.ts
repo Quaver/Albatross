@@ -16,6 +16,7 @@ import ServerPacketUserDisconected from "../packets/server/ServerPacketUserDisco
 import ChatManager from "../chat/ChatManager";
 import ChatChannel from "../chat/ChatChannel";
 import ServerPacketAvailableChatchannel from "../packets/server/ServerPacketAvailableChatChannel";
+import AlbatrossBot from "../bot/AlbatrossBot";
 const axios = require("axios");
 const config = require("../config/config.json");
 const randomstring = require("randomstring");
@@ -106,10 +107,12 @@ export default class LoginHandler {
             await Albatross.SendToUser(user, new ServerPacketLoginReply(user));
             await Albatross.SendToUser(user, Albatross.BuildUsersOnlinePacket());
             await LoginHandler.SendAndAutojoinChatChannels(user);
+
             await Albatross.Broadcast(new ServerPacketUserConnected(user));
  
+            await ChatManager.SendMessage(AlbatrossBot.User, user.Username, `Welcome to the Quaver alpha, ${user.Username}!`);
+
         } catch (err) {
-            // TODO: Send login failure alert packet
             // TODO: Add required data to log.
             Logger.Error(`${err}`);
 

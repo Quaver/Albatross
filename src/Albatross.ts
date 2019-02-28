@@ -107,6 +107,16 @@ export default class Albatross {
     }
 
     /**
+     * Sends a packet to a list of users
+     * @param users 
+     * @param packet 
+     */
+    public static async SendToUsers(users: User[], packet: Packet): Promise<void> {
+        for (let i = 0; i < users.length; i++)
+            await Albatross.SendToUser(users[i], packet);
+    }
+
+    /**
      * Sends a packet to a specific socket
      * @param socket 
      * @param packet 

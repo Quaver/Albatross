@@ -91,6 +91,11 @@ export default class User implements IPacketWritable, IStringifyable {
     public ChannelsJoined: ChatChannel[] = [];
 
     /**
+     * The amount of messages the user has sent within the spam detection interval.
+     */
+    public SpamRate: number = 0;
+
+    /**
      * @param token 
      * @param steamId 
      * @param username 
@@ -144,6 +149,62 @@ export default class User implements IPacketWritable, IStringifyable {
         this.ChannelsJoined.push(chan);
         
         await Albatross.SendToUser(this, new ServerPacketJoinedChatChannel(chan));
+    }
+
+    /**
+     * Returns if the user is muted in chat.
+     */
+    public IsMuted(): boolean { 
+        return this.MuteEndTime > Date.now();
+    }
+
+    /**
+     * Returns if the user is an administrator
+     */
+    public IsAdmin(): boolean {
+        return (this.UserGroups & UserGroups.Admin) != 0;
+    }
+
+    /**
+     * Returns if the user is a bot
+     */
+    public IsBot(): boolean {
+        return (this.UserGroups & UserGroups.Bot) != 0;
+    }
+
+    /**
+     * Returns if the user is a developer
+     */
+    public IsDeveloper(): boolean {
+        return (this.UserGroups & UserGroups.Developer) != 0;
+    }
+
+    /**
+     * Returns if the user is a moderator
+     */
+    public IsModerator(): boolean {
+        return (this.UserGroups & UserGroups.Moderator) != 0;
+    }
+
+    /**
+     * Returns if the user is god.
+     */
+    public IsSwan(): boolean {
+        return (this.UserGroups & UserGroups.Swan) != 0;
+    }
+
+    /**
+     * Returns if the user is a ranking supervisor
+     */
+    public IsRankingSupervisor(): boolean {
+        return (this.UserGroups & UserGroups.RankingSupervisor) != 0;
+    }
+
+    /**
+     * Returns if the user is a contributor
+     */
+    public IsContributor(): boolean {
+        return (this.UserGroups & UserGroups.Contributor) != 0;
     }
 
     /**
