@@ -6,6 +6,9 @@ import SqlDatabase from "../database/SqlDatabase";
 import UserStats from "./UserStats";
 import ModeToUserStatsMap from "./ModeToUserStatsMap";
 import RedisHelper from "../database/RedisHelper";
+import ServerPacketNotification from "../packets/server/ServerPacketNotification";
+import ServerNotificationType from "../enums/ServerNotificationType";
+import AsyncHelper from "../utils/AsyncHelper";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -107,8 +110,11 @@ export default class User implements IPacketWritable, IStringifyable {
     /**
      * Kicks the user from the server
      */
-    public Kick(notify: boolean = false): void {
-        this.Socket.close();
+    public async Kick(notify: boolean = true): Promise<void> {
+        if (notify)
+            this.Socket.send(new ServerPacketNotification(ServerNotificationType.Error, "You have been kicked from the server.").ToString());
+
+        return await AsyncHelper.Sleep(100, () => this.Socket.close());
     }
 
     /**
