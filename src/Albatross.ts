@@ -6,7 +6,7 @@ import CloseHandler from "./handlers/CloseHandler";
 import ServerPacketPing from "./packets/server/ServerPacketPing";
 import {setInterval} from "timers";
 import OnlineUserStore from "./sessions/OnlineUserStore";
-import AlbatrossBot from "./bot/AlbatrossBot";
+import QuaverBot from "./bot/QuaverBot";
 import RedisHelper from "./database/RedisHelper";
 import ServerPacketUsersOnline from "./packets/server/ServerPacketUsersOnline";
 import Packet from "./packets/Packet";
@@ -53,7 +53,7 @@ export default class Albatross {
      */
     public async Start(): Promise<void> {
         await this.CleanPreviousSessions();
-        await AlbatrossBot.Initialize();
+        await QuaverBot.Initialize();
 
         this.Server = new WebSocketServer({ port: this.Port });
         

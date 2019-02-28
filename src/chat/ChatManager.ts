@@ -5,7 +5,7 @@ import UserGroups from "../enums/UserGroups";
 import User from "../sessions/User";
 import Albatross from "../Albatross";
 import ServerPacketAvailableChatchannel from "../packets/server/ServerPacketAvailableChatChannel";
-import AlbatrossBot from "../bot/AlbatrossBot";
+import QuaverBot from "../bot/QuaverBot";
 import ServerPacketChatMessage from "../packets/server/ServerPacketChatMessage";
 const config = require("../config/config.json");
 
@@ -95,7 +95,7 @@ export default class ChatManager {
         const channel: ChatChannel = ChatManager.Channels[to];
 
         // Check if the user is actually in the channel (Note: We ignore the bot user, as we want it to be in every channel)
-        if (!channel.UsersInChannel.includes(sender) && sender != AlbatrossBot.User)
+        if (!channel.UsersInChannel.includes(sender) && sender != QuaverBot.User)
             return Logger.Warning(`${sender.Username} (#${sender.Id}) has tried to send a message to: ${to}, but they aren't in the channel!`);
 
         // Send packet to all receiving users

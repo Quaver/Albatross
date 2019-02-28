@@ -23,7 +23,9 @@
     "password": ""
   },
   "chatBot": {
-    "username": "AlbatrossBot",
+    "id": 2,
+    "steamId": 0,
+    "username": "QuaverBot",
     "country": "US",
     "avatarUrl": "https://pbs.twimg.com/profile_images/1003731743990374400/QZjgWGlk_400x400.jpg"
   },
