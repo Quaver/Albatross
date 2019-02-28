@@ -88,7 +88,9 @@ export default class LoginHandler {
                 return await AsyncHelper.Sleep(100, () => socket.close());
             }
 
-            await LoginHandler.VerifyGameBuild(socket, user, loginDetails);
+            if (!await LoginHandler.VerifyGameBuild(socket, user, loginDetails))
+                return;
+
             await LoginHandler.LogIpAddress(socket, user);
             await LoginHandler.UpdateLatestActivityAndAvatar(socket, user);
             await user.UpdateStats();
@@ -109,14 +111,13 @@ export default class LoginHandler {
 
             // Send packet to all online users to make them aware of this user
             await Albatross.Broadcast(new ServerPacketUserConnected(user));
-
-            // Discord message
  
         } catch (err) {
             // TODO: Send login failure alert packet
             // TODO: Add required data to log.
             Logger.Error(`${err}`);
-            socket.close();
+            socket.send(new ServerPacketNotification(ServerNotificationType.Error, "Failed to login: Unknown Server Error!"));
+            return await AsyncHelper.Sleep(100, () => socket.close());  
         }
     }
 
@@ -167,24 +168,27 @@ export default class LoginHandler {
      * @param user 
      * @param loginDetails 
      */
-    private static async VerifyGameBuild(socket: any, user: User, loginDetails: any): Promise<void> {
+    private static async VerifyGameBuild(socket: any, user: User, loginDetails: any): Promise<boolean> {
         // Don't bother checking their game build if its a test client.
         if (loginDetails.testClientKey == config.testClientKey)
-            return;
-
-            console.log("Need to check game build!");
+            return true;
 
         const split = loginDetails.client.split("|");
 
         if (split.length != 5)
-            return LoginHandler.LogInvalidRequest(socket, "Invalid client details");
+            LoginHandler.LogInvalidRequest(socket, "Invalid client details");
 
         const result = await SqlDatabase.Execute("SELECT id FROM game_builds WHERE quaver_dll = ? AND quaver_api_dll = ? AND quaver_server_client_dll = ? " + 
                                                 "AND quaver_server_common_dll = ? AND quaver_shared_dll = ? AND allowed = 1 LIMIT 1", 
                                                 [split[0], split[1], split[2], split[3], split[4]])
 
-        if (result.length == 0)
-            return LoginHandler.LogInvalidRequest(socket, "Outdated/Unrecognized Game Build");
+        if (result.length == 0) {
+            socket.send(new ServerPacketNotification(ServerNotificationType.Error, "Your game client is outdated. Please restart Steam and update it!").ToString());
+            await AsyncHelper.Sleep(100, () => socket.close());    
+            return false        
+        }
+
+        return true;
     }
 
     /**
@@ -237,8 +241,9 @@ export default class LoginHandler {
             Logger.Info(`Detected multiple login session for user: ${user.Username} (#${user.Id}) <${alreadyOnline[i].Token}>.`);
 
             const packet = new ServerPacketNotification(ServerNotificationType.Error, "Logged out due to signing in from another location.");
-            await AsyncHelper.Sleep(100, () => alreadyOnline[i].Socket.send(packet.ToString()));
-            alreadyOnline[i].Socket.close();
+            alreadyOnline[i].Socket.send(packet.ToString());
+
+            await AsyncHelper.Sleep(100, () => alreadyOnline[i].Socket.close());
         }
 
         return;
