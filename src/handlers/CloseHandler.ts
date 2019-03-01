@@ -12,7 +12,7 @@ export default class CloseHandler {
     public static async Handle(socket: any): Promise<void> {
         try {
             const user: User = Albatross.Instance.OnlineUsers.GetUserBySocket(socket);
-            
+                
             Albatross.Instance.OnlineUsers.RemoveUser(user);
             Albatross.Broadcast(new ServerPacketUserDisconected(user.Id));
         } catch (err) {

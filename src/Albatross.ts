@@ -95,17 +95,14 @@ export default class Albatross {
     /**
      * Broadcasts a packet to all online users.
      */
-    public static async Broadcast(packet: Packet): Promise<void> {
+    public static Broadcast(packet: Packet): void {
         Albatross.Instance.Server.broadcast(packet.ToString());
     }
 
     /**
      * Sends a packet to a specific user
      */
-    public static async SendToUser(user: User, packet: Packet): Promise<void> {
-        if (!user || !user.Socket)
-            return;
-            
+    public static SendToUser(user: User, packet: Packet): void {
         user.Socket.send(packet.ToString());
     }
 
@@ -114,9 +111,9 @@ export default class Albatross {
      * @param users 
      * @param packet 
      */
-    public static async SendToUsers(users: User[], packet: Packet): Promise<void> {
+    public static SendToUsers(users: User[], packet: Packet): void {
         for (let i = 0; i < users.length; i++)
-            await Albatross.SendToUser(users[i], packet);
+            Albatross.SendToUser(users[i], packet);
     }
 
     /**
@@ -124,7 +121,7 @@ export default class Albatross {
      * @param socket 
      * @param packet 
      */
-    public static async SendToSocket(socket: any, packet: Packet): Promise<void> {
+    public static SendToSocket(socket: any, packet: Packet): void {
         if (!socket)
             return;
             

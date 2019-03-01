@@ -6,6 +6,7 @@ import ISocketTokenToUserMap from "./maps/ISocketTokenToUserMap";
 import RedisHelper from "../database/RedisHelper";
 import Albatross from "../Albatross";
 import QuaverBot from "../bot/QuaverBot";
+import ChatManager from "../chat/ChatManager";
 
 export default class OnlineUserStore {
     /**
@@ -74,6 +75,11 @@ export default class OnlineUserStore {
 
         this.Users = this.Users.filter(x => x != user);
         this.Count--;
+
+        for (let i = 0; i < user.ChannelsJoined.length; i++) {
+            const filteredChannelList: User[] = ChatManager.Channels[user.ChannelsJoined[i].Name].UsersInChannel.filter(x => x.Id != user.Id);
+            ChatManager.Channels[user.ChannelsJoined[i].Name].UsersInChannel = filteredChannelList
+        }
 
         // Update redis online users and add user session.
         await RedisHelper.set("quaver:server:online_users", this.Count.toString());
