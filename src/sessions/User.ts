@@ -16,6 +16,8 @@ import ServerPacketJoinedChatChannel from "../packets/server/ServerPacketJoinedC
 import * as _ from "lodash";
 import ServerPacketLeftChatChannel from "../packets/server/ServerPacketLeftChatChannel";
 import ServerPacketFailedToJoinChannel from "../packets/server/ServerPacketFailedToJoinChannel";
+import ServerPacketMuteEndTime from "../packets/server/ServerPacketMuteEndTime";
+import OnlineNotificationType from "../enums/OnlineNotificationType";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -195,6 +197,28 @@ export default class User implements IPacketWritable, IStringifyable {
         // this isn't really required, but if the server wants to force them to leave a channel, then 
         // thats a circumstance where the packet should be sent.
         Albatross.SendToUser(this, new ServerPacketLeftChatChannel(channel.Name));
+    }
+
+    /**
+     * Mutes an online user for a specific amount of seconds
+     * @param seconds 
+     * @param reason 
+     * @param author 
+     */
+    public async Mute(seconds: number, reason: string, author: number = 0): Promise<void> {
+        this.MuteEndTime = Date.now() + (seconds * 1000);  
+        
+        Albatross.Broadcast(new ServerPacketMuteEndTime(this, this.MuteEndTime));
+
+        await SqlDatabase.Execute("UPDATE users SET mute_endtime = ? WHERE id = ?", [this.MuteEndTime, this.Id]);
+
+        await SqlDatabase.Execute("INSERT INTO mutes (user_id, author, seconds, reason, timestamp) VALUES (?, ?, ?, ?, ?)",
+            [this.Id, author, seconds, reason, Date.now()]);
+
+        await SqlDatabase.Execute("INSERT INTO notifications (user_id, type, target_id, subject, message, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
+            [this.Id, Number(OnlineNotificationType.UserMuted), this.Id, "Your account has been muted.", 
+            `Your account has been muted for ${seconds} seconds. During this time, you will not be able to use th in-game chat, ` + 
+            `and some community features may be limited.`, Date.now()]);
     }
 
     /**
