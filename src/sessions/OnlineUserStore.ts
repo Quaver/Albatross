@@ -7,6 +7,8 @@ import RedisHelper from "../database/RedisHelper";
 import Albatross from "../Albatross";
 import QuaverBot from "../bot/QuaverBot";
 import ChatManager from "../chat/ChatManager";
+import ChatChannel from "../chat/ChatChannel";
+import * as _ from "lodash";
 
 export default class OnlineUserStore {
     /**
@@ -73,12 +75,16 @@ export default class OnlineUserStore {
         if (user.Socket)
             delete this.SocketToUser[user.Socket.token];
 
-        this.Users = this.Users.filter(x => x != user);
+        _.remove(this.Users, (u) => u == user);
         this.Count--;
 
         for (let i = 0; i < user.ChannelsJoined.length; i++) {
-            const filteredChannelList: User[] = ChatManager.Channels[user.ChannelsJoined[i].Name].UsersInChannel.filter(x => x.Id != user.Id);
-            ChatManager.Channels[user.ChannelsJoined[i].Name].UsersInChannel = filteredChannelList
+            const chan: ChatChannel = ChatManager.Channels[user.ChannelsJoined[i].Name];
+            
+            if (!chan)
+                continue;
+
+            _.remove(chan.UsersInChannel, (u) => u == user);  
         }
 
         // Update redis online users and add user session.

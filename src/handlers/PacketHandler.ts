@@ -5,6 +5,10 @@ import PongHandler from "./PongHandler";
 import ClientPacketPong from "../packets/client/ClientPacketPong";
 import ChatMessageHander from "./ChatMessageHandler";
 import ClientPacketChatMessage from "../packets/client/ClientPacketChatMessage";
+import RequestLeaveChatChannelHandler from "./RequestLeaveChatChannelHandler";
+import ClientPacketRequestLeaveChatChannel from "../packets/client/ClientPacketRequestLeaveChatChannel";
+import User from "../sessions/User";
+import Albatross from "../Albatross";
 
 export default class PacketHandler {
     /**
@@ -13,17 +17,25 @@ export default class PacketHandler {
      */
     public static async Handle(socket: any, message: any): Promise<void> {
         try {
+            const user: User = Albatross.Instance.OnlineUsers.GetUserBySocket(socket);
+
+            if (!user)
+                return Logger.Error(`Received packet: ${message} from socket IP: ${socket._socket.remoteAddress}, but they aren't logged in!`);
+
             const msg: any = JSON.parse(message);
             const jsonConvert: JsonConvert = new JsonConvert();
             
-            console.log(msg);
+            console.log(user.Username + " " + message);
             
             switch (msg.id) {
                 case PacketId.ClientPong:
-                    await PongHandler.Handle(socket, jsonConvert.deserializeObject(msg, ClientPacketPong));
+                    await PongHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketPong));
                     break;
                 case PacketId.ClientChatMessage:
-                    await ChatMessageHander.Handle(socket, jsonConvert.deserializeObject(msg, ClientPacketChatMessage));
+                    await ChatMessageHander.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketChatMessage));
+                    break;
+                case PacketId.ClientRequestLeaveChatChannel:
+                    await RequestLeaveChatChannelHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketRequestLeaveChatChannel));
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS

@@ -118,6 +118,12 @@ export default class ChatManager {
         if (!receiver)
             return Logger.Warning(`${sender.Username} (#${sender.Id}) has tried to send a message to: ${to}, but they are offline`);
 
+        // Handle but messages.
+        if (receiver == QuaverBot.User) {
+            console.log("bot msg");
+            return;
+        }
+
         Albatross.SendToUser(receiver, new ServerPacketChatMessage(sender, to, message));
 
         // Handle Bot Commands

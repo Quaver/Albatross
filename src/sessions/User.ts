@@ -13,6 +13,7 @@ import Albatross from "../Albatross";
 import ChatChannel from "../chat/ChatChannel";
 import Logger from "../logging/Logger";
 import ServerPacketJoinedChatChannel from "../packets/server/ServerPacketJoinedChatChannel";
+import * as _ from "lodash";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -149,6 +150,23 @@ export default class User implements IPacketWritable, IStringifyable {
         this.ChannelsJoined.push(chan);
         
         Albatross.SendToUser(this, new ServerPacketJoinedChatChannel(chan));
+    }
+
+    /**
+     * Removes the user from a chat channel that they're in
+     * @param channel 
+     */
+    public async LeaveChatChannel(channel: ChatChannel): Promise<void> {
+        // Check to see if the channel they want to leave actually exists
+        if (!channel)
+            return Logger.Warning(`${this.Username} (#${this.Id}) wants to leave a channel, but it doesn't exist!`);
+            
+        // Check to see if the user is actually in the channel.
+        if (!channel.UsersInChannel.includes(this))
+            return Logger.Warning(`${this.Username} (#${this.Id}) wants to leave channel '${channel.Name}', but they aren't in the channel!`);
+
+        _.remove(channel.UsersInChannel, (u) => u == this);
+        _.remove(this.ChannelsJoined, (c) => c == channel);
     }
 
     /**
