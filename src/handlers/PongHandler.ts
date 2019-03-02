@@ -9,6 +9,7 @@ export default class PongHandler {
      */
     public static async Handle(user: User, packet: ClientPacketPong): Promise<void> {
         try {
+            user.LastPongTime = Date.now();
             Logger.Info(`Received user pong at: ${packet.Timestamp}`);
         } catch (err) {
             Logger.Error(err);

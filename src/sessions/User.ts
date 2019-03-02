@@ -20,6 +20,7 @@ import ServerPacketMuteEndTime from "../packets/server/ServerPacketMuteEndTime";
 import OnlineNotificationType from "../enums/OnlineNotificationType";
 import ChatManager from "../chat/ChatManager";
 import QuaverBot from "../bot/QuaverBot";
+import ServerPacketPing from "../packets/server/ServerPacketPing";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -126,6 +127,14 @@ export default class User implements IPacketWritable, IStringifyable {
         this.Privileges = privileges;
         this.UserGroups = usergroups;
         this.AvatarUrl = avatarUrl;
+    }
+
+    /**
+     * Pings the client and updates their last ping time
+     */
+    public Ping(): void {
+        this.LastPingTime = Date.now();
+        Albatross.SendToUser(this, new ServerPacketPing());
     }
 
     /**

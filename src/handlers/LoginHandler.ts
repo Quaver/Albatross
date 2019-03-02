@@ -102,6 +102,12 @@ export default class LoginHandler {
 
             // New session
             LoginHandler.GenerateSessionToken(socket, user);
+
+            // Update last ping and pong times so they don't get timed out immediately.
+            user.LastPingTime = Date.now();
+            user.LastPongTime = Date.now();
+
+            // Safe to add user and consider them online now.
             Albatross.Instance.OnlineUsers.AddUser(user);
 
             Albatross.SendToUser(user, new ServerPacketLoginReply(user));

@@ -43,6 +43,11 @@ export default class Albatross {
     private readonly PING_INTERVAL: number = 20000;
 
     /**
+     * The time it takes for a user to be timed out for now responding to pings.
+     */
+    private readonly PING_TIMEOUT_TIME: number = 80000;
+
+    /**
      * How frequent spam rates will be cleared for users
      */
     private readonly SPAM_RATE_CLEAR_INTERVAL: number = 10000;
@@ -157,28 +162,49 @@ export default class Albatross {
      * 
      * - Pinging users & timing out users who haven't responded to pongs
      * - Clearing chat spam rates
-     * - 
      */
     private StartBackgroundWorker(): void {
+        // Initially set the spam rate clear time so it can be fresh with the current time.
         this.TimeSpamRateLastCleared = Date.now();
 
         setInterval(() => {
+            // Fetch the current time, so it can be used to detect when certain actions
+            // should be performed during this interval
             const currentTime: number = Date.now();
 
-            for (let i = 0; i < this.OnlineUsers.Users.length; i++) {
+            // Go through each user and perform their appropriate actions
+            // In this circumstance, we loop backwards, because if users are timed out
+            // for not responding to pings, they'll be removed from the user list.
+            for (let i = this.OnlineUsers.Users.length - 1; i >= 0; i--) {
                 const user: User = this.OnlineUsers.Users[i];
 
+                // Ignore everything by QuaverBot, as he doesn't matter.
                 if (user == QuaverBot.User)
                     continue;
 
+                // Clear user spam rates
                 if (currentTime - this.TimeSpamRateLastCleared >= this.SPAM_RATE_CLEAR_INTERVAL)
                     user.SpamRate = 0;
+
+                // Ping the user if necessary
+                if (currentTime - user.LastPingTime >= this.PING_INTERVAL)
+                    user.Ping();
+
+                // Timeout the socket if they haven't responding to our pings in a while.
+                if (currentTime - user.LastPongTime >= this.PING_TIMEOUT_TIME) 
+                {
+                    Logger.Warning(`Timing out inactive client session for: ${user.Username} (#${user.Id}) <${user.Token}>.`);
+                    user.Socket.close();
+                }
             }
+
+            // NOTE: Important that we update the times actions were last performed AFTER the loop
+            // so they don't get updated while iterating over the users.
 
             // Update the time the spam rate was cleared.
             if (currentTime - this.TimeSpamRateLastCleared >= this.SPAM_RATE_CLEAR_INTERVAL)
                 this.TimeSpamRateLastCleared = currentTime;
-        }, 500);
+        }, 100);
     }
 
     /**
