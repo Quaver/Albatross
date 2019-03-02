@@ -16,6 +16,9 @@ import ClientPacketStatusUpdate from "../packets/client/ClientPacketStatusUpdate
 import UserClientStatus from "../objects/UserClientStatus";
 import RequestUserInfoHandler from "./RequestUserInfoHandler";
 import ClientPacketRequestUserInfo from "../packets/client/ClientPacketRequestUserInfo";
+import RequestUserStatusHandler from "./RequestUserStatusHandler";
+import ClientPacketRequestUserStatus from "../packets/client/ClientPacketRequestUserStatus";
+const config = require("../config/config.json");
 
 export default class PacketHandler {
     /**
@@ -32,7 +35,8 @@ export default class PacketHandler {
             const msg: any = JSON.parse(message);
             const jsonConvert: JsonConvert = new JsonConvert();
             
-            console.log(user.Username + " " + message);
+            if (config.logPacketTransfer)
+                Logger.Info(`Received Packet: ${user.Username} (#${user.Id}) -> ${PacketId[msg.id]} -> "${message}"`);
             
             switch (msg.id) {
                 case PacketId.ClientPong:
@@ -57,9 +61,12 @@ export default class PacketHandler {
                 case PacketId.ClientRequestUserInfo:
                     await RequestUserInfoHandler.Handle(user, jsonConvert.deserializeObject(msg,ClientPacketRequestUserInfo));
                     break;
+                case PacketId.ClientRequestUserStatus:
+                    await RequestUserStatusHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketRequestUserStatus));
+                    break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS
-                    throw new Error(`Client sent a packet that can't be handled: ${msg}`);
+                    throw new Error(`${user.Username} (#${user.Id}) -> sent a packet that can't be handled -> "${message}"`);
             }
         } catch (err) {
             Logger.Error(err);

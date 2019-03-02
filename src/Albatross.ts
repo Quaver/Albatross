@@ -12,7 +12,9 @@ import ServerPacketUsersOnline from "./packets/server/ServerPacketUsersOnline";
 import Packet from "./packets/Packet";
 import User from "./sessions/User";
 import ChatManager from "./chat/ChatManager";
+import PacketId from "./packets/PacketId";
 
+const config = require("./config/config.json");
 const express = require("express");
 const WebSocketServer = require("uws").Server;
 
@@ -117,6 +119,9 @@ export default class Albatross {
      * Broadcasts a packet to all online users.
      */
     public static Broadcast(packet: Packet): void {
+        if (config.logPacketTransfer)
+            Logger.Info(`Broadcasting Packet: ${PacketId[packet.Id]} -> "${packet.ToString()}"`);
+
         Albatross.Instance.Server.broadcast(packet.ToString());
     }
 
@@ -124,6 +129,9 @@ export default class Albatross {
      * Sends a packet to a specific user
      */
     public static SendToUser(user: User, packet: Packet): void {
+        if (config.logPacketTransfer)
+            Logger.Info(`Sending Packet: To ${user.Username} (#${user.Id}) -> ${PacketId[packet.Id]} -> "${packet.ToString()}"}`);
+            
         user.Socket.send(packet.ToString());
     }
 

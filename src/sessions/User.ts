@@ -183,10 +183,9 @@ export default class User implements IPacketWritable, IStringifyable {
                 return Albatross.SendToUser(this, new ServerPacketFailedToJoinChannel(chan.Name));       
         }
 
-        if (this.ChannelsJoined.includes(chan)) {
-            Logger.Warning(`${this.Username} (#${this.Id}) has tried to join channel: ${chan.Name}, but they are already in it.`);
+        // User is already in the channel.
+        if (this.ChannelsJoined.includes(chan))
             return;
-        }
 
         chan.UsersInChannel.push(this);
         this.ChannelsJoined.push(chan);
