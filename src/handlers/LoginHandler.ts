@@ -113,7 +113,8 @@ export default class LoginHandler {
             await ChatManager.SendMessage(QuaverBot.User, user.Username, `Welcome to the Quaver alpha, ${user.Username}!`);
 
             if (user.IsMuted())
-                await ChatManager.SendMessage(QuaverBot.User, user.Username, `Your account is muted for another ${(user.MuteEndTime - Date.now()) / 1000 / 60} minutes`);
+                await ChatManager.SendMessage(QuaverBot.User, user.Username, 
+                    `Your account is muted for another ${(user.MuteEndTime - Date.now()) / 1000 / 60} minutes`);
 
         } catch (err) {
             // TODO: Add required data to log.
