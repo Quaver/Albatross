@@ -38,6 +38,21 @@ export default class Albatross {
     public Server: any;
 
     /**
+     * How frequent users will be pinged by the server
+     */
+    private readonly PING_INTERVAL: number = 20000;
+
+    /**
+     * How frequent spam rates will be cleared for users
+     */
+    private readonly SPAM_RATE_CLEAR_INTERVAL: number = 10000;
+
+    /**
+     * The time user spam rates were last cleared.
+     */
+    private TimeSpamRateLastCleared: number = 0;
+
+    /**
      * @param port
      */
     constructor(port: number) {
@@ -55,6 +70,7 @@ export default class Albatross {
         await this.CleanPreviousSessions();
         await QuaverBot.Initialize();
 
+        this.StartBackgroundWorker();
         this.Server = new WebSocketServer({ port: this.Port });
         
         this.Server.on("connection", async (socket: any) => {
@@ -133,6 +149,36 @@ export default class Albatross {
      */
     public static BuildUsersOnlinePacket(): ServerPacketUsersOnline {
         return new ServerPacketUsersOnline(Albatross.Instance.OnlineUsers.Users.map(x => x.Id));
+    }
+
+    /**
+     * Starts a worker interval to perform certain tasks to keep the server in check.
+     * Tasks include:
+     * 
+     * - Pinging users & timing out users who haven't responded to pongs
+     * - Clearing chat spam rates
+     * - 
+     */
+    private StartBackgroundWorker(): void {
+        this.TimeSpamRateLastCleared = Date.now();
+
+        setInterval(() => {
+            const currentTime: number = Date.now();
+
+            for (let i = 0; i < this.OnlineUsers.Users.length; i++) {
+                const user: User = this.OnlineUsers.Users[i];
+
+                if (user == QuaverBot.User)
+                    continue;
+
+                if (currentTime - this.TimeSpamRateLastCleared >= this.SPAM_RATE_CLEAR_INTERVAL)
+                    user.SpamRate = 0;
+            }
+
+            // Update the time the spam rate was cleared.
+            if (currentTime - this.TimeSpamRateLastCleared >= this.SPAM_RATE_CLEAR_INTERVAL)
+                this.TimeSpamRateLastCleared = currentTime;
+        }, 500);
     }
 
     /**
