@@ -3,7 +3,7 @@ import PacketId from "../PacketId";
 import { JsonProperty, JsonObject } from "json2typescript";
 
 @JsonObject("ServerLeftChatChannelPacket")
-export default class ServerLeftChatChannelPacket extends Packet {
+export default class ServerPacketLeftChatChannel extends Packet {
     
     public Id: PacketId = PacketId.ServerLeftChatChannelPacket;
 

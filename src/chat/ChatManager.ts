@@ -7,7 +7,7 @@ import Albatross from "../Albatross";
 import ServerPacketAvailableChatchannel from "../packets/server/ServerPacketAvailableChatChannel";
 import QuaverBot from "../bot/QuaverBot";
 import ServerPacketChatMessage from "../packets/server/ServerPacketChatMessage";
-import ServerLeftChatChannelPacket from "../packets/server/ServerLeftChatChannelPacket";
+import ServerPacketLeftChatChannel from "../packets/server/ServerPacketLeftChatChannel";
 const config = require("../config/config.json");
 
 export default class ChatManager {

@@ -14,7 +14,8 @@ import ChatChannel from "../chat/ChatChannel";
 import Logger from "../logging/Logger";
 import ServerPacketJoinedChatChannel from "../packets/server/ServerPacketJoinedChatChannel";
 import * as _ from "lodash";
-import ServerLeftChatChannelPacket from "../packets/server/ServerLeftChatChannelPacket";
+import ServerPacketLeftChatChannel from "../packets/server/ServerPacketLeftChatChannel";
+import ServerPacketFailedToJoinChannel from "../packets/server/ServerPacketFailedToJoinChannel";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -153,19 +154,14 @@ export default class User implements IPacketWritable, IStringifyable {
      * Places the user in a chat channel if they aren't already in it.
      */
     public async JoinChatChannel(chan: ChatChannel, sendFailurePacket: boolean = false): Promise<void> {
-        if (!chan) {
-            Logger.Warning(`${this.Username} (#${this.Id}) has tried to join channel, but it does not exist!`);
-
-            // TODO: SEND FAILURE PACKET REGARDLESS
-            return;
-        }
+        if (!chan)
+            return Logger.Warning(`${this.Username} (#${this.Id}) has tried to join channel, but it does not exist!`);
 
         if (!ChatChannel.IsUserAllowed(chan, this)) {
             Logger.Warning(`${this.Username} (#${this.Id}) has tried to join channel: ${chan.Name}, but they do not have permission.`);
 
             if (sendFailurePacket)
-                console.log("Need to send join failure packet.")
-            return;
+                return Albatross.SendToUser(this, new ServerPacketFailedToJoinChannel(chan.Name));       
         }
 
         if (this.ChannelsJoined.includes(chan)) {
@@ -198,7 +194,7 @@ export default class User implements IPacketWritable, IStringifyable {
         // Send packet to user letting them know they've successfully left the channel.
         // this isn't really required, but if the server wants to force them to leave a channel, then 
         // thats a circumstance where the packet should be sent.
-        Albatross.SendToUser(this, new ServerLeftChatChannelPacket(channel.Name));
+        Albatross.SendToUser(this, new ServerPacketLeftChatChannel(channel.Name));
     }
 
     /**
