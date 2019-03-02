@@ -99,6 +99,10 @@ export default class ChatManager {
         if (!channel.UsersInChannel.includes(sender) && sender != QuaverBot.User)
             return Logger.Warning(`${sender.Username} (#${sender.Id}) has tried to send a message to: ${to}, but they aren't in the channel!`);
 
+        // User is talking in a moderated channel, but they aren't an administrator.
+        if (channel.IsModerated && (!sender.IsAdmin() && !sender.IsDeveloper() && sender != QuaverBot.User))
+            return;
+
         // Send packet to all receiving users
         Albatross.SendToUsers(channel.UsersInChannel, new ServerPacketChatMessage(sender, to, message));
 
