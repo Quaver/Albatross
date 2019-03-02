@@ -152,9 +152,19 @@ export default class User implements IPacketWritable, IStringifyable {
     /**
      * Places the user in a chat channel if they aren't already in it.
      */
-    public async JoinChatChannel(chan: ChatChannel): Promise<void> {
+    public async JoinChatChannel(chan: ChatChannel, sendFailurePacket: boolean = false): Promise<void> {
+        if (!chan) {
+            Logger.Warning(`${this.Username} (#${this.Id}) has tried to join channel, but it does not exist!`);
+
+            // TODO: SEND FAILURE PACKET REGARDLESS
+            return;
+        }
+
         if (!ChatChannel.IsUserAllowed(chan, this)) {
-            Logger.Warning(`${this.Username} (#${this.Id}) has tried to join channel: ${chan.Name}, but they do not have permission`);
+            Logger.Warning(`${this.Username} (#${this.Id}) has tried to join channel: ${chan.Name}, but they do not have permission.`);
+
+            if (sendFailurePacket)
+                console.log("Need to send join failure packet.")
             return;
         }
 

@@ -9,6 +9,8 @@ import RequestLeaveChatChannelHandler from "./RequestLeaveChatChannelHandler";
 import ClientPacketRequestLeaveChatChannel from "../packets/client/ClientPacketRequestLeaveChatChannel";
 import User from "../sessions/User";
 import Albatross from "../Albatross";
+import RequestJoinChatChannelHandler from "./RequestJoinChatChannelHandler";
+import ClientPacketRequestJoinChatChannel from "../packets/client/ClientPacketRequestJoinChatChannel";
 
 export default class PacketHandler {
     /**
@@ -36,6 +38,9 @@ export default class PacketHandler {
                     break;
                 case PacketId.ClientRequestLeaveChatChannel:
                     await RequestLeaveChatChannelHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketRequestLeaveChatChannel));
+                    break;
+                case PacketId.ClientRequestJoinChatChannel:
+                    await RequestJoinChatChannelHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketRequestJoinChatChannel));
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS
