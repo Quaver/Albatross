@@ -7,6 +7,7 @@ import Albatross from "../Albatross";
 import ServerPacketAvailableChatchannel from "../packets/server/ServerPacketAvailableChatChannel";
 import QuaverBot from "../bot/QuaverBot";
 import ServerPacketChatMessage from "../packets/server/ServerPacketChatMessage";
+import ServerLeftChatChannelPacket from "../packets/server/ServerLeftChatChannelPacket";
 const config = require("../config/config.json");
 
 export default class ChatManager {
@@ -102,7 +103,7 @@ export default class ChatManager {
         Albatross.SendToUsers(channel.UsersInChannel, new ServerPacketChatMessage(sender, to, message));
 
         // Handle bot commands
-
+        
         // Log to discord
     }
 

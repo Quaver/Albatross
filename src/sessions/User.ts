@@ -14,6 +14,7 @@ import ChatChannel from "../chat/ChatChannel";
 import Logger from "../logging/Logger";
 import ServerPacketJoinedChatChannel from "../packets/server/ServerPacketJoinedChatChannel";
 import * as _ from "lodash";
+import ServerLeftChatChannelPacket from "../packets/server/ServerLeftChatChannelPacket";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -133,6 +134,22 @@ export default class User implements IPacketWritable, IStringifyable {
     }
 
     /**
+     * Bans the user from the game
+     * 
+     * TODO: Add Steam publisher banning.
+     * @param notify 
+     */
+    public async Ban(notify: boolean = true): Promise<void> {
+        // Change allowed status in the DB
+        await SqlDatabase.Execute("UPDATE users SET allowed = 0 WHERE id = ?", [this.Id]);
+
+        if (notify)
+            Albatross.SendToUser(this, new ServerPacketNotification(ServerNotificationType.Error, "You have been banned from Quaver."));
+
+        return await AsyncHelper.Sleep(100, () => this.Socket.close());
+    }
+
+    /**
      * Places the user in a chat channel if they aren't already in it.
      */
     public async JoinChatChannel(chan: ChatChannel): Promise<void> {
@@ -156,7 +173,7 @@ export default class User implements IPacketWritable, IStringifyable {
      * Removes the user from a chat channel that they're in
      * @param channel 
      */
-    public async LeaveChatChannel(channel: ChatChannel): Promise<void> {
+    public LeaveChatChannel(channel: ChatChannel): void {
         // Check to see if the channel they want to leave actually exists
         if (!channel)
             return Logger.Warning(`${this.Username} (#${this.Id}) wants to leave a channel, but it doesn't exist!`);
@@ -167,6 +184,11 @@ export default class User implements IPacketWritable, IStringifyable {
 
         _.remove(channel.UsersInChannel, (u) => u == this);
         _.remove(this.ChannelsJoined, (c) => c == channel);
+
+        // Send packet to user letting them know they've successfully left the channel.
+        // this isn't really required, but if the server wants to force them to leave a channel, then 
+        // thats a circumstance where the packet should be sent.
+        Albatross.SendToUser(this, new ServerLeftChatChannelPacket(channel.Name));
     }
 
     /**
