@@ -77,7 +77,7 @@ export default class LoginHandler {
             // Close the connection as well, as username creation is handled by the API server.
             if (!user) {
                 Logger.Warning(`Received login request from: ${steamLogin.steamid}. (they do not have an account yet!)`);
-                await Albatross.SendToSocket(socket, new ServerPacketChooseUsername());
+                Albatross.SendToSocket(socket, new ServerPacketChooseUsername());
                 return await AsyncHelper.Sleep(100, () => socket.close());            
             }
 
@@ -87,7 +87,7 @@ export default class LoginHandler {
 
                 // Send a notification to the user letting them know that they're ban
                 const banned: ServerPacketNotification = new ServerPacketNotification(ServerNotificationType.Error, "You are banned. Email support@quavergame.com.");
-                await Albatross.SendToUser(user, banned);
+                Albatross.SendToUser(user, banned);
 
                 return await AsyncHelper.Sleep(100, () => socket.close());
             }
@@ -104,8 +104,8 @@ export default class LoginHandler {
             LoginHandler.GenerateSessionToken(socket, user);
             Albatross.Instance.OnlineUsers.AddUser(user);
 
-            await Albatross.SendToUser(user, new ServerPacketLoginReply(user));
-            await Albatross.SendToUser(user, Albatross.BuildUsersOnlinePacket());
+            Albatross.SendToUser(user, new ServerPacketLoginReply(user));
+            Albatross.SendToUser(user, Albatross.BuildUsersOnlinePacket());
             await LoginHandler.SendAndAutojoinChatChannels(user);
 
             await Albatross.Broadcast(new ServerPacketUserConnected(user));
@@ -116,7 +116,7 @@ export default class LoginHandler {
             // TODO: Add required data to log.
             Logger.Error(`${err}`);
 
-            await Albatross.SendToSocket(socket, new ServerPacketNotification(ServerNotificationType.Error, "Failed to login: Unknown Server Error!"))
+            Albatross.SendToSocket(socket, new ServerPacketNotification(ServerNotificationType.Error, "Failed to login: Unknown Server Error!"))
             return await AsyncHelper.Sleep(100, () => socket.close());  
         }
     }
@@ -183,7 +183,7 @@ export default class LoginHandler {
                                                 [split[0], split[1], split[2], split[3], split[4]])
 
         if (result.length == 0) {
-            await Albatross.SendToUser(user, new ServerPacketNotification(ServerNotificationType.Error, 
+            Albatross.SendToUser(user, new ServerPacketNotification(ServerNotificationType.Error, 
                 "Your game client is outdated. Please restart Steam and update it!"))
                 
             await AsyncHelper.Sleep(100, () => socket.close());    
@@ -244,7 +244,7 @@ export default class LoginHandler {
 
             const packet = new ServerPacketNotification(ServerNotificationType.Error, "Logged out due to signing in from another location.");
 
-            await Albatross.SendToUser(alreadyOnline[i], packet);
+            Albatross.SendToUser(alreadyOnline[i], packet);
             await AsyncHelper.Sleep(100, () => alreadyOnline[i].Socket.close());
         }
 

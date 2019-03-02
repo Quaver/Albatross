@@ -35,7 +35,7 @@ export default class ChatManager {
      */
     public static async SendAvailableChannel(user: User, chan: ChatChannel): Promise<void> {
         if (ChatChannel.IsUserAllowed(chan, user))
-            return await Albatross.SendToUser(user, new ServerPacketAvailableChatchannel(chan));
+            return Albatross.SendToUser(user, new ServerPacketAvailableChatchannel(chan));
 
         Logger.Warning(`Tried to send ${user.Username} (#${user.Id}) available channel: ${chan.Name}, but failed. (No permissions!)`);
     }
@@ -67,7 +67,6 @@ export default class ChatManager {
 
         sender.SpamRate++;
 
-        console.log("GOT HERE MAN")
         // Check if the user is spamming and mute them.
         if (sender.SpamRate >= 10 && (!sender.IsAdmin() && !sender.IsBot())) {
             Logger.Warning(`${sender.Username} (#${sender.Id}) has sent ${sender.SpamRate} messages in a short amount of time. Auto-muting!`);
@@ -100,8 +99,7 @@ export default class ChatManager {
             return Logger.Warning(`${sender.Username} (#${sender.Id}) has tried to send a message to: ${to}, but they aren't in the channel!`);
 
         // Send packet to all receiving users
-        console.log(channel.UsersInChannel.length);
-        await Albatross.SendToUsers(channel.UsersInChannel, new ServerPacketChatMessage(sender, to, message));
+        Albatross.SendToUsers(channel.UsersInChannel, new ServerPacketChatMessage(sender, to, message));
 
         // Handle bot commands
 
@@ -120,7 +118,7 @@ export default class ChatManager {
         if (!receiver)
             return Logger.Warning(`${sender.Username} (#${sender.Id}) has tried to send a message to: ${to}, but they are offline`);
 
-        await Albatross.SendToUser(receiver, new ServerPacketChatMessage(sender, to, message));
+        Albatross.SendToUser(receiver, new ServerPacketChatMessage(sender, to, message));
 
         // Handle Bot Commands
 

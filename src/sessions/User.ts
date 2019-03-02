@@ -126,7 +126,7 @@ export default class User implements IPacketWritable, IStringifyable {
      */
     public async Kick(notify: boolean = true): Promise<void> {
         if (notify)
-            await Albatross.SendToUser(this, new ServerPacketNotification(ServerNotificationType.Error, "You have been kicked from the server."));
+            Albatross.SendToUser(this, new ServerPacketNotification(ServerNotificationType.Error, "You have been kicked from the server."));
 
         return await AsyncHelper.Sleep(100, () => this.Socket.close());
     }
@@ -148,7 +148,7 @@ export default class User implements IPacketWritable, IStringifyable {
         chan.UsersInChannel.push(this);
         this.ChannelsJoined.push(chan);
         
-        await Albatross.SendToUser(this, new ServerPacketJoinedChatChannel(chan));
+        Albatross.SendToUser(this, new ServerPacketJoinedChatChannel(chan));
     }
 
     /**
