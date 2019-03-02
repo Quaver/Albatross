@@ -8,6 +8,7 @@ import ServerPacketAvailableChatchannel from "../packets/server/ServerPacketAvai
 import QuaverBot from "../bot/QuaverBot";
 import ServerPacketChatMessage from "../packets/server/ServerPacketChatMessage";
 import ServerPacketLeftChatChannel from "../packets/server/ServerPacketLeftChatChannel";
+import ServerPacketMuteEndTime from "../packets/server/ServerPacketMuteEndTime";
 const config = require("../config/config.json");
 
 export default class ChatManager {
@@ -61,9 +62,7 @@ export default class ChatManager {
         // Stop execution and make them aware that they are muted.
         if (sender.IsMuted()) {
             Logger.Warning(`${sender.Username} (#${sender.Id}) tried to send a message, but they are muted!`);
-
-            // TODO: Send mute time packet
-            return;
+            return Albatross.SendToUser(sender, new ServerPacketMuteEndTime(sender, sender.MuteEndTime));     
         }
 
         sender.SpamRate++;
@@ -71,11 +70,10 @@ export default class ChatManager {
         // Check if the user is spamming and mute them.
         if (sender.SpamRate >= 10 && (!sender.IsAdmin() && !sender.IsBot())) {
             Logger.Warning(`${sender.Username} (#${sender.Id}) has sent ${sender.SpamRate} messages in a short amount of time. Auto-muting!`);
-
-            // TODO: Mute
-            return;
+            return await sender.MuteForSpamming(to);
         }
 
+        // Go through with sending the mesage
         if (to.startsWith("#"))
             await ChatManager.SendPublicChannelMessage(sender, to, message);
         else

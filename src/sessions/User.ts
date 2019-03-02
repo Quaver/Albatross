@@ -18,6 +18,8 @@ import ServerPacketLeftChatChannel from "../packets/server/ServerPacketLeftChatC
 import ServerPacketFailedToJoinChannel from "../packets/server/ServerPacketFailedToJoinChannel";
 import ServerPacketMuteEndTime from "../packets/server/ServerPacketMuteEndTime";
 import OnlineNotificationType from "../enums/OnlineNotificationType";
+import ChatManager from "../chat/ChatManager";
+import QuaverBot from "../bot/QuaverBot";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -210,6 +212,8 @@ export default class User implements IPacketWritable, IStringifyable {
         
         Albatross.Broadcast(new ServerPacketMuteEndTime(this, this.MuteEndTime));
 
+        await ChatManager.SendMessage(QuaverBot.User, this.Username, `Your account has been muted for ${seconds} seconds.`);
+
         await SqlDatabase.Execute("UPDATE users SET mute_endtime = ? WHERE id = ?", [this.MuteEndTime, this.Id]);
 
         await SqlDatabase.Execute("INSERT INTO mutes (user_id, author, seconds, reason, timestamp) VALUES (?, ?, ?, ?, ?)",
@@ -219,6 +223,14 @@ export default class User implements IPacketWritable, IStringifyable {
             [this.Id, Number(OnlineNotificationType.UserMuted), this.Id, "Your account has been muted.", 
             `Your account has been muted for ${seconds} seconds. During this time, you will not be able to use th in-game chat, ` + 
             `and some community features may be limited.`, Date.now()]);
+    }
+
+    /**
+     * If this user is deemed to be spamming in chat, then this will mute them for the appropriate amount of time.
+     */
+    public async MuteForSpamming(channel: string): Promise<void> {
+        const halfHour: number = 1800;
+        await this.Mute(halfHour, `Spamming ${channel}`, QuaverBot.User.Id);
     }
 
     /**

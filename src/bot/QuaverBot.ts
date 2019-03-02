@@ -8,13 +8,15 @@ export default class QuaverBot {
     /**
      * The online user for the bot.
      */
-    public static User: User = new User(null, config.chatBot.id, config.chatBot.userId, config.chatBot.username, true, 0, config.chatBot.country, Privileges.Normal,
-        UserGroups.Normal | UserGroups.Admin | UserGroups.Bot, config.chatBot.avatarUrl);
+    public static User: User | any = null;
 
     /**
      * Does initialiazation of the bot. Should only be called once 
      */
     public static async Initialize(): Promise<void> {
+        QuaverBot.User = new User(null, config.chatBot.id, config.chatBot.steamId, config.chatBot.username, true, 0, "US", Privileges.Normal,
+                        UserGroups.Normal | UserGroups.Bot | UserGroups.Admin, config.chatBot.avatarUrl);
+
         await Albatross.Instance.OnlineUsers.AddUser(QuaverBot.User);
     }
 }
