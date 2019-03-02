@@ -32,6 +32,13 @@
   "testClientKey": "",
   "chatChannels": [
     {
+      "name": "#announcements",
+      "description": "Get the latest on what happens!",
+      "allowedUserGroups": 1,
+      "isModerated": true,
+      "autojoin": true
+    },
+    {
       "name": "#admin",
       "description": "Super secret channel for the evil dictators.",
       "allowedUserGroups": 16,
@@ -41,6 +48,13 @@
     {
       "name": "#quaver",
       "description": "General discussion about Quaver. Type /help for more information!",
+      "allowedUserGroups": 1,
+      "isModerated": false,
+      "autojoin": true
+    },
+    {
+      "name": "#offtopic",
+      "description": "Talk about anything you'd like! Keep it safe for work, however!",
       "allowedUserGroups": 1,
       "isModerated": false,
       "autojoin": true
