@@ -21,6 +21,7 @@ import OnlineNotificationType from "../enums/OnlineNotificationType";
 import ChatManager from "../chat/ChatManager";
 import QuaverBot from "../bot/QuaverBot";
 import ServerPacketPing from "../packets/server/ServerPacketPing";
+import UserClientStatus from "../objects/UserClientStatus";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -82,6 +83,11 @@ export default class User implements IPacketWritable, IStringifyable {
      *  Statistics for the user.
      */
     public Stats: ModeToUserStatsMap = {};
+
+    /**
+     *  What the user is currently doing in-game.
+     */
+    public CurrentStatus: UserClientStatus = new UserClientStatus();
 
     /**
      * The time the client was last pinged

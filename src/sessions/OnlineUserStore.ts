@@ -90,6 +90,7 @@ export default class OnlineUserStore {
         // Update redis online users and add user session.
         await RedisHelper.set("quaver:server:online_users", this.Count.toString());
         await RedisHelper.del(`quaver:server:session:${user.Token}`);
+        await RedisHelper.del(`quaver:server:user_status:${user.Id}`);
 
         Logger.Info(`${user.Username} (#${user.Id}) [${user.SteamId}] <${user.Token}> has disconnected from the server.`);
         Logger.Info(`There are now: ${this.Count} users online.`);

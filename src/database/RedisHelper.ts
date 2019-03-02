@@ -138,6 +138,23 @@ export default class RedisHelper {
     }
     
     /**
+     * Promisifies the redis hset command
+     * @param key 
+     * @param field 
+     * @param value 
+     */
+    public static async hset(key: string, field: string, value: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.Client.hset(key, field, value, (err, val) => {
+                if (err)
+                    return reject(err);
+
+                return resolve(val);
+            });
+        });
+    }
+    
+    /**
      * Promisifies the redis "lrange" command.
      * @param key
      * @param start

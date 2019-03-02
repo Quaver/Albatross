@@ -11,6 +11,9 @@ import User from "../sessions/User";
 import Albatross from "../Albatross";
 import RequestJoinChatChannelHandler from "./RequestJoinChatChannelHandler";
 import ClientPacketRequestJoinChatChannel from "../packets/client/ClientPacketRequestJoinChatChannel";
+import ClientStatusUpdateHandler from "./ClientStatusUpdateHandler";
+import ClientPacketStatusUpdate from "../packets/client/ClientPacketStatusUpdate";
+import UserClientStatus from "../objects/UserClientStatus";
 
 export default class PacketHandler {
     /**
@@ -41,6 +44,14 @@ export default class PacketHandler {
                     break;
                 case PacketId.ClientRequestJoinChatChannel:
                     await RequestJoinChatChannelHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketRequestJoinChatChannel));
+                    break;
+                case PacketId.ClientStatusUpdate:
+                    // Since its an object within an object, we have to handle it a bit differently and deserialize
+                    // both objects because the lib doesn't handle it for some reason.
+                    const updatePacket: ClientPacketStatusUpdate = jsonConvert.deserializeObject(msg, ClientPacketStatusUpdate);
+                    updatePacket.Status = jsonConvert.deserializeObject(msg.st, UserClientStatus);
+                    
+                    await ClientStatusUpdateHandler.Handle(user, updatePacket);
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS
