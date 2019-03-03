@@ -42,7 +42,7 @@ export default class User implements IPacketWritable, IStringifyable {
     /**
      * The user's confirmed Steam Id
      */
-    public SteamId: number;
+    public SteamId: string;
 
     /**
      * The username of the user
@@ -115,7 +115,7 @@ export default class User implements IPacketWritable, IStringifyable {
      * @param username 
      * @param socket 
      */
-    constructor(socket: any, userId: number, steamId: number, username: string, allowed: boolean, muteEndTime: number, country: string,
+    constructor(socket: any, userId: number, steamId: string, username: string, allowed: boolean, muteEndTime: number, country: string,
         privileges: Privileges, usergroups: UserGroups, avatarUrl: string) {
         // For artifical users such as bots.
         if (socket)
@@ -248,6 +248,17 @@ export default class User implements IPacketWritable, IStringifyable {
     }
 
     /**
+     * Unmutes a user
+     */
+    public async Unmute(): Promise<void> {
+        this.MuteEndTime = 0;
+        
+        await SqlDatabase.Execute("UPDATE users SET mute_endtime = 0 WHERE id = ?", [this.Id]);
+        
+        Albatross.Broadcast(new ServerPacketMuteEndTime(this, this.MuteEndTime));
+    }
+
+    /**
      * Returns if the user is muted in chat.
      */
     public IsMuted(): boolean { 
@@ -301,6 +312,14 @@ export default class User implements IPacketWritable, IStringifyable {
      */
     public IsContributor(): boolean {
         return (this.UserGroups & UserGroups.Contributor) != 0;
+    }
+
+    /**
+     * Returns if the user has a certain privilege
+     * @param privilege 
+     */
+    public HasPrivilege(privilege: Privileges): boolean {
+        return (this.Privileges & privilege) != 0;
     }
 
     /**

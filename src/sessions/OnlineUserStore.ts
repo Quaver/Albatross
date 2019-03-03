@@ -42,7 +42,7 @@ export default class OnlineUserStore {
      */
     public async AddUser(user: User): Promise<void> {
         this.UserIdToUser[user.Id] = user;
-        this.UsernameToUser[user.Username] = user;
+        this.UsernameToUser[user.Username.toLowerCase()] = user;
         this.Users.push(user);
 
         if (user.Socket)
@@ -70,7 +70,7 @@ export default class OnlineUserStore {
             return;
 
         delete this.UserIdToUser[user.Id];
-        delete this.UsernameToUser[user.Username];
+        delete this.UsernameToUser[user.Username.toLowerCase()];
 
         if (user.Socket)
             delete this.SocketToUser[user.Socket.token];
@@ -109,7 +109,7 @@ export default class OnlineUserStore {
      * @param username 
      */
     public GetUserByUsername(username: string): User {
-        return this.UsernameToUser[username];
+        return this.UsernameToUser[username.toLowerCase()];
     }
 
     /**

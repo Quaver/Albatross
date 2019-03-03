@@ -101,12 +101,8 @@ export default class ChatManager {
         if (channel.IsModerated && (!sender.IsAdmin() && !sender.IsDeveloper() && sender != QuaverBot.User))
             return;
 
-        // Send packet to all receiving users
         Albatross.SendToUsers(channel.UsersInChannel, new ServerPacketChatMessage(sender, to, message));
-
-        // Handle bot commands
-        
-        // Log to discord
+        await QuaverBot.HandlePublicMessageCommands(sender, channel, message);
     }
 
     /**
@@ -121,16 +117,10 @@ export default class ChatManager {
         if (!receiver)
             return Logger.Warning(`${sender.Username} (#${sender.Id}) has tried to send a message to: ${to}, but they are offline`);
 
-        // Handle but messages.
-        if (receiver == QuaverBot.User) {
-            console.log("bot msg");
-            return;
-        }
+        // Handle bot messages.
+        if (receiver == QuaverBot.User)
+            return await QuaverBot.HandlePrivateMessageCommands(sender, receiver, message);
 
-        Albatross.SendToUser(receiver, new ServerPacketChatMessage(sender, to, message));
-
-        // Handle Bot Commands
-
-        // Log to discord
+        Albatross.SendToUser(receiver, new ServerPacketChatMessage(sender, to, message));  
     }
 }
