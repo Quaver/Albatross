@@ -74,7 +74,7 @@ export default class Albatross {
      * @constructor
      */
     public async Start(): Promise<void> {
-        await this.CleanPreviousSessions();
+        // await this.CleanPreviousSessions();
         await Bot.Initialize();
 
         this.StartBackgroundWorker();
