@@ -6,7 +6,7 @@ import CloseHandler from "./handlers/CloseHandler";
 import ServerPacketPing from "./packets/server/ServerPacketPing";
 import {setInterval} from "timers";
 import OnlineUserStore from "./sessions/OnlineUserStore";
-import QuaverBot from "./bot/QuaverBot";
+import Bot from "./bot/Bot";
 import RedisHelper from "./database/RedisHelper";
 import ServerPacketUsersOnline from "./packets/server/ServerPacketUsersOnline";
 import Packet from "./packets/Packet";
@@ -75,7 +75,7 @@ export default class Albatross {
      */
     public async Start(): Promise<void> {
         await this.CleanPreviousSessions();
-        await QuaverBot.Initialize();
+        await Bot.Initialize();
 
         this.StartBackgroundWorker();
         this.Server = new WebSocketServer({ port: this.Port });
@@ -187,7 +187,7 @@ export default class Albatross {
                 const user: User = this.OnlineUsers.Users[i];
 
                 // Ignore everything by QuaverBot, as he doesn't matter.
-                if (user == QuaverBot.User)
+                if (user == Bot.User)
                     continue;
 
                 // Clear user spam rates

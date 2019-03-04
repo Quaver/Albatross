@@ -5,7 +5,7 @@ import IUsernameToUserMap from "./maps/IUsernameToUserMap";
 import ISocketTokenToUserMap from "./maps/ISocketTokenToUserMap";
 import RedisHelper from "../database/RedisHelper";
 import Albatross from "../Albatross";
-import QuaverBot from "../bot/QuaverBot";
+import Bot from "../bot/Bot";
 import ChatManager from "../chat/ChatManager";
 import ChatChannel from "../chat/ChatChannel";
 import * as _ from "lodash";
@@ -53,7 +53,7 @@ export default class OnlineUserStore {
         // Update redis online users and add user session.
         await RedisHelper.incr("quaver:server:online_users");
 
-        if (user != QuaverBot.User)
+        if (user != Bot.User)
             await RedisHelper.set(`quaver:server:session:${user.Token}`, user.Id.toString());
 
         Logger.Success(`${user.Username} (#${user.Id}) [${user.SteamId}] <${user.Token}> has successfully logged in!`);

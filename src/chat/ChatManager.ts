@@ -5,7 +5,7 @@ import UserGroups from "../enums/UserGroups";
 import User from "../sessions/User";
 import Albatross from "../Albatross";
 import ServerPacketAvailableChatchannel from "../packets/server/ServerPacketAvailableChatChannel";
-import QuaverBot from "../bot/QuaverBot";
+import Bot from "../bot/Bot";
 import ServerPacketChatMessage from "../packets/server/ServerPacketChatMessage";
 import ServerPacketLeftChatChannel from "../packets/server/ServerPacketLeftChatChannel";
 import ServerPacketMuteEndTime from "../packets/server/ServerPacketMuteEndTime";
@@ -94,15 +94,15 @@ export default class ChatManager {
         const channel: ChatChannel = ChatManager.Channels[to];
 
         // Check if the user is actually in the channel (Note: We ignore the bot user, as we want it to be in every channel)
-        if (!channel.UsersInChannel.includes(sender) && sender != QuaverBot.User)
+        if (!channel.UsersInChannel.includes(sender) && sender != Bot.User)
             return Logger.Warning(`${sender.Username} (#${sender.Id}) has tried to send a message to: ${to}, but they aren't in the channel!`);
 
         // User is talking in a moderated channel, but they aren't an administrator.
-        if (channel.IsModerated && (!sender.IsAdmin() && !sender.IsDeveloper() && sender != QuaverBot.User))
+        if (channel.IsModerated && (!sender.IsAdmin() && !sender.IsDeveloper() && sender != Bot.User))
             return;
 
         Albatross.SendToUsers(channel.UsersInChannel, new ServerPacketChatMessage(sender, to, message));
-        await QuaverBot.HandlePublicMessageCommands(sender, channel, message);
+        await Bot.HandlePublicMessageCommands(sender, channel, message);
     }
 
     /**
@@ -118,8 +118,8 @@ export default class ChatManager {
             return Logger.Warning(`${sender.Username} (#${sender.Id}) has tried to send a message to: ${to}, but they are offline`);
 
         // Handle bot messages.
-        if (receiver == QuaverBot.User)
-            return await QuaverBot.HandlePrivateMessageCommands(sender, receiver, message);
+        if (receiver == Bot.User)
+            return await Bot.HandlePrivateMessageCommands(sender, receiver, message);
 
         Albatross.SendToUser(receiver, new ServerPacketChatMessage(sender, to, message));  
     }

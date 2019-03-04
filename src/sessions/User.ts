@@ -19,9 +19,11 @@ import ServerPacketFailedToJoinChannel from "../packets/server/ServerPacketFaile
 import ServerPacketMuteEndTime from "../packets/server/ServerPacketMuteEndTime";
 import OnlineNotificationType from "../enums/OnlineNotificationType";
 import ChatManager from "../chat/ChatManager";
-import QuaverBot from "../bot/QuaverBot";
+import Bot from "../bot/Bot";
 import ServerPacketPing from "../packets/server/ServerPacketPing";
 import UserClientStatus from "../objects/UserClientStatus";
+import AdminActionLogger from "../admin/AdminActionLogger";
+import AdminActionLogType from "../admin/AdminActionLogType";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -226,7 +228,7 @@ export default class User implements IPacketWritable, IStringifyable {
         
         Albatross.Broadcast(new ServerPacketMuteEndTime(this, this.MuteEndTime));
 
-        await ChatManager.SendMessage(QuaverBot.User, this.Username, `Your account has been muted for ${seconds} seconds.`);
+        await ChatManager.SendMessage(Bot.User, this.Username, `Your account has been muted for ${seconds} seconds.`);
 
         await SqlDatabase.Execute("UPDATE users SET mute_endtime = ? WHERE id = ?", [this.MuteEndTime, this.Id]);
 
@@ -244,7 +246,9 @@ export default class User implements IPacketWritable, IStringifyable {
      */
     public async MuteForSpamming(channel: string): Promise<void> {
         const halfHour: number = 1800;
-        await this.Mute(halfHour, `Spamming ${channel}`, QuaverBot.User.Id);
+        await this.Mute(halfHour, `Spamming ${channel}`, Bot.User.Id);
+        
+        await AdminActionLogger.Add(Bot.User, this, AdminActionLogType.Updated, `Muted automatically for ${halfHour} seconds (Spamming)`);
     }
 
     /**

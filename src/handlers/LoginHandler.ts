@@ -16,7 +16,7 @@ import ServerPacketUserDisconected from "../packets/server/ServerPacketUserDisco
 import ChatManager from "../chat/ChatManager";
 import ChatChannel from "../chat/ChatChannel";
 import ServerPacketAvailableChatchannel from "../packets/server/ServerPacketAvailableChatChannel";
-import QuaverBot from "../bot/QuaverBot";
+import Bot from "../bot/Bot";
 const axios = require("axios");
 const config = require("../config/config.json");
 const randomstring = require("randomstring");
@@ -116,10 +116,10 @@ export default class LoginHandler {
 
             await Albatross.Broadcast(new ServerPacketUserConnected(user));
  
-            await ChatManager.SendMessage(QuaverBot.User, user.Username, `Welcome to the Quaver alpha, ${user.Username}!`);
+            await ChatManager.SendMessage(Bot.User, user.Username, `Welcome to the Quaver alpha, ${user.Username}!`);
 
             if (user.IsMuted())
-                await ChatManager.SendMessage(QuaverBot.User, user.Username, 
+                await ChatManager.SendMessage(Bot.User, user.Username, 
                     `Your account is muted for another ${(user.MuteEndTime - Date.now()) / 1000 / 60} minutes`);
 
         } catch (err) {
