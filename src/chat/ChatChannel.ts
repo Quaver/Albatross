@@ -2,6 +2,7 @@ import IPacketWritable from "../packets/IPacketWritable";
 import { JsonObject, JsonProperty } from "json2typescript";
 import User from "../sessions/User";
 import UserGroups from "../enums/UserGroups";
+import * as Discord from "discord.js";
 
 @JsonObject("ChatChannel")
 export default class ChatChannel {
@@ -21,12 +22,17 @@ export default class ChatChannel {
 
     public UsersInChannel: User[] = [];
     
-    constructor(name: string, description: string, userGroups: UserGroups, isModerated: boolean, autojoin: boolean) {
+    public DiscordWebhook: Discord.WebhookClient | null;
+
+    constructor(name: string, description: string, userGroups: UserGroups, isModerated: boolean, autojoin: boolean, 
+        discordWebhook: Discord.WebhookClient | null = null) {
+
         this.Name = name;
         this.Description = description;
         this.AllowedUserGroups = userGroups;
         this.IsModerated = isModerated;
         this.Autojoin = autojoin;
+        this.DiscordWebhook = discordWebhook;
     }
 
     /**

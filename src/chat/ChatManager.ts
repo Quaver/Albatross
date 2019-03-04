@@ -9,7 +9,10 @@ import Bot from "../bot/Bot";
 import ServerPacketChatMessage from "../packets/server/ServerPacketChatMessage";
 import ServerPacketLeftChatChannel from "../packets/server/ServerPacketLeftChatChannel";
 import ServerPacketMuteEndTime from "../packets/server/ServerPacketMuteEndTime";
+import * as Discord from "discord.js";
+import DiscordWebhookHelper from "../discord/DiscordWebhookHelper";
 const config = require("../config/config.json");
+const randomcolor = require("randomcolor");
 
 export default class ChatManager {
     /**
@@ -24,10 +27,17 @@ export default class ChatManager {
         for (let i = 0; i < config.chatChannels.length; i++) {
             const chan: any = config.chatChannels[i];
             
-            const channel: ChatChannel = new ChatChannel(chan.name, chan.description, chan.allowedUserGroups, chan.isModerated, chan.autojoin);
+            let webhook: Discord.WebhookClient | null = null;
+
+            if (chan.discordWebhook && chan.discordWebhook.id && chan.discordWebhook.token) {
+                webhook = new Discord.WebhookClient(chan.discordWebhook.id, chan.discordWebhook.token);
+                webhook.client.listenerCount = function(){return 0};
+            }
+                
+            const channel: ChatChannel = new ChatChannel(chan.name, chan.description, chan.allowedUserGroups, chan.isModerated, chan.autojoin, webhook);
             ChatManager.Channels[channel.Name] = channel;
 
-            Logger.Info(`Chat Channel: ${channel.Name} [${UserGroups[channel.AllowedUserGroups]}] has been initialized!`);
+            Logger.Info(`Chat Channel: ${channel.Name} [${UserGroups[channel.AllowedUserGroups]}] (WH: ${webhook != null}) has been initialized!`);
         }
     }
 
@@ -103,6 +113,7 @@ export default class ChatManager {
 
         Albatross.SendToUsers(channel.UsersInChannel, new ServerPacketChatMessage(sender, to, message));
         await Bot.HandlePublicMessageCommands(sender, channel, message);
+        await ChatManager.LogPublicMessageToDiscord(sender, channel, message);
     }
 
     /**
@@ -118,9 +129,58 @@ export default class ChatManager {
             return Logger.Warning(`${sender.Username} (#${sender.Id}) has tried to send a message to: ${to}, but they are offline`);
 
         // Handle bot messages.
-        if (receiver == Bot.User)
-            return await Bot.HandlePrivateMessageCommands(sender, receiver, message);
+        if (receiver == Bot.User) {
+            await Bot.HandlePrivateMessageCommands(sender, receiver, message);
+            return await ChatManager.LogPrivateMessageToDiscord(sender, receiver, message);
+        }
 
         Albatross.SendToUser(receiver, new ServerPacketChatMessage(sender, to, message));  
+        await ChatManager.LogPrivateMessageToDiscord(sender, receiver, message);
+    }
+
+    /**
+     * Sends a log to discord of public messages
+     * @param sender 
+     * @param channel 
+     * @param message 
+     */
+    private static async LogPublicMessageToDiscord(sender: User, channel: ChatChannel, message: string): Promise<void> {
+        if (!channel.DiscordWebhook)
+            return;
+
+        try {
+            const embed = new Discord.RichEmbed()
+            .setAuthor(sender.Username, sender.AvatarUrl, `https://quavergame.com/profile/${sender.Id}`)
+            .setDescription(message)
+            .setTimestamp()
+            .setColor(randomcolor());
+
+            await channel.DiscordWebhook.send(embed);
+        } catch (err) {
+            Logger.Error(err);
+        }
+    }
+
+    /**
+     * Sends log to discord of private messages.
+     * @param sender 
+     * @param to 
+     * @param message 
+     */
+    private static async LogPrivateMessageToDiscord(sender: User, receiver: User, message: string): Promise<void> {
+        if (!DiscordWebhookHelper.PrivateMessageHook)
+            return;
+
+        try {
+            const embed = new Discord.RichEmbed()
+            .setAuthor(sender.Username, sender.AvatarUrl, `https://quavergame.com/profile/${sender.Id}`)
+            .setDescription(`**@${receiver.Username}:** ` + message)
+            .setTimestamp()
+            .setColor(randomcolor());
+
+            await DiscordWebhookHelper.PrivateMessageHook.send(embed);
+        } catch (err) {
+            Logger.Error(err);
+        }
     }
 }

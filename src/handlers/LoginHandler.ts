@@ -17,6 +17,8 @@ import ChatManager from "../chat/ChatManager";
 import ChatChannel from "../chat/ChatChannel";
 import ServerPacketAvailableChatchannel from "../packets/server/ServerPacketAvailableChatChannel";
 import Bot from "../bot/Bot";
+import DiscordWebhookHelper from "../discord/DiscordWebhookHelper";
+import * as Discord from "discord.js";
 const axios = require("axios");
 const config = require("../config/config.json");
 const randomstring = require("randomstring");
@@ -119,6 +121,7 @@ export default class LoginHandler {
                 await ChatManager.SendMessage(Bot.User, user.Username, 
                     `Your account is muted for another ${(user.MuteEndTime - Date.now()) / 1000 / 60} minutes`);
 
+            await LoginHandler.SendLoginEventToDiscord(user);
         } catch (err) {
             const loginFailureLog: string = `${err}\n` + 
                 `Steam ID: ${steamId}\n` + 
@@ -299,6 +302,27 @@ export default class LoginHandler {
             
             if (channel.Autojoin)
                 await user.JoinChatChannel(channel);
+        }
+    }
+
+    /**
+     * Sends the login event for this user to Discord.
+     * @param user 
+     */
+    private static async SendLoginEventToDiscord(user: User): Promise<void> {
+        if (!DiscordWebhookHelper.EventsHook)
+            return;
+        
+        try {
+            const embed = new Discord.RichEmbed()
+            .setAuthor(user.Username, user.AvatarUrl, `https://quavergame.com/profile/${user.Id}`)
+            .setDescription("Connected to the in-game server.\n")
+            .setTimestamp()
+            .setColor(0x3eec60);
+
+            DiscordWebhookHelper.EventsHook.send(embed)
+        } catch (err) {
+            Logger.Error(err);
         }
     }
 }

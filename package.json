@@ -36,6 +36,7 @@
     "json2typescript": "^1.1.1",
     "lodash": "^4.17.11",
     "mysql": "^2.16.0",
+    "randomcolor": "^0.5.4",
     "randomstring": "^1.1.5",
     "redis": "^2.8.0",
     "steam-web": "^0.7.0",

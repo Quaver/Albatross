@@ -2,7 +2,11 @@
   "port": 3000,
   "logPackeTransfer": true,
   "discord": {
-    "webhook": {
+    "eventsWebhook": {
+      "id": "",
+      "token": ""
+    },
+    "privateMessageWebhook": {
       "id": "",
       "token": ""
     }
@@ -44,21 +48,33 @@
       "description": "Super secret channel for the evil dictators.",
       "allowedUserGroups": 16,
       "isModerated": false,
-      "autojoin": true
+      "autojoin": true,
+      "discordWebhook": {
+        "id": "",
+        "token": ""
+      }
     },
     {
       "name": "#quaver",
       "description": "General discussion about Quaver. Type /help for more information!",
       "allowedUserGroups": 1,
       "isModerated": false,
-      "autojoin": true
+      "autojoin": true,
+      "discordWebhook": {
+        "id": "",
+        "token": ""
+      }
     },
     {
       "name": "#offtopic",
       "description": "Talk about anything you'd like! Keep it safe for work, however!",
       "allowedUserGroups": 1,
       "isModerated": false,
-      "autojoin": true
+      "autojoin": true,
+      "discordWebhook": {
+        "id": "",
+        "token": ""
+      }
     }
   ]
 }

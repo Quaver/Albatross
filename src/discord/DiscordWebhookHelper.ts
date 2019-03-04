@@ -1,19 +1,35 @@
 import Logger from "../logging/Logger";
-const Discord = require("discord.js");
+import * as Discord from "discord.js";
 const config = require("../config/config.json");
 
 export default class DiscordWebhookHelper {
     /**
      * The webhook used to send messages to Discord.
      */
-    public static Hook: any = null;
+    public static EventsHook: Discord.WebhookClient | null = null;
+
+    /**
+     * Logs private messages 
+     */
+    public static PrivateMessageHook: Discord.WebhookClient | null = null;
 
     /**
      * Initializes the discord webhook
      * @constructor
      */
     public static async Initialize(): Promise<void> {
-        DiscordWebhookHelper.Hook = new Discord.WebhookClient(config.discord.webhook.id, config.discord.webhook.token);
+        if (config.discord.eventsWebhook) {
+            DiscordWebhookHelper.EventsHook = new Discord.WebhookClient(config.discord.eventsWebhook.id, config.discord.eventsWebhook.token);
+            DiscordWebhookHelper.EventsHook.client.listenerCount = function(){return 0};
+        }
+
+        if (config.discord.privateMessageWebhook) {
+            DiscordWebhookHelper.PrivateMessageHook = new Discord.WebhookClient(config.discord.privateMessageWebhook.id, 
+                config.discord.privateMessageWebhook.token);
+
+            DiscordWebhookHelper.PrivateMessageHook.client.listenerCount = function(){return 0};
+        }
+
         Logger.Success(`Discord Webhook has been successfully initialized!`);
     }
 }
