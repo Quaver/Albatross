@@ -152,7 +152,7 @@ export default class User implements IPacketWritable, IStringifyable {
         if (notify)
             Albatross.SendToUser(this, new ServerPacketNotification(ServerNotificationType.Error, "You have been kicked from the server."));
 
-        return await AsyncHelper.Sleep(100, () => this.Socket.close());
+        return await AsyncHelper.Sleep(50, () => this.Socket.close());
     }
 
     /**
@@ -168,7 +168,7 @@ export default class User implements IPacketWritable, IStringifyable {
         if (notify)
             Albatross.SendToUser(this, new ServerPacketNotification(ServerNotificationType.Error, "You have been banned from Quaver."));
 
-        return await AsyncHelper.Sleep(100, () => this.Socket.close());
+        return await AsyncHelper.Sleep(50, () => this.Socket.close());
     }
 
     /**

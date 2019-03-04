@@ -27,17 +27,14 @@ export default class LoginHandler {
      * @constructor
      */
     public static async Handle(socket: any): Promise<void> {
-        try {
-            // Required
-            let steamId: string | number | null = StringHelper.GetUrlParameter(socket.upgradeReq.url, "id");
-            const steamName: string | null = StringHelper.GetUrlParameter(socket.upgradeReq.url, "u")
-            const pTicket: string | null = StringHelper.GetUrlParameter(socket.upgradeReq.url, "pt");
-            const client: string | null = StringHelper.GetUrlParameter(socket.upgradeReq.url, "c");
-            let pcbTicket: string | number | null = StringHelper.GetUrlParameter(socket.upgradeReq.url, "pcb");
+        let steamId: string | number | null = StringHelper.GetUrlParameter(socket.upgradeReq.url, "id");
+        const steamName: string | null = StringHelper.GetUrlParameter(socket.upgradeReq.url, "u")
+        const pTicket: string | null = StringHelper.GetUrlParameter(socket.upgradeReq.url, "pt");
+        const client: string | null = StringHelper.GetUrlParameter(socket.upgradeReq.url, "c");
+        let pcbTicket: string | number | null = StringHelper.GetUrlParameter(socket.upgradeReq.url, "pcb");
+        const testClientKey: string | null = StringHelper.GetUrlParameter(socket.upgradeReq.url, "t");
 
-            // Not Required (Testing/Debug Purposes)
-            const testClientKey: string | null = StringHelper.GetUrlParameter(socket.upgradeReq.url, "t");
-   
+        try {   
             if (!pcbTicket)
                 return LoginHandler.LogInvalidRequest(socket, "No PcbTicket Given");
 
@@ -78,18 +75,18 @@ export default class LoginHandler {
             if (!user) {
                 Logger.Warning(`Received login request from: ${steamLogin.steamid}. (they do not have an account yet!)`);
                 Albatross.SendToSocket(socket, new ServerPacketChooseUsername());
-                return await AsyncHelper.Sleep(100, () => socket.close());            
+                return await AsyncHelper.Sleep(50, () => socket.close());            
             }
 
             // Check if the user is banned
             if (!user.Allowed) {
-                Logger.Warning(`Received invalid login request from: ${steamLogin.steamid} (they are banned!)`);
+                Logger.Warning(`Received invalid login request from: ${user.Username} (#${user.Id}) <${steamLogin.steamid}> (they are banned!)`);
 
                 // Send a notification to the user letting them know that they're ban
                 const banned: ServerPacketNotification = new ServerPacketNotification(ServerNotificationType.Error, "You are banned. Email support@quavergame.com.");
                 Albatross.SendToUser(user, banned);
 
-                return await AsyncHelper.Sleep(100, () => socket.close());
+                return await AsyncHelper.Sleep(50, () => socket.close());
             }
 
             if (!await LoginHandler.VerifyGameBuild(socket, user, loginDetails))
@@ -123,11 +120,17 @@ export default class LoginHandler {
                     `Your account is muted for another ${(user.MuteEndTime - Date.now()) / 1000 / 60} minutes`);
 
         } catch (err) {
-            // TODO: Add required data to log.
-            Logger.Error(`${err}`);
+            const loginFailureLog: string = `${err}\n` + 
+                `Steam ID: ${steamId}\n` + 
+                `Steam Name: ${steamName}\n` + 
+                `PTicket Length: ${pTicket ? pTicket.length : "null"}\n` + 
+                `Client: ${client}\n` + 
+                `PcbTicket: ${pcbTicket}`;
+
+            Logger.Error(loginFailureLog);
 
             Albatross.SendToSocket(socket, new ServerPacketNotification(ServerNotificationType.Error, "Failed to login: Unknown Server Error!"))
-            return await AsyncHelper.Sleep(100, () => socket.close());  
+            return await AsyncHelper.Sleep(50, () => socket.close());  
         }
     }
 
@@ -196,7 +199,7 @@ export default class LoginHandler {
             Albatross.SendToUser(user, new ServerPacketNotification(ServerNotificationType.Error, 
                 "Your game client is outdated. Please restart Steam and update it!"))
                 
-            await AsyncHelper.Sleep(100, () => socket.close());    
+            await AsyncHelper.Sleep(50, () => socket.close());    
             return false        
         }
 
@@ -255,7 +258,7 @@ export default class LoginHandler {
             const packet = new ServerPacketNotification(ServerNotificationType.Error, "Logged out due to signing in from another location.");
 
             Albatross.SendToUser(alreadyOnline[i], packet);
-            await AsyncHelper.Sleep(100, () => alreadyOnline[i].Socket.close());
+            await AsyncHelper.Sleep(50, () => alreadyOnline[i].Socket.close());
         }
 
         return;
