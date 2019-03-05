@@ -88,7 +88,7 @@ export default class OnlineUserStore {
         }
 
         // Update redis online users and add user session.
-        await RedisHelper.set("quaver:server:online_users", this.Count.toString());
+        await RedisHelper.decr("quaver:server:online_users");
         await RedisHelper.del(`quaver:server:session:${user.Token}`);
         await RedisHelper.del(`quaver:server:user_status:${user.Id}`);
 

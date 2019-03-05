@@ -232,4 +232,19 @@ export default class RedisHelper {
             })
         })
     }
+
+        /**
+     * Promisifies the decr command.
+     * @param key
+     */
+    public static decr(key: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.Client.decr(key, (err, reply) => {
+                if (err)
+                    return reject(err);
+                
+                return resolve(reply);
+            })
+        })
+    }
 }
