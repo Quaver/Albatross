@@ -298,6 +298,10 @@ export default class LoginHandler {
         for (let name in ChatManager.Channels) {
 
             const channel: ChatChannel = ChatManager.Channels[name];
+
+            if (!ChatChannel.IsUserAllowed(channel, user))
+                continue;
+
             ChatManager.SendAvailableChannel(user, channel);
             
             if (channel.Autojoin)
@@ -315,10 +319,10 @@ export default class LoginHandler {
         
         try {
             const embed = new Discord.RichEmbed()
-            .setAuthor(user.Username, user.AvatarUrl, `https://quavergame.com/profile/${user.Id}`)
-            .setDescription("Connected to the in-game server.\n")
-            .setTimestamp()
-            .setColor(0x3eec60);
+                .setAuthor(user.Username, user.AvatarUrl, `https://quavergame.com/profile/${user.Id}`)
+                .setDescription("Connected to the in-game server.\n")
+                .setTimestamp()
+                .setColor(0x3eec60);
 
             DiscordWebhookHelper.EventsHook.send(embed)
         } catch (err) {

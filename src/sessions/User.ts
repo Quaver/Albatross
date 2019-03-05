@@ -182,7 +182,9 @@ export default class User implements IPacketWritable, IStringifyable {
             Logger.Warning(`${this.Username} (#${this.Id}) has tried to join channel: ${chan.Name}, but they do not have permission.`);
 
             if (sendFailurePacket)
-                return Albatross.SendToUser(this, new ServerPacketFailedToJoinChannel(chan.Name));       
+                Albatross.SendToUser(this, new ServerPacketFailedToJoinChannel(chan.Name));  
+                
+            return;
         }
 
         // User is already in the channel.
