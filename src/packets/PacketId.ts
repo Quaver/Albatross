@@ -117,7 +117,10 @@ enum PacketId {
     /// <summary>
     ///     The server is telling the client to choose a username
     /// </summary>
-    ServerChooseUsername
+    ServerChooseUsername,
+
+    ClientLobbyJoin,
+    ClientLobbyLeave
 }
 
 export default PacketId;

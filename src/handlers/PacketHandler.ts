@@ -18,6 +18,10 @@ import RequestUserInfoHandler from "./RequestUserInfoHandler";
 import ClientPacketRequestUserInfo from "../packets/client/ClientPacketRequestUserInfo";
 import RequestUserStatusHandler from "./RequestUserStatusHandler";
 import ClientPacketRequestUserStatus from "../packets/client/ClientPacketRequestUserStatus";
+import LobbyJoinHandler from "./LobbyJoinHandler";
+import ClientPacketLobbyJoin from "../packets/client/ClientPacketLobbyJoin";
+import LobbyLeaveHandler from "./LobbyLeaveHandler";
+import ClientPacketLobbyLeave from "../packets/client/ClientPacketLobbyLeave";
 const config = require("../config/config.json");
 
 export default class PacketHandler {
@@ -63,6 +67,12 @@ export default class PacketHandler {
                     break;
                 case PacketId.ClientRequestUserStatus:
                     await RequestUserStatusHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketRequestUserStatus));
+                    break;
+                case PacketId.ClientLobbyJoin:
+                    await LobbyJoinHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketLobbyJoin));
+                    break;
+                case PacketId.ClientLobbyLeave:
+                    await LobbyLeaveHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketLobbyLeave));
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS

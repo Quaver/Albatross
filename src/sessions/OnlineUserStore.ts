@@ -9,6 +9,7 @@ import Bot from "../bot/Bot";
 import ChatManager from "../chat/ChatManager";
 import ChatChannel from "../chat/ChatChannel";
 import * as _ from "lodash";
+import Lobby from "../multiplayer/Lobby";
 
 export default class OnlineUserStore {
     /**
@@ -86,6 +87,9 @@ export default class OnlineUserStore {
 
             _.remove(chan.UsersInChannel, (u) => u == user);  
         }
+
+        // Remove from the multiplayer lobby if they exist.
+        Lobby.RemoveUser(user);
 
         // Update redis online users and add user session.
         await RedisHelper.decr("quaver:server:online_users");
