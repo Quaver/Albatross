@@ -3,6 +3,8 @@ import User from "../sessions/User";
 import MultiplayerGame from "./MutliplayerGame";
 import IUniqueIdtoGameMap from "./maps/IUniqueIdToGameMap";
 import Logger from "../logging/Logger";
+import Albatross from "../Albatross";
+import ServerPacketMultiplayerGameInfo from "../packets/server/ServerPacketMultiplayerGameInfo";
 
 export default class Lobby {
     /**
@@ -38,8 +40,7 @@ export default class Lobby {
      */
     public static CreateGame(game: MultiplayerGame): void {
         Lobby.Games[game.Id] = game;
-
-        // TODO: Send packet to users in lobby that the game was created.
+        Albatross.SendToUsers(Lobby.Users, new ServerPacketMultiplayerGameInfo(game));
         Logger.Success(`Multiplayer Game: "${game.Name}" <${game.Id}> has been created.`);
     }
 

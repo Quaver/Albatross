@@ -34,9 +34,6 @@ export default class CreateGameHandler {
 
             // Create the actual game.
             Lobby.CreateGame(game);
-
-            // Send user the game information
-            user.SendMultiplayerGameInfo(game);
             user.JoinMultiplayerGame(game, game.Password);
             
             // Set the host
