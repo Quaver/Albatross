@@ -32,7 +32,8 @@ enum PacketId {
     ServerMultiplayerGameInfo,
     ServerJoinGame,
     ServerChangeGameHost,
-    ClientLeaveGame
+    ClientLeaveGame,
+    ServerGameDisbanded
 }
 
 export default PacketId;

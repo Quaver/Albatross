@@ -5,6 +5,7 @@ import IUniqueIdtoGameMap from "./maps/IUniqueIdToGameMap";
 import Logger from "../logging/Logger";
 import Albatross from "../Albatross";
 import ServerPacketMultiplayerGameInfo from "../packets/server/ServerPacketMultiplayerGameInfo";
+import ServerPacketGameDisbanded from "../packets/server/ServerPacketGameDisbanded";
 
 export default class Lobby {
     /**
@@ -41,6 +42,7 @@ export default class Lobby {
     public static CreateGame(game: MultiplayerGame): void {
         Lobby.Games[game.Id] = game;
         Albatross.SendToUsers(Lobby.Users, new ServerPacketMultiplayerGameInfo(game));
+        
         Logger.Success(`Multiplayer Game: "${game.Name}" <${game.Id}> has been created.`);
     }
 
@@ -50,8 +52,8 @@ export default class Lobby {
      */
     public static DeleteGame(game: MultiplayerGame): void {
         delete Lobby.Games[game.Id];
+        Albatross.SendToUsers(Lobby.Users, new ServerPacketGameDisbanded(game));
 
-        // TODO: Send packet to users in lobby that the game was disbanded.
         Logger.Success(`Multiplayer Game: "${game.Name}" <${game.Id}> has been disbanded.`);
     }
 }
