@@ -5,6 +5,7 @@ enum ClientStatus {
     Paused,
     Watching,
     Editing,
+    InLobby
 }
 
 export default ClientStatus;
