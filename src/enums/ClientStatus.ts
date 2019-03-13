@@ -5,7 +5,8 @@ enum ClientStatus {
     Paused,
     Watching,
     Editing,
-    InLobby
+    InLobby,
+    Multiplayer
 }
 
 export default ClientStatus;

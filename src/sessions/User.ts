@@ -24,6 +24,11 @@ import ServerPacketPing from "../packets/server/ServerPacketPing";
 import UserClientStatus from "../objects/UserClientStatus";
 import AdminActionLogger from "../admin/AdminActionLogger";
 import AdminActionLogType from "../admin/AdminActionLogType";
+import MultiplayerGame from "../multiplayer/MutliplayerGame";
+import ServerPacketMultiplayerGameInfo from "../packets/server/ServerPacketMultiplayerGameInfo";
+import ServerPacketJoinGame from "../packets/server/ServerPacketJoinGame";
+import Lobby from "../multiplayer/Lobby";
+import MultiplayerGameType from "../multiplayer/MultiplayerGameType";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -110,6 +115,11 @@ export default class User implements IPacketWritable, IStringifyable {
      * The amount of messages the user has sent within the spam detection interval.
      */
     public SpamRate: number = 0;
+
+    /**
+     * The current game that the user is in, if any.
+     */
+    public CurrentGame: MultiplayerGame | null = null;
 
     /**
      * @param token 
@@ -326,6 +336,68 @@ export default class User implements IPacketWritable, IStringifyable {
      */
     public HasPrivilege(privilege: Privileges): boolean {
         return (this.Privileges & privilege) != 0;
+    }
+
+    /**
+     * Returns if the user is currently in a multiplayer game.
+     */
+    public IsInMultiplayerGame(): boolean {
+        return this.CurrentGame != null;
+    }
+
+    /**
+     * Sends the user information about a multiplayer game.
+     * @param game 
+     */
+    public SendMultiplayerGameInfo(game: MultiplayerGame): void {
+        Albatross.SendToUser(this, new ServerPacketMultiplayerGameInfo(game));
+    }
+
+    /**
+     * Joins the player into a multiplayer match
+     * @param game 
+     */
+    public JoinMultiplayerGame(game: MultiplayerGame, password: string | null = null): void {
+        // TODO: Leave existing multiplayer match if in one.
+
+        // Check to see if the user is eligible to join the match (room slots, etc).
+        if (game.IsFull())
+            return Logger.Warning("Could not join the game because it is full");
+
+        if (game.HasPassword && game.Password != password)
+            return Logger.Warning("Could not join game because incorrect password!");
+
+        // Remove the player from the lobby if they're currently in it.
+        Lobby.RemoveUser(this);
+
+        // Place the player into the game
+        this.CurrentGame = game;
+        game.Players.push(this);
+
+        Albatross.SendToUser(this, new ServerPacketJoinGame(game));
+    }
+
+    /**
+     * Leaves the current multiplayer game if in one.
+     * @param game 
+     */
+    public LeaveMultiplayerGame(): void {
+        // User isn't in a game, so there's no need to handle it.
+        if (!this.CurrentGame)
+            return;
+
+        const game: MultiplayerGame = this.CurrentGame;
+        
+        _.remove(game.Players, this);
+        this.CurrentGame = null;
+
+        // No more players, so the game should be disbanded.
+        if (game.Players.length == 0)
+            return Lobby.DeleteGame(game);
+        
+        // The current host of the game was us, so we'll need to find a new host.   
+        if (game.Type == MultiplayerGameType.Custom && game.Host == this)
+            game.ChangeHost(game.Players[0]);
     }
 
     /**

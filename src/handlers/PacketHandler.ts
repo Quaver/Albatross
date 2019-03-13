@@ -22,6 +22,11 @@ import LobbyJoinHandler from "./LobbyJoinHandler";
 import ClientPacketLobbyJoin from "../packets/client/ClientPacketLobbyJoin";
 import LobbyLeaveHandler from "./LobbyLeaveHandler";
 import ClientPacketLobbyLeave from "../packets/client/ClientPacketLobbyLeave";
+import ClientPacketCreateGame from "../packets/client/ClientPacketCreateGame";
+import CreateGameHandler from "./CreateGameHandler";
+import MultiplayerGame from "../multiplayer/MutliplayerGame";
+import GameLeaveHandler from "./GameLeaveHandler";
+import ClientPacketLeaveGame from "../packets/client/ClientPacketLeaveGame";
 const config = require("../config/config.json");
 
 export default class PacketHandler {
@@ -73,6 +78,15 @@ export default class PacketHandler {
                     break;
                 case PacketId.ClientLobbyLeave:
                     await LobbyLeaveHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketLobbyLeave));
+                    break;
+                case PacketId.ClientCreateGame:
+                    const createGamePacket: ClientPacketCreateGame = jsonConvert.deserializeObject(msg, ClientPacketCreateGame);
+                    createGamePacket.Game = jsonConvert.deserializeObject(msg.g, MultiplayerGame);
+
+                    await CreateGameHandler.Handle(user, createGamePacket);
+                    break;
+                case PacketId.ClientLeaveGame:
+                    await GameLeaveHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketLeaveGame));
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS
