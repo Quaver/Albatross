@@ -115,7 +115,7 @@ export default class LoginHandler {
 
             await Albatross.Broadcast(new ServerPacketUserConnected(user));
  
-            await ChatManager.SendMessage(Bot.User, user.Username, `Welcome to the Quaver alpha, ${user.Username}!`);
+            // await ChatManager.SendMessage(Bot.User, user.Username, `Welcome to the Quaver alpha, ${user.Username}!`);
 
             if (user.IsMuted())
                 await ChatManager.SendMessage(Bot.User, user.Username, 
