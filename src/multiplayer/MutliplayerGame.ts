@@ -4,6 +4,10 @@ import User from "../sessions/User";
 import MultiplayerGameType from "./MultiplayerGameType";
 import Albatross from "../Albatross";
 import ServerPacketChangeGameHost from "../packets/server/ServerPacketChangeGameHost";
+import Lobby from "./Lobby";
+import ServerPacketMultiplayerGameInfo from "../packets/server/ServerPacketMultiplayerGameInfo";
+import MultiplayerGameRuleset from "./MultiplayerGameRuleset";
+import GameMode from "../enums/GameMode";
 const md5 = require("md5");
 
 @JsonObject("MultiplayerGame")
@@ -18,7 +22,7 @@ export default class MultiplayerGame {
      * The type of multiplayer game this is.
      */
     @JsonProperty("t")
-    public Type: MultiplayerGameType = MultiplayerGameType.Custom;
+    public Type: MultiplayerGameType = MultiplayerGameType.Friendly;
 
     /**
      * The name of the game
@@ -29,7 +33,6 @@ export default class MultiplayerGame {
     /**
      * The password for the game, if any
      */
-    @JsonProperty("p")
     public Password: string | null = null;
 
     /**
@@ -43,6 +46,66 @@ export default class MultiplayerGame {
      */
     @JsonProperty("mp")
     public MaxPlayers: number = 16;
+
+    /**
+     * The Md5 hash of the map
+     */
+    @JsonProperty("md5")
+    public MapMd5: string = "";
+
+    /**
+     * The ID of the map
+     */
+    @JsonProperty("mid")
+    public MapId: number = -1;
+    
+    /**
+     * The mapset id of the map.
+     */
+    @JsonProperty("msid")
+    public MapsetId: number = -1;
+
+    /**
+     * The title of the map.
+     */
+    @JsonProperty("map")
+    public Map: string = "";
+
+    /**
+     * The ids of the players in the game
+     */
+    @JsonProperty("ps")
+    public PlayerIds: number[] = [];
+
+    /**
+     * The id of the game host.
+     */
+    @JsonProperty("h")
+    public HostId: number = -1;
+
+    /**
+     * The ruleset of the game (teams, ffa, etc.)
+     */
+    @JsonProperty("r")
+    public Ruleset: MultiplayerGameRuleset = MultiplayerGameRuleset.Free_For_All;
+
+    /**
+     * Whether the server will control host rotation for the match
+     */
+    @JsonProperty("hr")
+    public HostRotation: boolean = false;
+
+    /**
+     * The game mode for the currently selected map
+     */
+    @JsonProperty("gm")
+    public GameMode: GameMode = GameMode.Keys4;
+
+    /**
+     * The difficulty rating of the currently selected map.
+     */
+    @JsonProperty("d")
+    public DifficultyRating: number = 0;
 
     /**
      * The players that are currently in the game
@@ -62,7 +125,10 @@ export default class MultiplayerGame {
      * @param maxPlayers 
      * @param host 
      */
-    public static Create(type: MultiplayerGameType, name: string, password: string | null, maxPlayers: number, host: User | null = null): MultiplayerGame {
+    public static Create(type: MultiplayerGameType, name: string, password: string | null, maxPlayers: number, mapMd5: string, 
+        mapId: number, mapsetId: number, map: string, ruleset: MultiplayerGameRuleset, hostRotation: boolean, mode: GameMode, difficultyRating: number,
+        host: User | null = null): MultiplayerGame {
+
         const game: MultiplayerGame = new MultiplayerGame();
 
         game.Type = type;
@@ -70,8 +136,16 @@ export default class MultiplayerGame {
         game.Name = name;
         game.Host = host;
         game.MaxPlayers = game.ClampMaxPlayers(maxPlayers);
+        game.MapMd5 = mapMd5;
+        game.MapId = mapId;
+        game.MapsetId = mapsetId;
+        game.Map = map;
+        game.Ruleset = ruleset;
+        game.HostRotation = hostRotation;
+        game.GameMode = mode;
+        game.DifficultyRating = difficultyRating;
         game.Password = password;
-        game.HasPassword = password != null;
+        if (password) game.HasPassword = true;
 
         return game;
     }
@@ -102,6 +176,7 @@ export default class MultiplayerGame {
      */
     public ChangeHost(user: User): void {
         this.Host = user;
+        this.HostId = user.Id;
         Albatross.SendToUsers(this.Players, new ServerPacketChangeGameHost(user));
     } 
 
@@ -110,5 +185,9 @@ export default class MultiplayerGame {
      */
     public IsFull(): boolean {
         return this.Players.length == this.MaxPlayers;
+    }
+
+    public UpdateSettings(): void {
+        Albatross.SendToUsers(Lobby.Users, new ServerPacketMultiplayerGameInfo(this));
     }
 }

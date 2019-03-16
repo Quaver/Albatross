@@ -1,5 +1,5 @@
 enum MultiplayerGameType {
-    Custom,
+    Friendly,
     Competitive
 }
 

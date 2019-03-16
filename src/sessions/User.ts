@@ -373,6 +373,7 @@ export default class User implements IPacketWritable, IStringifyable {
         // Place the player into the game
         this.CurrentGame = game;
         game.Players.push(this);
+        game.PlayerIds.push(this.Id);
 
         Albatross.SendToUser(this, new ServerPacketJoinGame(game));
     }
@@ -389,6 +390,8 @@ export default class User implements IPacketWritable, IStringifyable {
         const game: MultiplayerGame = this.CurrentGame;
         
         _.remove(game.Players, this);
+        _.remove(game.PlayerIds, this.Id);
+
         this.CurrentGame = null;
 
         // No more players, so the game should be disbanded.
@@ -396,8 +399,10 @@ export default class User implements IPacketWritable, IStringifyable {
             return Lobby.DeleteGame(game);
         
         // The current host of the game was us, so we'll need to find a new host.   
-        if (game.Type == MultiplayerGameType.Custom && game.Host == this)
+        if (game.Type == MultiplayerGameType.Friendly && game.Host == this)
             game.ChangeHost(game.Players[0]);
+
+        Albatross.SendToUsers(Lobby.Users, new ServerPacketMultiplayerGameInfo(game));    
     }
 
     /**

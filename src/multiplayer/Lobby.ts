@@ -6,6 +6,8 @@ import Logger from "../logging/Logger";
 import Albatross from "../Albatross";
 import ServerPacketMultiplayerGameInfo from "../packets/server/ServerPacketMultiplayerGameInfo";
 import ServerPacketGameDisbanded from "../packets/server/ServerPacketGameDisbanded";
+import MultiplayerGameType from "./MultiplayerGameType";
+import Bot from "../bot/Bot";
 
 export default class Lobby {
     /**
@@ -19,6 +21,16 @@ export default class Lobby {
     public static Games: IUniqueIdtoGameMap = {};
 
     /**
+     * Used strictly as a test game that can be joined.
+     */
+    public static InitializeTest(): void {
+        var game = MultiplayerGame.Create(MultiplayerGameType.Friendly, "Test Game!", "testing123", 2, "None", 1, 2, "Meme - Title [Yes]");
+        Bot.User.JoinMultiplayerGame(game, "testing123");
+        game.ChangeHost(Bot.User);
+        Lobby.CreateGame(game);
+    }
+
+    /**
      * Adds a user to the multiplayer lobby
      */
     public static AddUser(user: User): void {
@@ -26,6 +38,9 @@ export default class Lobby {
             return;
 
         Lobby.Users.push(user);
+
+        for (let i in Lobby.Games)
+            Albatross.SendToUser(user, new ServerPacketMultiplayerGameInfo(Lobby.Games[i]));
     }
 
     /**

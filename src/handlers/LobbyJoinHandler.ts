@@ -2,6 +2,7 @@ import ClientPacketLobbyJoin from "../packets/client/ClientPacketLobbyJoin";
 import Logger from "../logging/Logger";
 import User from "../sessions/User";
 import Lobby from "../multiplayer/Lobby";
+import ServerPacketMultiplayerGameInfo from "../packets/server/ServerPacketMultiplayerGameInfo";
 
 export default class LobbyJoinHandler {
     /**
@@ -12,8 +13,6 @@ export default class LobbyJoinHandler {
     public static async Handle(user: User, packet: ClientPacketLobbyJoin): Promise<void> {
         try {
             Lobby.AddUser(user);
-            
-            // TODO: Send them all the games.
         } catch (err) {
             return Logger.Error(err);
         }

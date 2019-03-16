@@ -13,6 +13,7 @@ import Packet from "./packets/Packet";
 import User from "./sessions/User";
 import ChatManager from "./chat/ChatManager";
 import PacketId from "./packets/PacketId";
+import Lobby from "./multiplayer/Lobby";
 
 const config = require("./config/config.json");
 const express = require("express");
@@ -76,9 +77,12 @@ export default class Albatross {
     public async Start(): Promise<void> {
         await this.CleanPreviousSessions();
         await Bot.Initialize();
+        
 
         this.StartBackgroundWorker();
         this.Server = new WebSocketServer({ port: this.Port });
+        
+        // Lobby.InitializeTest();
         
         this.Server.on("connection", async (socket: any) => {
             await LoginHandler.Handle(socket);
@@ -131,6 +135,9 @@ export default class Albatross {
     public static SendToUser(user: User, packet: Packet): void {
         if (config.logPacketTransfer)
             Logger.Info(`Sending Packet: To ${user.Username} (#${user.Id}) -> ${PacketId[packet.Id]} -> "${packet.ToString()}"}`);
+           
+        if (!user.Socket)
+            return;
             
         user.Socket.send(packet.ToString());
     }

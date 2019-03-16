@@ -8,6 +8,9 @@ import ServerPacketNotification from "../packets/server/ServerPacketNotification
 import ServerNotificationType from "../enums/ServerNotificationType";
 import AdminActionLogger from "../admin/AdminActionLogger";
 import AdminActionLogType from "../admin/AdminActionLogType";
+import Lobby from "../multiplayer/Lobby";
+import MultiplayerGame from "../multiplayer/MutliplayerGame";
+import MultiplayerGameType from "../multiplayer/MultiplayerGameType";
 const config = require("../config/config.json");
 
 export default class Bot {
