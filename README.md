@@ -1,5 +1,5 @@
-<p align="center"> 
-  <img src="https://i.imgur.com/DeHzl6f.png">
+<p align="left"> 
+  <img src="https://i.imgur.com/h8wIKwH.png" width="100px" height="100px">
 </p>
 
 # Albatross
