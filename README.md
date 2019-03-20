@@ -6,7 +6,7 @@
 
 Albatross is one of many servers that powers the rhythm game [Quaver](https://github.com/Quaver). In particular, this server handles things such as: 
 
-* Game client login & authentication
+* Game client login & sessions
 * In-Game Chat
 * Built-in chat bot
 * Online user listing & statuses
