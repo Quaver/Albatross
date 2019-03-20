@@ -25,7 +25,7 @@ As such, this server is being developed for internal use, and no support will be
 * Make sure Redis is installed.
 * Compile the server using the TypeScript compiler (`tsc`)
 * In the `dist` folder, create a folder named `config`
-* Copy the [example config file](https://github.com/Swan/Albatross/tree/master/src/config) into the `config` folder and rename it to `config.json`
+* Copy the [example config file](/src/config/config.example.json) into the `config` folder and rename it to `config.json`
 * Fill in the appropriate details within the config file.
 * Start up the server with `node index.js` or a process manager of your choice.
 
