@@ -8,7 +8,7 @@ Albatross is one of many servers that powers the rhythm game [Quaver](https://gi
 
 * Game client login & authentication
 * In-Game Chat
-* Multiplayer
+* Multiplayer (In Development)
 * Built-in chat bot
 * Online user listing & statuses
 * and much more!
@@ -27,9 +27,34 @@ It's the game server that brings the Quaver client to life wth the rest of the w
 * Fill in the appropriate details within the config file.
 * Start up the server with `node index.js` or a process manager of your choice.
 
+### Server Event Logs
+
 **Note:** It's also possible to log important server events & in-game chat messages to Discord via a Webhook. If you'd like this functionality, it's as simple as setting this info in the config file as well.
 
+### Adding Chat Channels
 
+Creating and removing chat channels is as simple as modifying the config file.
+
+An example chat channel would be the following:
+
+```json
+{
+  "name": "#quaver", 
+  "description": "General discussion about Quaver. Type /help for more information!", 
+  "allowedUserGroups": 1,
+  "isModerated": false,
+  "autojoin": true,
+  "discordWebhook": {
+    "id": "",
+    "token": ""
+  }
+```
+
+* **name** - The name of the chat channel as it appears in-game
+* **description** - The description of the chat channel as it appears in-game
+* **allowedUserGroups** - The [UserGroup]() required to access this channel.
+* **isModerated** - If true, only administrators and developers can talk in this channel.
+* **autojoin** - If true, players who connect to the server will automatically be placed in this channel.
 
 ## License
 
