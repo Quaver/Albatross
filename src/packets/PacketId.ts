@@ -1,7 +1,4 @@
 enum PacketId {
-    /// <summary>
-    ///     Just an invalid packet as a placeholder since enums default at 0.
-    /// </summary>
     Invalid = 0,
     ServerPing,
     ClientPong,
