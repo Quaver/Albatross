@@ -15,7 +15,7 @@ Albatross is one of many servers that powers the rhythm game [Quaver](https://gi
 
 It's the game server that brings the Quaver client to life wth the rest of the world.
 
-## Setting Up
+## Setting Up & Running
 
 **Please Note:** In order to run and use this server, you'll need to be a [Steam Partner](https://partner.steamgames.com/), as the server makes use of publisher-only API calls to Steam. As such, **no support will be given for the usage this software.** 
 
@@ -26,7 +26,10 @@ It's the game server that brings the Quaver client to life wth the rest of the w
 * Copy the [example config file](https://github.com/Swan/Albatross/tree/master/src/config) into the `config` folder and rename it to `config.json`
 * Fill in the appropriate details within the config file.
 * Start up the server with `node index.js` or a process manager of your choice.
-* **Note:** It's possible to log server events & in-game chat messages to Discord via a Webhook. If you want this functionality, it's as simple as setting this info in the config file as well.
+
+**Note:** It's also possible to log important server events & in-game chat messages to Discord via a Webhook. If you'd like this functionality, it's as simple as setting this info in the config file as well.
+
+
 
 ## License
 
