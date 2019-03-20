@@ -15,7 +15,7 @@ Albatross is one of many servers that power the rhythm game [Quaver](https://git
 
 It's the game server that brings the Quaver client to life with the rest of the world.
 
-## Setting Up & Running
+## Setting Up
 
 **Please Note:** In order to run and use this server, you'll need to be a [Steam Partner](https://partner.steamgames.com/), as the server makes use of publisher-only API calls to Steam. 
 
