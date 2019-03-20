@@ -19,6 +19,10 @@ It's the game server that brings the Quaver client to life wth the rest of the w
 
 **Please Note:** In order to run and use this server, you'll need to be a [Steam Partner](https://partner.steamgames.com/), as the server makes use of publisher-only API calls to Steam. As such, **no support will be given for the usage this software.** 
 
+* Generate both a [Steam Web & Publisher API key](https://partner.steamgames.com/doc/webapi_overview/auth).
+* Make sure Redis is installed
+
+
 ## License
 
 Albatross is released and licensed under the [GNU Affero General Public License v3.0](/LICENSE). Please see the [LICENSE](/LICENSE) file for more information.
