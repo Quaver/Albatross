@@ -21,4 +21,4 @@ It's the game server that brings the Quaver client to life wth the rest of the w
 
 ## License
 
-Albatross is released and licensed under the [GNU Affero General Public License v3.0]/LICENSE). Please see the [LICENSE](/LICENSE) file for more information.
+Albatross is released and licensed under the [GNU Affero General Public License v3.0](/LICENSE). Please see the [LICENSE](/LICENSE) file for more information.
