@@ -2,7 +2,7 @@
   <img src="https://i.imgur.com/h8wIKwH.png" width="75px" height="75px">
 </p>
 
-# Albatross
+# Albatross [![Blog](https://img.shields.io/badge/Blog-Read-blue.svg)](https://blog.quavergame.com) [![Discord](https://discordapp.com/api/guilds/354206121386573824/widget.png?style=shield)](https://discord.gg/nJa8VFr)
 
 Albatross is one of many servers that powers the rhythm game [Quaver](https://github.com/Quaver). In particular, this server handles things such as: 
 
