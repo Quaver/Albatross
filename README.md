@@ -33,31 +33,6 @@ As such, this server is being developed for internal use, and no support will be
 
 **Note:** It's also possible to log important server events & in-game chat messages to Discord via a Webhook. If you'd like this functionality, it's as simple as setting this info in the config file as well.
 
-### Adding Chat Channels
-
-Creating and removing chat channels is as simple as modifying the config file.
-
-An example chat channel would be the following:
-
-```json
-{
-  "name": "#quaver", 
-  "description": "General discussion about Quaver. Type /help for more information!", 
-  "allowedUserGroups": 1,
-  "isModerated": false,
-  "autojoin": true,
-  "discordWebhook": {
-    "id": "",
-    "token": ""
-  }
-```
-
-* **name** - The name of the chat channel as it appears in-game
-* **description** - The description of the chat channel as it appears in-game
-* **allowedUserGroups** - The [UserGroup]() required to access this channel.
-* **isModerated** - If true, only administrators and developers can talk in this channel.
-* **autojoin** - If true, players who connect to the server will automatically be placed in this channel.
-
 ## License
 
 Albatross is released and licensed under the [GNU Affero General Public License v3.0](/LICENSE). Please see the [LICENSE](/LICENSE) file for more information.
