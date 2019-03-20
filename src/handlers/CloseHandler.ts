@@ -18,6 +18,7 @@ export default class CloseHandler {
             if (!user)
                 return;
 
+            user.LeaveMultiplayerGame();
             Albatross.Instance.OnlineUsers.RemoveUser(user);
             Albatross.Broadcast(new ServerPacketUserDisconected(user.Id));
 

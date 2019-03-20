@@ -27,6 +27,8 @@ import CreateGameHandler from "./CreateGameHandler";
 import MultiplayerGame from "../multiplayer/MutliplayerGame";
 import GameLeaveHandler from "./GameLeaveHandler";
 import ClientPacketLeaveGame from "../packets/client/ClientPacketLeaveGame";
+import JoinGameHandler from "./JoinGameHandler";
+import ClientPacketJoinGame from "../packets/client/ClientPacketJoinGame";
 const config = require("../config/config.json");
 
 export default class PacketHandler {
@@ -91,6 +93,9 @@ export default class PacketHandler {
                     break;
                 case PacketId.ClientLeaveGame:
                     await GameLeaveHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketLeaveGame));
+                    break;
+                case PacketId.ClientJoinGame:
+                    await JoinGameHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketJoinGame));
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS

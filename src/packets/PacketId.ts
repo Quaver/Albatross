@@ -33,7 +33,9 @@ enum PacketId {
     ServerJoinGame,
     ServerChangeGameHost,
     ClientLeaveGame,
-    ServerGameDisbanded
+    ServerGameDisbanded,
+    ClientJoinGame,
+    ServerJoinGameFailed
 }
 
 export default PacketId;

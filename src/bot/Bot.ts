@@ -11,6 +11,8 @@ import AdminActionLogType from "../admin/AdminActionLogType";
 import Lobby from "../multiplayer/Lobby";
 import MultiplayerGame from "../multiplayer/MutliplayerGame";
 import MultiplayerGameType from "../multiplayer/MultiplayerGameType";
+import MultiplayerGameRuleset from "../multiplayer/MultiplayerGameRuleset";
+import GameMode from "../enums/GameMode";
 const config = require("../config/config.json");
 
 export default class Bot {
@@ -112,6 +114,40 @@ export default class Bot {
             case "mute":
                 await Bot.ExecuteMuteCommand(sender, to, args);
                 break;
+            /*case "d":
+                for (let i in Lobby.Games) {
+                    Lobby.DeleteGame(Lobby.Games[i]);
+                    break;
+                }
+                break;
+            case "dall":
+                for (let i in Lobby.Games) {
+                    Lobby.DeleteGame(Lobby.Games[i]);
+                }
+                break;
+            case "a":
+                for (let i = 0; i < 100; i++) {
+                    Lobby.CreateGame(MultiplayerGame.Create(MultiplayerGameType.Friendly, "Game: " + i.toString(), i % 2 == 0 ? "test" : null, 16, "none", i, i + 1, "Artist - Title [meme]",
+                    MultiplayerGameRuleset.Free_For_All, false, GameMode.Keys4, 60.21));
+                }
+                break;
+            case "u":
+                for (let i in Lobby.Games) {
+                    Lobby.Games[i].ChangeName("My Game");
+                }
+                break;
+            case "cm":
+                for (let i in Lobby.Games) {
+                    Lobby.Games[i].ChangeMap("none", 150, 150, "New Artist - New Title [New Diff]", GameMode.Keys7, 1.00);
+                    break;
+                }
+                break;
+            case "cp":
+                for (let i in Lobby.Games) {
+                    Lobby.Games[i].ChangePassword(null);
+                    break;
+                }
+                break;*/
         }
     }
 

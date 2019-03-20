@@ -8,6 +8,8 @@ import ServerPacketMultiplayerGameInfo from "../packets/server/ServerPacketMulti
 import ServerPacketGameDisbanded from "../packets/server/ServerPacketGameDisbanded";
 import MultiplayerGameType from "./MultiplayerGameType";
 import Bot from "../bot/Bot";
+import MultiplayerGameRuleset from "./MultiplayerGameRuleset";
+import GameMode from "../enums/GameMode";
 
 export default class Lobby {
     /**
@@ -24,7 +26,9 @@ export default class Lobby {
      * Used strictly as a test game that can be joined.
      */
     public static InitializeTest(): void {
-        var game = MultiplayerGame.Create(MultiplayerGameType.Friendly, "Test Game!", "testing123", 2, "None", 1, 2, "Meme - Title [Yes]");
+        var game = MultiplayerGame.Create(MultiplayerGameType.Friendly, "Test Game", "testing123", 16, "None", 2, 2, "Artist - Title [Diff]", 
+        MultiplayerGameRuleset.Free_For_All, false, GameMode.Keys4, 50.24);
+        
         Bot.User.JoinMultiplayerGame(game, "testing123");
         game.ChangeHost(Bot.User);
         Lobby.CreateGame(game);

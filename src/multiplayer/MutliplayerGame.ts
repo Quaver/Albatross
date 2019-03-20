@@ -169,6 +169,13 @@ export default class MultiplayerGame {
         else
             return _.clamp(numPlayers, 2, 16);
     }
+    
+    /**
+     * Returns if the game is full
+     */
+    public IsFull(): boolean {
+        return this.Players.length == this.MaxPlayers;
+    }
 
     /**
      * Changes the host of the game.
@@ -177,16 +184,55 @@ export default class MultiplayerGame {
     public ChangeHost(user: User): void {
         this.Host = user;
         this.HostId = user.Id;
+
         Albatross.SendToUsers(this.Players, new ServerPacketChangeGameHost(user));
+        this.UpdateSettings();
     } 
 
     /**
-     * Returns if the game is full
+     * Changes the name of the game
      */
-    public IsFull(): boolean {
-        return this.Players.length == this.MaxPlayers;
+    public ChangeName(name: string): void {
+        this.Name = name;
+
+        // TODO: Send packet to users currently in the game.
+
+        this.UpdateSettings();
     }
 
+    /**
+     * Changes the selected map of the game
+     */
+    public ChangeMap(md5: string, mapId: number, mapsetId: number, map: string, mode: GameMode, difficulty: number): void {
+        this.MapMd5 = md5;
+        this.MapId = mapId;
+        this.MapsetId = mapsetId;
+        this.Map = map;
+        this.GameMode = mode;
+        this.DifficultyRating = difficulty;
+
+        // TODO: Send packet to users currently in the game.
+
+        this.UpdateSettings();
+    }
+
+    /**
+     * Changes the password of the game
+     * @param password 
+     */
+    public ChangePassword(password: string | null): void {
+        this.Password = password;
+        this.HasPassword = password != null;
+
+
+        // TODO: Send packet to users currently in the game.
+
+        this.UpdateSettings();
+    }
+
+    /**
+     * Sends a packet to all users in the lobby that the settings of the game has been updated.
+     */
     public UpdateSettings(): void {
         Albatross.SendToUsers(Lobby.Users, new ServerPacketMultiplayerGameInfo(this));
     }

@@ -29,6 +29,8 @@ import ServerPacketMultiplayerGameInfo from "../packets/server/ServerPacketMulti
 import ServerPacketJoinGame from "../packets/server/ServerPacketJoinGame";
 import Lobby from "../multiplayer/Lobby";
 import MultiplayerGameType from "../multiplayer/MultiplayerGameType";
+import JoinGameFailureReason from "../enums/JoinGameFailureReason";
+import ServerPacketJoinedGameFailed from "../packets/server/ServerPacketJoinGameFailed";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -358,14 +360,18 @@ export default class User implements IPacketWritable, IStringifyable {
      * @param game 
      */
     public JoinMultiplayerGame(game: MultiplayerGame, password: string | null = null): void {
-        // TODO: Leave existing multiplayer match if in one.
+        // Have the player leave their already existing match if they're in one.
+        this.LeaveMultiplayerGame();
+
+        if (!game)
+            return this.SendJoinGameFailurePacket(JoinGameFailureReason.MatchNoExists);
 
         // Check to see if the user is eligible to join the match (room slots, etc).
         if (game.IsFull())
-            return Logger.Warning("Could not join the game because it is full");
-
+            return this.SendJoinGameFailurePacket(JoinGameFailureReason.Full);
+ 
         if (game.HasPassword && game.Password != password)
-            return Logger.Warning("Could not join game because incorrect password!");
+            return this.SendJoinGameFailurePacket(JoinGameFailureReason.Password);
 
         // Remove the player from the lobby if they're currently in it.
         Lobby.RemoveUser(this);
@@ -403,6 +409,15 @@ export default class User implements IPacketWritable, IStringifyable {
             game.ChangeHost(game.Players[0]);
 
         Albatross.SendToUsers(Lobby.Users, new ServerPacketMultiplayerGameInfo(game));    
+    }
+
+    /**
+     * Sends a packet to the user stating that they are unable to join a game
+     * for a specified reason
+     * @param reason 
+     */
+    public SendJoinGameFailurePacket(reason: JoinGameFailureReason): void {
+        Albatross.SendToUser(this, new ServerPacketJoinedGameFailed(reason));
     }
 
     /**
