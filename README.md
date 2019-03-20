@@ -31,7 +31,7 @@ As such, this server is being developed for internal use, and no support will be
 
 ### Server Event Logs
 
-**Note:** It's also possible to log important server events & in-game chat messages to Discord via a Webhook. If you'd like this functionality, it's as simple as setting this info in the config file as well.
+**Note:** It's also possible to log important server events & in-game chat messages to Discord via a webhook. If you'd like this functionality, it's as simple as setting this info in the config file as well.
 
 ## License
 
