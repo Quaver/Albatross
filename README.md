@@ -13,7 +13,7 @@ Albatross is one of many servers that powers the rhythm game [Quaver](https://gi
 * Multiplayer (In Development)
 * and much more!
 
-It's the game server that brings the Quaver client to life wth the rest of the world.
+It's the game server that brings the Quaver client to life with the rest of the world.
 
 ## Setting Up & Running
 
