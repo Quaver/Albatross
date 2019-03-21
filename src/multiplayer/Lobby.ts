@@ -10,6 +10,8 @@ import MultiplayerGameType from "./MultiplayerGameType";
 import Bot from "../bot/Bot";
 import MultiplayerGameRuleset from "./MultiplayerGameRuleset";
 import GameMode from "../enums/GameMode";
+import DiscordWebhookHelper from "../discord/DiscordWebhookHelper";
+import * as Discord from "discord.js";
 
 export default class Lobby {
     /**
