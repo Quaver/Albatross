@@ -31,6 +31,8 @@ import Lobby from "../multiplayer/Lobby";
 import MultiplayerGameType from "../multiplayer/MultiplayerGameType";
 import JoinGameFailureReason from "../enums/JoinGameFailureReason";
 import ServerPacketJoinedGameFailed from "../packets/server/ServerPacketJoinGameFailed";
+import ServerPacketUserJoinedGame from "../packets/server/ServerPacketUserJoinedGame";
+import ServerPacketUserLeftGame from "../packets/server/ServerPacketUserLeftGame";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -376,12 +378,21 @@ export default class User implements IPacketWritable, IStringifyable {
         // Remove the player from the lobby if they're currently in it.
         Lobby.RemoveUser(this);
 
+        // Send packet to users already in the game, letting them know that a new player has joined.
+        // send it BEFORE pushing the new player to the list, so we don't send an unnecessary packet to 
+        // the user jining.
+        Albatross.SendToUsers(game.Players, new ServerPacketUserJoinedGame(this));
+
         // Place the player into the game
         this.CurrentGame = game;
         game.Players.push(this);
         game.PlayerIds.push(this.Id);
 
+        // Let the player know they've joined the game.
         Albatross.SendToUser(this, new ServerPacketJoinGame(game));
+
+        // Let players in the lobby be aware of this change
+        game.InformLobbyUsers();
     }
 
     /**
@@ -396,7 +407,7 @@ export default class User implements IPacketWritable, IStringifyable {
         const game: MultiplayerGame = this.CurrentGame;
         
         _.remove(game.Players, this);
-        _.remove(game.PlayerIds, this.Id);
+        game.PlayerIds = game.PlayerIds.filter((x: number) => x != this.Id);
 
         this.CurrentGame = null;
 
@@ -408,7 +419,11 @@ export default class User implements IPacketWritable, IStringifyable {
         if (game.Type == MultiplayerGameType.Friendly && game.Host == this)
             game.ChangeHost(game.Players[0]);
 
-        Albatross.SendToUsers(Lobby.Users, new ServerPacketMultiplayerGameInfo(game));    
+        // Send a packet to users already in the game.
+        Albatross.SendToUsers(game.Players, new ServerPacketUserLeftGame(this));   
+        
+        // Let players in the lobby be aware of this change
+        game.InformLobbyUsers();  
     }
 
     /**

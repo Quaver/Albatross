@@ -186,7 +186,7 @@ export default class MultiplayerGame {
         this.HostId = user.Id;
 
         Albatross.SendToUsers(this.Players, new ServerPacketChangeGameHost(user));
-        this.UpdateSettings();
+        this.InformLobbyUsers();
     } 
 
     /**
@@ -197,7 +197,7 @@ export default class MultiplayerGame {
 
         // TODO: Send packet to users currently in the game.
 
-        this.UpdateSettings();
+        this.InformLobbyUsers();
     }
 
     /**
@@ -213,7 +213,7 @@ export default class MultiplayerGame {
 
         // TODO: Send packet to users currently in the game.
 
-        this.UpdateSettings();
+        this.InformLobbyUsers();
     }
 
     /**
@@ -227,13 +227,13 @@ export default class MultiplayerGame {
 
         // TODO: Send packet to users currently in the game.
 
-        this.UpdateSettings();
+        this.InformLobbyUsers();
     }
 
     /**
-     * Sends a packet to all users in the lobby that the settings of the game has been updated.
+     * Sends a packet to all users in the lobby that the settings/changes of/in the game has been updated.
      */
-    public UpdateSettings(): void {
+    public InformLobbyUsers(): void {
         Albatross.SendToUsers(Lobby.Users, new ServerPacketMultiplayerGameInfo(this));
     }
 }
