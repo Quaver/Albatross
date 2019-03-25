@@ -29,6 +29,8 @@ import GameLeaveHandler from "./GameLeaveHandler";
 import ClientPacketLeaveGame from "../packets/client/ClientPacketLeaveGame";
 import JoinGameHandler from "./JoinGameHandler";
 import ClientPacketJoinGame from "../packets/client/ClientPacketJoinGame";
+import ChangeGameMapHandler from "./ChangeGameMapHandler";
+import ClientPacketChangeGameMap from "../packets/client/ClientPacketChangeGameMap";
 const config = require("../config/config.json");
 
 export default class PacketHandler {
@@ -96,6 +98,9 @@ export default class PacketHandler {
                     break;
                 case PacketId.ClientJoinGame:
                     await JoinGameHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketJoinGame));
+                    break;
+                case PacketId.ClientChangeGameMap:
+                    await ChangeGameMapHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketChangeGameMap));
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS

@@ -499,4 +499,8 @@ export default class User implements IPacketWritable, IStringifyable {
     public ToString(): string {
         return JSON.stringify(this);
     }
+
+    public ToNameIdString(): string {
+        return `${this.Username} (#${this.Id})`;
+    }
 }
