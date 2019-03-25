@@ -8,6 +8,7 @@ import Lobby from "./Lobby";
 import ServerPacketMultiplayerGameInfo from "../packets/server/ServerPacketMultiplayerGameInfo";
 import MultiplayerGameRuleset from "./MultiplayerGameRuleset";
 import GameMode from "../enums/GameMode";
+import ServerPacketGameMapChanged from "../packets/server/ServerPacketGameMapChanged";
 const md5 = require("md5");
 
 @JsonObject("MultiplayerGame")
@@ -211,8 +212,7 @@ export default class MultiplayerGame {
         this.GameMode = mode;
         this.DifficultyRating = difficulty;
 
-        // TODO: Send packet to users currently in the game.
-
+        Albatross.SendToUsers(this.Players, new ServerPacketGameMapChanged(md5, mapId, mapsetId, map, mode, difficulty));
         this.InformLobbyUsers();
     }
 
