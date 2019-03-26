@@ -33,6 +33,7 @@ import JoinGameFailureReason from "../enums/JoinGameFailureReason";
 import ServerPacketJoinedGameFailed from "../packets/server/ServerPacketJoinGameFailed";
 import ServerPacketUserJoinedGame from "../packets/server/ServerPacketUserJoinedGame";
 import ServerPacketUserLeftGame from "../packets/server/ServerPacketUserLeftGame";
+import ServerPacketGameNoMap from "../packets/server/ServerPacketGameNoMap";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -424,6 +425,22 @@ export default class User implements IPacketWritable, IStringifyable {
         
         // Let players in the lobby be aware of this change
         game.InformLobbyUsers();  
+    }
+
+    /**
+     * Handles when this particular user doesn't have the map in a multiplayer match
+     */
+    public HandleNoMultiplayerGameMap(): void {
+        if (!this.CurrentGame)
+            return Logger.Warning(`${this.ToNameIdString} stated they don't have a map, but they aren't in a game.`);
+            
+        const game: MultiplayerGame = this.CurrentGame;
+
+        if (!game.PlayersWithoutMap.includes(this.Id))
+            game.PlayersWithoutMap.push(this.Id);
+
+        Albatross.SendToUsers(game.Players, new ServerPacketGameNoMap(this));
+        game.InformLobbyUsers();
     }
 
     /**
