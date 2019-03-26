@@ -109,6 +109,12 @@ export default class MultiplayerGame {
     public DifficultyRating: number = 0;
 
     /**
+     * Players in the match that don't have the current map
+     */
+    @JsonProperty("pwm")
+    public PlayersWithoutMap: number[] = [];
+
+    /**
      * The players that are currently in the game
      */
     public Players: User[] = [];
@@ -212,6 +218,7 @@ export default class MultiplayerGame {
         this.GameMode = mode;
         this.DifficultyRating = difficulty;
 
+        this.PlayersWithoutMap = [];
         Albatross.SendToUsers(this.Players, new ServerPacketGameMapChanged(md5, mapId, mapsetId, map, mode, difficulty));
         this.InformLobbyUsers();
     }

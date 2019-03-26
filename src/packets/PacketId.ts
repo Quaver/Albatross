@@ -36,7 +36,9 @@ enum PacketId {
     ServerUserJoinedGame,
     ServerUserLeftGame,
     ClientChangeGameMap,
-    ServerGameMapChanged
+    ServerGameMapChanged,
+    ClientGamePlayerNoMap,
+    ServerGamePlayerNoMap
 }
 
 export default PacketId;
