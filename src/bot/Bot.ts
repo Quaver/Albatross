@@ -114,6 +114,12 @@ export default class Bot {
             case "mute":
                 await Bot.ExecuteMuteCommand(sender, to, args);
                 break;
+            case "start":
+                if (sender.CurrentGame) {
+                    if (sender.CurrentGame.Host == sender)
+                        sender.CurrentGame.Start();
+                }
+                break;
             /*case "d":
                 for (let i in Lobby.Games) {
                     Lobby.DeleteGame(Lobby.Games[i]);

@@ -33,6 +33,12 @@ import ChangeGameMapHandler from "./ChangeGameMapHandler";
 import ClientPacketChangeGameMap from "../packets/client/ClientPacketChangeGameMap";
 import ClientNoMapHandler from "./ClientNoMapHandler";
 import ClientPacketGameNoMap from "../packets/client/ClientPacketNoMap";
+import GamePlayerHasMapHandler from "./GamePlayerHasMapHandler";
+import ClientPacketGamePlayerHasMap from "../packets/client/ClientPacketGamePlayerHasMap";
+import ClientPlayerFinishedHandler from "./ClientPlayerFinishedHandler";
+import ClientPacketPlayerFinished from "../packets/client/ClientPacketPlayerFinished";
+import ClientPacketGameJudgements from "../packets/client/ClientPacketGameJudgements";
+import GameJudgementsHandler from "./GameJudgementsHandler";
 const config = require("../config/config.json");
 
 export default class PacketHandler {
@@ -106,6 +112,15 @@ export default class PacketHandler {
                     break;
                 case PacketId.ClientGamePlayerNoMap:
                     await ClientNoMapHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGameNoMap));
+                    break;
+                case PacketId.ClientGamePlayerHasMap:
+                    await GamePlayerHasMapHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGamePlayerHasMap));
+                    break;
+                case PacketId.ClientPlayerFinished:
+                    await ClientPlayerFinishedHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketPlayerFinished));
+                    break;
+                case PacketId.ClientGameJudgements:
+                    await GameJudgementsHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGameJudgements));
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS

@@ -34,6 +34,8 @@ import ServerPacketJoinedGameFailed from "../packets/server/ServerPacketJoinGame
 import ServerPacketUserJoinedGame from "../packets/server/ServerPacketUserJoinedGame";
 import ServerPacketUserLeftGame from "../packets/server/ServerPacketUserLeftGame";
 import ServerPacketGameNoMap from "../packets/server/ServerPacketGameNoMap";
+import ServerPacketGamePlayerHasMap from "../packets/server/ServerPacketGamePlayerHasMap";
+import ServerPacketGameJudgements from "../packets/server/ServerPacketGameJudgements";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -441,6 +443,52 @@ export default class User implements IPacketWritable, IStringifyable {
 
         Albatross.SendToUsers(game.Players, new ServerPacketGameNoMap(this));
         game.InformLobbyUsers();
+    }
+
+    /**
+     * HAndles when the client now has the selected multiplayer game's map.
+     */
+    public HandleNowHasMultiplayerGameMap(): void {
+        if (!this.CurrentGame)
+            return Logger.Warning(`${this.ToNameIdString} stated they now have a map, but they aren't in a game.`);
+
+        const game: MultiplayerGame = this.CurrentGame;
+
+        game.PlayersWithoutMap = game.PlayersWithoutMap.filter(x => x != this.Id);
+        
+        Albatross.SendToUsers(game.Players, new ServerPacketGamePlayerHasMap(this));
+        game.InformLobbyUsers();
+    }
+
+    /**
+     * Handles when the client has finished playing their multiplayer game play session
+     */
+    public FinishPlayingMultiplayerGame(): void {
+        if (!this.CurrentGame)
+            return Logger.Warning(`${this.ToNameIdString} stated they finished playing a multiplayer game, but they aren't in one!`);
+
+        const game: MultiplayerGame = this.CurrentGame;
+
+        if (!game.FinishedPlayers.includes(this))
+            game.FinishedPlayers.push(this);
+
+        if (game.FinishedPlayers.length == game.PlayersGameStartedWith.length)
+            game.End();
+    }
+
+    /**
+     * Handles when the client gives us more multiplayer judgements
+     */
+    public HandleMultiplayerJudgements(judgements: number[]): void {
+        if (!this.CurrentGame)
+            return Logger.Warning(`${this.ToNameIdString} gave us multiplayer judgements, but they aren't in one!`);
+
+        const game: MultiplayerGame = this.CurrentGame;
+
+        if (!game.InProgress)
+            return Logger.Warning(`${this.ToNameIdString} gave us multiplayer judgements, but the game is not in progress!`);
+
+        Albatross.SendToUsers(game.Players, new ServerPacketGameJudgements(this, judgements));
     }
 
     /**

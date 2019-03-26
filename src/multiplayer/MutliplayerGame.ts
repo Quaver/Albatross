@@ -9,6 +9,8 @@ import ServerPacketMultiplayerGameInfo from "../packets/server/ServerPacketMulti
 import MultiplayerGameRuleset from "./MultiplayerGameRuleset";
 import GameMode from "../enums/GameMode";
 import ServerPacketGameMapChanged from "../packets/server/ServerPacketGameMapChanged";
+import ServerPacketGameStart from "../packets/server/ServerPacketGameStart";
+import ServerPacketGameEnded from "../packets/server/ServerPacketGameEnded";
 const md5 = require("md5");
 
 @JsonObject("MultiplayerGame")
@@ -115,6 +117,12 @@ export default class MultiplayerGame {
     public PlayersWithoutMap: number[] = [];
 
     /**
+     * If the match is currently in progress.
+     */
+    @JsonProperty("p")
+    public InProgress: boolean = false;
+
+    /**
      * The players that are currently in the game
      */
     public Players: User[] = [];
@@ -123,6 +131,16 @@ export default class MultiplayerGame {
      * The host of the game, if any
      */
     public Host: User | null = null;
+
+    /**
+     * The players that the game has started with.
+     */
+    public PlayersGameStartedWith: User[] = [];
+
+    /**
+     * The amount of players that have finished the map.
+     */
+    public FinishedPlayers: User[] = [];
 
     /**
      * Creates and returns a multiplayer game
@@ -151,6 +169,7 @@ export default class MultiplayerGame {
         game.HostRotation = hostRotation;
         game.GameMode = mode;
         game.DifficultyRating = difficultyRating;
+        game.InProgress = false;
         game.Password = password;
         if (password) game.HasPassword = true;
 
@@ -237,6 +256,36 @@ export default class MultiplayerGame {
         this.InformLobbyUsers();
     }
 
+    /**
+     * Starts the multiplayer game
+     */
+    public Start(): void {
+        if (this.InProgress)
+            return;
+
+        this.InProgress = true;
+        this.PlayersGameStartedWith = this.Players.filter(x => !this.PlayersWithoutMap.includes(x.Id));
+        this.FinishedPlayers = [];
+
+        Albatross.SendToUsers(this.Players, new ServerPacketGameStart());
+        this.InformLobbyUsers();
+    }
+
+    /**
+     * Ends the multiplayer game
+     */
+    public End(): void {
+        if (!this.InProgress)
+            return;
+
+        this.InProgress = false;
+        this.PlayersGameStartedWith = [];
+        this.FinishedPlayers = [];
+
+        // Send packet to all users that the game has finished.
+        Albatross.SendToUsers(this.Players, new ServerPacketGameEnded());
+        this.InformLobbyUsers();
+    }
     /**
      * Sends a packet to all users in the lobby that the settings/changes of/in the game has been updated.
      */
