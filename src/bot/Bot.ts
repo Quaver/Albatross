@@ -120,6 +120,23 @@ export default class Bot {
                         sender.CurrentGame.Start();
                 }
                 break;
+            case "host":
+                if (sender.CurrentGame) {
+                    if (sender.CurrentGame.Host == sender) {
+                        if (args.length == 0)
+                            return;
+
+                        const targetUsername: string = args[0].replace(/_/g, " ");
+                        const target: User = Albatross.Instance.OnlineUsers.GetUserByUsername(targetUsername);
+
+                        if (!target)
+                            return;
+
+                        if (target.CurrentGame == sender.CurrentGame)
+                            sender.CurrentGame.ChangeHost(target);
+                    }
+                }
+                break;
             /*case "d":
                 for (let i in Lobby.Games) {
                     Lobby.DeleteGame(Lobby.Games[i]);
