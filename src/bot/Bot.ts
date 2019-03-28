@@ -137,6 +137,12 @@ export default class Bot {
                     }
                 }
                 break;
+            case "end":
+                if (sender.CurrentGame) {
+                    if (sender.CurrentGame.Host == sender)
+                        sender.CurrentGame.End();
+                }
+                break;
             /*case "d":
                 for (let i in Lobby.Games) {
                     Lobby.DeleteGame(Lobby.Games[i]);
