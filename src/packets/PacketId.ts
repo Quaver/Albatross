@@ -45,7 +45,9 @@ enum PacketId {
     ClientPlayerFinished,
     ServerGameEnded,
     ClientGameJudgements,
-    ServerGameJudgements
+    ServerGameJudgements,
+    ClientGameScreenLoaded,
+    ServerAllPlayersLoaded
 }
 
 export default PacketId;
