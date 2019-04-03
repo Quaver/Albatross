@@ -39,6 +39,8 @@ import ClientPlayerFinishedHandler from "./ClientPlayerFinishedHandler";
 import ClientPacketPlayerFinished from "../packets/client/ClientPacketPlayerFinished";
 import ClientPacketGameJudgements from "../packets/client/ClientPacketGameJudgements";
 import GameJudgementsHandler from "./GameJudgementsHandler";
+import GameScreenLoadedHandler from "./GameScreenLoadedHandler";
+import ClientPacketGameScreenLoaded from "../packets/client/ClientPacketGameScreenLoaded";
 const config = require("../config/config.json");
 
 export default class PacketHandler {
@@ -121,6 +123,9 @@ export default class PacketHandler {
                     break;
                 case PacketId.ClientGameJudgements:
                     await GameJudgementsHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGameJudgements));
+                    break;
+                case PacketId.ClientGameScreenLoaded:
+                    await GameScreenLoadedHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGameScreenLoaded));
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS

@@ -36,6 +36,7 @@ import ServerPacketUserLeftGame from "../packets/server/ServerPacketUserLeftGame
 import ServerPacketGameNoMap from "../packets/server/ServerPacketGameNoMap";
 import ServerPacketGamePlayerHasMap from "../packets/server/ServerPacketGamePlayerHasMap";
 import ServerPacketGameJudgements from "../packets/server/ServerPacketGameJudgements";
+import ServerPacketAllPlayersLoaded from "../packets/server/ServerPacketAllPlayersLoaded";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -412,6 +413,7 @@ export default class User implements IPacketWritable, IStringifyable {
         _.remove(game.Players, this);
         _.remove(game.PlayersWithoutMap, this.Id);
         _.remove(game.PlayersGameStartedWith, this);
+        _.remove(game.PlayersWithGameScreenLoaded, this);
         game.PlayerIds = game.PlayerIds.filter((x: number) => x != this.Id);
 
         this.CurrentGame = null;
@@ -436,7 +438,7 @@ export default class User implements IPacketWritable, IStringifyable {
      */
     public HandleNoMultiplayerGameMap(): void {
         if (!this.CurrentGame)
-            return Logger.Warning(`${this.ToNameIdString} stated they don't have a map, but they aren't in a game.`);
+            return Logger.Warning(`${this.ToNameIdString()} stated they don't have a map, but they aren't in a game.`);
             
         const game: MultiplayerGame = this.CurrentGame;
 
@@ -452,7 +454,7 @@ export default class User implements IPacketWritable, IStringifyable {
      */
     public HandleNowHasMultiplayerGameMap(): void {
         if (!this.CurrentGame)
-            return Logger.Warning(`${this.ToNameIdString} stated they now have a map, but they aren't in a game.`);
+            return Logger.Warning(`${this.ToNameIdString()} stated they now have a map, but they aren't in a game.`);
 
         const game: MultiplayerGame = this.CurrentGame;
 
@@ -467,7 +469,7 @@ export default class User implements IPacketWritable, IStringifyable {
      */
     public FinishPlayingMultiplayerGame(): void {
         if (!this.CurrentGame)
-            return Logger.Warning(`${this.ToNameIdString} stated they finished playing a multiplayer game, but they aren't in one!`);
+            return Logger.Warning(`${this.ToNameIdString()} stated they finished playing a multiplayer game, but they aren't in one!`);
 
         const game: MultiplayerGame = this.CurrentGame;
 
@@ -483,14 +485,39 @@ export default class User implements IPacketWritable, IStringifyable {
      */
     public HandleMultiplayerJudgements(judgements: number[]): void {
         if (!this.CurrentGame)
-            return Logger.Warning(`${this.ToNameIdString} gave us multiplayer judgements, but they aren't in one!`);
+            return Logger.Warning(`${this.ToNameIdString()} gave us multiplayer judgements, but they aren't in one!`);
 
         const game: MultiplayerGame = this.CurrentGame;
 
         if (!game.InProgress)
-            return Logger.Warning(`${this.ToNameIdString} gave us multiplayer judgements, but the game is not in progress!`);
+            return Logger.Warning(`${this.ToNameIdString()} gave us multiplayer judgements, but the game is not in progress!`);
 
         Albatross.SendToUsers(game.Players, new ServerPacketGameJudgements(this, judgements));
+    }
+
+    /**
+     * When the user is ready and loaded to play a multiplayer game
+     */
+    public ReadyToPlayMultiplayerGame(): void {
+        if (!this.CurrentGame)
+            return Logger.Warning(`${this.ToNameIdString()} stated their game screen is loaded, but they aren't in a multiplayer game!`);
+        
+        const game: MultiplayerGame = this.CurrentGame;
+
+        if (!game.InProgress)
+            return Logger.Warning(`${this.ToNameIdString()} stated their game screen is loaded, but the multiplayer game is already in progress`);
+
+        if (game.PlayersWithGameScreenLoaded.includes(this))
+            return Logger.Warning(`${this.ToNameIdString()} stated their game screen is loaded, but they are already loaded!`);
+
+        game.PlayersWithGameScreenLoaded.push(this);
+
+        for (let i = 0; i < game.PlayersGameStartedWith.length; i++) {
+            if (!game.PlayersWithGameScreenLoaded.includes(game.PlayersGameStartedWith[i]))
+                return;
+        }
+
+        Albatross.SendToUsers(game.PlayersGameStartedWith, new ServerPacketAllPlayersLoaded());
     }
 
     /**

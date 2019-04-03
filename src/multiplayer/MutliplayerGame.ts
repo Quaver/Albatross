@@ -143,6 +143,17 @@ export default class MultiplayerGame {
     public FinishedPlayers: User[] = [];
 
     /**
+     * The amount of players in the match that have their gameplay screen loaded
+     * and are ready to start.
+     * 
+     * When all PlayersGameStartedWith has the same people as in this, 
+     * the game will begin.
+     * 
+     * This is so everyone can begin the song at around the exact same time.
+     */
+    public PlayersWithGameScreenLoaded: User[] = [];
+
+    /**
      * Creates and returns a multiplayer game
      * @param type 
      * @param name 
@@ -266,6 +277,7 @@ export default class MultiplayerGame {
         this.InProgress = true;
         this.PlayersGameStartedWith = this.Players.filter(x => !this.PlayersWithoutMap.includes(x.Id));
         this.FinishedPlayers = [];
+        this.PlayersWithGameScreenLoaded = [];
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameStart());
         this.InformLobbyUsers();
@@ -281,6 +293,7 @@ export default class MultiplayerGame {
         this.InProgress = false;
         this.PlayersGameStartedWith = [];
         this.FinishedPlayers = [];
+        this.PlayersWithGameScreenLoaded = [];
 
         // Send packet to all users that the game has finished.
         Albatross.SendToUsers(this.Players, new ServerPacketGameEnded());
