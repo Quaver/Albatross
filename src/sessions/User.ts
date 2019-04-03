@@ -410,6 +410,8 @@ export default class User implements IPacketWritable, IStringifyable {
         const game: MultiplayerGame = this.CurrentGame;
         
         _.remove(game.Players, this);
+        _.remove(game.PlayersWithoutMap, this.Id);
+        _.remove(game.PlayersGameStartedWith, this);
         game.PlayerIds = game.PlayerIds.filter((x: number) => x != this.Id);
 
         this.CurrentGame = null;
