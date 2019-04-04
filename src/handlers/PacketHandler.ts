@@ -43,6 +43,10 @@ import GameScreenLoadedHandler from "./GameScreenLoadedHandler";
 import ClientPacketGameScreenLoaded from "../packets/client/ClientPacketGameScreenLoaded";
 import GameSongSkipRequestHandler from "./GameSongSkipRequestHandler";
 import ClientPacketGameSongSkipRequest from "../packets/client/ClientPacketGameSongSkipRequest";
+import GamePlayerReadyHandler from "./GamePlayerReadyHandler";
+import ClientPacketGamePlayerReady from "../packets/client/ClientPacketGamePlayerReady";
+import GamePlayerNotReadyHandler from "./GamePlayerNotReadyHandler";
+import ClientPacketGamePlayerNotReady from "../packets/client/ClientPacketGamePlayerNotReady";
 const config = require("../config/config.json");
 
 export default class PacketHandler {
@@ -131,6 +135,12 @@ export default class PacketHandler {
                     break;
                 case PacketId.ClientGameSongSkipRequest:
                     await GameSongSkipRequestHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGameSongSkipRequest));
+                    break;
+                case PacketId.ClientGamePlayerReady:
+                    await GamePlayerReadyHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGamePlayerReady));
+                    break;
+                case PacketId.ClientGamePlayerNotReady:
+                    await GamePlayerNotReadyHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGamePlayerNotReady));
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS

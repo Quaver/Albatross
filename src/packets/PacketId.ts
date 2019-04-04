@@ -49,7 +49,11 @@ enum PacketId {
     ClientGameScreenLoaded,
     ServerAllPlayersLoaded,
     ClientGameSongSkipRequest,
-    ServerGameAllPlayersSkipped
+    ServerGameAllPlayersSkipped,
+    ClientGamePlayerReady,
+    ServerGamePlayerReady,
+    ClientGamePlayerNotReady,
+    ServerGamePlayerNotReady
 }
 
 export default PacketId;

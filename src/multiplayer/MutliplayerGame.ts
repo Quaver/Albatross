@@ -12,6 +12,8 @@ import ServerPacketGameMapChanged from "../packets/server/ServerPacketGameMapCha
 import ServerPacketGameStart from "../packets/server/ServerPacketGameStart";
 import ServerPacketGameEnded from "../packets/server/ServerPacketGameEnded";
 import ServerPacketAllPlayersSkipped from "../packets/server/ServerPacketGameAllPlayersSkipped";
+import ServerPacketGamePlayerReady from "../packets/server/ServerPacketGamePlayerReady";
+import ServerPacketGamePlayerNotReady from "../packets/server/ServerPacketGamePlayerNotReady";
 const md5 = require("md5");
 
 @JsonObject("MultiplayerGame")
@@ -124,6 +126,12 @@ export default class MultiplayerGame {
     public InProgress: boolean = false;
 
     /**
+     * List of all ready players (ids, and serialized).
+     */
+    @JsonProperty("pri")
+    public PlayersReady: number[] = [];
+
+    /**
      * The players that are currently in the game
      */
     public Players: User[] = [];
@@ -163,6 +171,7 @@ export default class MultiplayerGame {
      * If the match has already been skipped or not.
      */
     public MatchSkipped: boolean = false;
+
 
     /**
      * Creates and returns a multiplayer game
@@ -260,6 +269,7 @@ export default class MultiplayerGame {
         this.DifficultyRating = difficulty;
 
         this.PlayersWithoutMap = [];
+        this.PlayersReady = [];
         Albatross.SendToUsers(this.Players, new ServerPacketGameMapChanged(md5, mapId, mapsetId, map, mode, difficulty));
         this.InformLobbyUsers();
     }
@@ -290,6 +300,7 @@ export default class MultiplayerGame {
         this.FinishedPlayers = [];
         this.PlayersWithGameScreenLoaded = [];
         this.PlayersSkipped = [];
+        this.PlayersReady = [];
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameStart());
         this.InformLobbyUsers();
@@ -308,6 +319,7 @@ export default class MultiplayerGame {
         this.FinishedPlayers = [];
         this.PlayersWithGameScreenLoaded = [];
         this.PlayersSkipped = [];
+        this.PlayersReady = [];
 
         // Send packet to all users that the game has finished.
         Albatross.SendToUsers(this.Players, new ServerPacketGameEnded());
@@ -327,5 +339,23 @@ export default class MultiplayerGame {
     public HandleAllPlayersSkipped(): void {
         this.MatchSkipped = true;
         Albatross.SendToUsers(this.PlayersGameStartedWith, new ServerPacketAllPlayersSkipped());
+    }
+
+    /**
+     * Informs all players in the game and the lobby that a player is ready.
+     * @param user 
+     */
+    public InformPlayerIsReady(user: User): void {
+        Albatross.SendToUsers(this.Players, new ServerPacketGamePlayerReady(user));
+        this.InformLobbyUsers();
+    }
+
+    /**
+     * Informs all players in the game and the lobby that a player isn't ready
+     * @param user 
+     */
+    public InformPlayerNotReady(user: User): void {
+        Albatross.SendToUsers(this.Players, new ServerPacketGamePlayerNotReady(user));
+        this.InformLobbyUsers();
     }
 }
