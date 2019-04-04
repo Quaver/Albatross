@@ -416,6 +416,7 @@ export default class User implements IPacketWritable, IStringifyable {
         _.remove(game.PlayersWithGameScreenLoaded, this);
         _.remove(game.PlayersSkipped, this);
         game.PlayerIds = game.PlayerIds.filter((x: number) => x != this.Id);
+        game.PlayersReady = game.PlayersReady.filter((x: number) => x != this.Id);
         this.LeaveChatChannel(ChatManager.Channels[`#multiplayer_${game.Id}`]);
 
         this.CurrentGame = null;
@@ -548,6 +549,44 @@ export default class User implements IPacketWritable, IStringifyable {
         }
 
         game.HandleAllPlayersSkipped();
+    }
+
+    /**
+     * Handles when the user is ready in their multiplayer game.
+     */
+    public HandleMultiplayerGameReady(): void {
+        if (!this.CurrentGame)
+            return Logger.Warning(`${this.ToNameIdString()} said they were ready, but they aren't in a multiplayer game.`);
+
+        const game: MultiplayerGame = this.CurrentGame;
+
+        if (game.InProgress)
+            return Logger.Warning(`${this.ToNameIdString()} said they were ready, but the game is already in progress.`);
+
+        if (game.PlayersReady.includes(this.Id))
+            return Logger.Warning(`${this.ToNameIdString()} said they were ready, but they are already ready.`);
+
+        game.PlayersReady.push(this.Id);
+        game.InformPlayerIsReady(this);
+    }
+
+    /**
+     * Handles when the user is not ready in their multiplayer game
+     */
+    public HandleMultiplayerGameNotReady(): void {
+        if (!this.CurrentGame)
+            return Logger.Warning(`${this.ToNameIdString()} said they were not ready, but they aren't in a multiplayer game.`);
+
+        const game: MultiplayerGame = this.CurrentGame;
+
+        if (game.InProgress)
+            return Logger.Warning(`${this.ToNameIdString()} said they were not ready, but the game is already in progress.`);
+
+        if (!game.PlayersReady.includes(this.Id))
+            return Logger.Warning(`${this.ToNameIdString()} said they were ready, but they aren't even ready`);
+
+        game.PlayersReady = game.PlayersReady.filter((x: number) => x != this.Id);
+        game.InformPlayerNotReady(this);
     }
 
     /**
