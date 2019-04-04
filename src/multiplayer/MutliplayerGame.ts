@@ -11,6 +11,7 @@ import GameMode from "../enums/GameMode";
 import ServerPacketGameMapChanged from "../packets/server/ServerPacketGameMapChanged";
 import ServerPacketGameStart from "../packets/server/ServerPacketGameStart";
 import ServerPacketGameEnded from "../packets/server/ServerPacketGameEnded";
+import ServerPacketAllPlayersSkipped from "../packets/server/ServerPacketGameAllPlayersSkipped";
 const md5 = require("md5");
 
 @JsonObject("MultiplayerGame")
@@ -154,6 +155,16 @@ export default class MultiplayerGame {
     public PlayersWithGameScreenLoaded: User[] = [];
 
     /**
+     * The players in the game that have requested to skip.
+     */
+    public PlayersSkipped: User[] = [];
+
+    /**
+     * If the match has already been skipped or not.
+     */
+    public MatchSkipped: boolean = false;
+
+    /**
      * Creates and returns a multiplayer game
      * @param type 
      * @param name 
@@ -278,6 +289,7 @@ export default class MultiplayerGame {
         this.PlayersGameStartedWith = this.Players.filter(x => !this.PlayersWithoutMap.includes(x.Id));
         this.FinishedPlayers = [];
         this.PlayersWithGameScreenLoaded = [];
+        this.PlayersSkipped = [];
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameStart());
         this.InformLobbyUsers();
@@ -291,18 +303,29 @@ export default class MultiplayerGame {
             return;
 
         this.InProgress = false;
+        this.MatchSkipped = false;
         this.PlayersGameStartedWith = [];
         this.FinishedPlayers = [];
         this.PlayersWithGameScreenLoaded = [];
+        this.PlayersSkipped = [];
 
         // Send packet to all users that the game has finished.
         Albatross.SendToUsers(this.Players, new ServerPacketGameEnded());
         this.InformLobbyUsers();
     }
+
     /**
      * Sends a packet to all users in the lobby that the settings/changes of/in the game has been updated.
      */
     public InformLobbyUsers(): void {
         Albatross.SendToUsers(Lobby.Users, new ServerPacketMultiplayerGameInfo(this));
+    }
+
+    /**
+     * Informs all players that we're skipping the beginning of the song.
+     */
+    public HandleAllPlayersSkipped(): void {
+        this.MatchSkipped = true;
+        Albatross.SendToUsers(this.PlayersGameStartedWith, new ServerPacketAllPlayersSkipped());
     }
 }
