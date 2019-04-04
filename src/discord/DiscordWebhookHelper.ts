@@ -14,20 +14,45 @@ export default class DiscordWebhookHelper {
     public static PrivateMessageHook: Discord.WebhookClient | null = null;
 
     /**
+     * Logs multiplayer chat channel messages
+     */
+    public static MultiplayerMessageHook: Discord.WebhookClient | null = null;
+
+    /**
      * Initializes the discord webhook
      * @constructor
      */
     public static async Initialize(): Promise<void> {
-        if (config.discord.eventsWebhook) {
-            DiscordWebhookHelper.EventsHook = new Discord.WebhookClient(config.discord.eventsWebhook.id, config.discord.eventsWebhook.token);
-            DiscordWebhookHelper.EventsHook.client.listenerCount = function(){return 0};
+        try {
+            if (config.discord.eventsWebhook) {
+                DiscordWebhookHelper.EventsHook = new Discord.WebhookClient(config.discord.eventsWebhook.id, config.discord.eventsWebhook.token);
+                DiscordWebhookHelper.EventsHook.client.listenerCount = function(){return 0};
+            }
+        } catch (err) {
+            Logger.Error(err);
         }
 
-        if (config.discord.privateMessageWebhook) {
-            DiscordWebhookHelper.PrivateMessageHook = new Discord.WebhookClient(config.discord.privateMessageWebhook.id, 
-                config.discord.privateMessageWebhook.token);
+        try {
+            if (config.discord.privateMessageWebhook) {
+                DiscordWebhookHelper.PrivateMessageHook = new Discord.WebhookClient(config.discord.privateMessageWebhook.id, 
+                    config.discord.privateMessageWebhook.token);
+    
+                DiscordWebhookHelper.PrivateMessageHook.client.listenerCount = function(){return 0};
+            }
+        } catch (err) {
+            Logger.Error(err);
+        }
 
-            DiscordWebhookHelper.PrivateMessageHook.client.listenerCount = function(){return 0};
+
+        try {
+            if (config.discord.multiplayerMessageHook) {
+                DiscordWebhookHelper.MultiplayerMessageHook = new Discord.WebhookClient(config.discord.multiplayerMessageWebhook.id, 
+                    config.discord.multiplayerMessageWebhook.token);
+    
+                DiscordWebhookHelper.MultiplayerMessageHook.client.listenerCount = function(){return 0};
+            }
+        } catch (err) {
+            Logger.Error(err);
         }
 
         Logger.Success(`Discord Webhook has been successfully initialized!`);
