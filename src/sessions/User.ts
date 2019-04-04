@@ -175,8 +175,6 @@ export default class User implements IPacketWritable, IStringifyable {
 
     /**
      * Bans the user from the game
-     * 
-     * TODO: Add Steam publisher banning.
      * @param notify 
      */
     public async Ban(notify: boolean = true): Promise<void> {
@@ -392,6 +390,8 @@ export default class User implements IPacketWritable, IStringifyable {
         game.Players.push(this);
         game.PlayerIds.push(this.Id);
 
+        this.JoinChatChannel(ChatManager.Channels[`#multiplayer_${game.Id}`]);
+
         // Let the player know they've joined the game.
         Albatross.SendToUser(this, new ServerPacketJoinGame(game));
 
@@ -414,7 +414,9 @@ export default class User implements IPacketWritable, IStringifyable {
         _.remove(game.PlayersWithoutMap, this.Id);
         _.remove(game.PlayersGameStartedWith, this);
         _.remove(game.PlayersWithGameScreenLoaded, this);
+        _.remove(game.PlayersSkipped, this);
         game.PlayerIds = game.PlayerIds.filter((x: number) => x != this.Id);
+        this.LeaveChatChannel(ChatManager.Channels[`#multiplayer_${game.Id}`]);
 
         this.CurrentGame = null;
 
@@ -505,7 +507,7 @@ export default class User implements IPacketWritable, IStringifyable {
         const game: MultiplayerGame = this.CurrentGame;
 
         if (!game.InProgress)
-            return Logger.Warning(`${this.ToNameIdString()} stated their game screen is loaded, but the multiplayer game is already in progress`);
+            return Logger.Warning(`${this.ToNameIdString()} stated their game screen is loaded, but the multiplayer game is not in progress`);
 
         if (game.PlayersWithGameScreenLoaded.includes(this))
             return Logger.Warning(`${this.ToNameIdString()} stated their game screen is loaded, but they are already loaded!`);
@@ -518,6 +520,34 @@ export default class User implements IPacketWritable, IStringifyable {
         }
 
         Albatross.SendToUsers(game.PlayersGameStartedWith, new ServerPacketAllPlayersLoaded());
+    }
+
+    /**
+     * Handles when the user is requesting to skip the song in a multiplayer game
+     */
+    public HandleMultiplayerGameSkipRequest(): void {
+        if (!this.CurrentGame)
+            return Logger.Warning(`${this.ToNameIdString()} requested to skip, but they aren't in a multiplayer game.`);
+
+        const game: MultiplayerGame = this.CurrentGame;
+
+        if (game.MatchSkipped)
+            return Logger.Warning(`${this.ToNameIdString()} requested to skip, but the multiplayer game was already skipped.`);
+
+        if (!game.InProgress)
+            return Logger.Warning(`${this.ToNameIdString()} requested to skip, but the multiplayer game is not in progress.`);
+
+        if (game.PlayersSkipped.includes(this))
+            return Logger.Warning(`${this.ToNameIdString()} requested to skip, but they have already done so!`);
+
+        game.PlayersSkipped.push(this);
+
+        for (let i = 0; i < game.PlayersGameStartedWith.length; i++) { 
+            if (!game.PlayersSkipped.includes(game.PlayersGameStartedWith[i]))
+                return;
+        }
+
+        game.HandleAllPlayersSkipped();
     }
 
     /**

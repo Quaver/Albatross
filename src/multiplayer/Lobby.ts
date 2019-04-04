@@ -12,6 +12,9 @@ import MultiplayerGameRuleset from "./MultiplayerGameRuleset";
 import GameMode from "../enums/GameMode";
 import DiscordWebhookHelper from "../discord/DiscordWebhookHelper";
 import * as Discord from "discord.js";
+import ChatManager from "../chat/ChatManager";
+import ChatChannel from "../chat/ChatChannel";
+import UserGroups from "../enums/UserGroups";
 
 export default class Lobby {
     /**
@@ -62,8 +65,13 @@ export default class Lobby {
      */
     public static CreateGame(game: MultiplayerGame): void {
         Lobby.Games[game.Id] = game;
+
+        // Create a new chat channel for the multiplayer game.
+        const channelName: string = `#multiplayer_${game.Id}`; 
+        const chan: ChatChannel = new ChatChannel(channelName, "Multiplayer Game Chat Discussion", UserGroups.Normal, false, false);
+        ChatManager.Channels[channelName] = chan;
+
         Albatross.SendToUsers(Lobby.Users, new ServerPacketMultiplayerGameInfo(game));
-        
         Logger.Success(`Multiplayer Game: "${game.Name}" <${game.Id}> has been created.`);
     }
 
@@ -73,8 +81,12 @@ export default class Lobby {
      */
     public static DeleteGame(game: MultiplayerGame): void {
         delete Lobby.Games[game.Id];
-        Albatross.SendToUsers(Lobby.Users, new ServerPacketGameDisbanded(game));
 
+        // Removes the multiplayer chat channel.
+        const channelName: string = `#multiplayer_${game.Id}`; 
+        delete ChatManager.Channels[channelName];
+
+        Albatross.SendToUsers(Lobby.Users, new ServerPacketGameDisbanded(game));
         Logger.Success(`Multiplayer Game: "${game.Name}" <${game.Id}> has been disbanded.`);
     }
 }
