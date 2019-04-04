@@ -68,7 +68,9 @@ export default class Lobby {
 
         // Create a new chat channel for the multiplayer game.
         const channelName: string = `#multiplayer_${game.Id}`; 
-        const chan: ChatChannel = new ChatChannel(channelName, "Multiplayer Game Chat Discussion", UserGroups.Normal, false, false);
+        const chan: ChatChannel = new ChatChannel(channelName, "Multiplayer Game Chat Discussion", UserGroups.Normal, false, false, 
+                                                    DiscordWebhookHelper.MultiplayerMessageHook);
+
         ChatManager.Channels[channelName] = chan;
 
         Albatross.SendToUsers(Lobby.Users, new ServerPacketMultiplayerGameInfo(game));

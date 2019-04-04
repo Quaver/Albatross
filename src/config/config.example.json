@@ -9,6 +9,10 @@
     "privateMessageWebhook": {
       "id": "",
       "token": ""
+    },
+    "multiplayerMessageWebhook": {
+      "id": "",
+      "token": ""
     }
   },
   "steam": {
