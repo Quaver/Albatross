@@ -255,6 +255,7 @@ export default class MultiplayerGame {
         this.Host = user;
         this.HostId = user.Id;
 
+        this.StopMatchCountdown(false);
         Albatross.SendToUsers(this.Players, new ServerPacketChangeGameHost(user));
         this.InformLobbyUsers();
     } 
@@ -283,7 +284,9 @@ export default class MultiplayerGame {
 
         this.PlayersWithoutMap = [];
         this.PlayersReady = [];
-        Albatross.SendToUsers(this.Players, new ServerPacketGameMapChanged(md5, mapId, mapsetId, map, mode, difficulty));
+
+        this.StopMatchCountdown(false); 
+        Albatross.SendToUsers(this.Players, new ServerPacketGameMapChanged(md5, mapId, mapsetId, map, mode, difficulty));    
         this.InformLobbyUsers();
     }
 
@@ -378,7 +381,7 @@ export default class MultiplayerGame {
     /**
      * Cancels the match countdown
      */
-    public StopMatchCountdown(): void {
+    public StopMatchCountdown(informLobbyUsers: boolean = true): void {
         if (this.CountdownStartTime == -1)
             return;
 
@@ -388,7 +391,9 @@ export default class MultiplayerGame {
         clearTimeout(this.CountdownTimer);
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameStopCountdown());
-        this.InformLobbyUsers();
+
+        if (informLobbyUsers)
+            this.InformLobbyUsers();
     }
 
     /**
