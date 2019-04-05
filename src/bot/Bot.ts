@@ -143,6 +143,12 @@ export default class Bot {
                         sender.CurrentGame.End();
                 }
                 break;
+            case "starttimer":
+                if (sender.CurrentGame) {
+                    if (sender.CurrentGame.Host == sender)
+                        sender.CurrentGame.StartMatchCountdown();
+                }
+                break;
             /*case "d":
                 for (let i in Lobby.Games) {
                     Lobby.DeleteGame(Lobby.Games[i]);

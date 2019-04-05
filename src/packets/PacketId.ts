@@ -53,7 +53,11 @@ enum PacketId {
     ClientGamePlayerReady,
     ServerGamePlayerReady,
     ClientGamePlayerNotReady,
-    ServerGamePlayerNotReady
+    ServerGamePlayerNotReady,
+    ClientGameStartCountdown,
+    ServerGameStartCountdown,
+    ClientGameStopCountdown,
+    ServerGameStopCountdown
 }
 
 export default PacketId;

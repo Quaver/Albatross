@@ -14,6 +14,9 @@ import ServerPacketGameEnded from "../packets/server/ServerPacketGameEnded";
 import ServerPacketAllPlayersSkipped from "../packets/server/ServerPacketGameAllPlayersSkipped";
 import ServerPacketGamePlayerReady from "../packets/server/ServerPacketGamePlayerReady";
 import ServerPacketGamePlayerNotReady from "../packets/server/ServerPacketGamePlayerNotReady";
+import Logger from "../logging/Logger";
+import ServerPacketGameStartCountdown from "../packets/server/ServerPacketGameStartCountdown";
+import ServerPacketGameStopCountdown from "../packets/server/ServerPacketGameStopCountdown";
 const md5 = require("md5");
 
 @JsonObject("MultiplayerGame")
@@ -132,6 +135,12 @@ export default class MultiplayerGame {
     public PlayersReady: number[] = [];
 
     /**
+     * Unix timestamp of the time the match start countdown has started
+     */
+    @JsonProperty("cst")
+    public CountdownStartTime: number = -1;
+
+    /**
      * The players that are currently in the game
      */
     public Players: User[] = [];
@@ -172,6 +181,10 @@ export default class MultiplayerGame {
      */
     public MatchSkipped: boolean = false;
 
+    /**
+     * The physical countdown timeout handler.
+     */
+    public CountdownTimer: any;
 
     /**
      * Creates and returns a multiplayer game
@@ -295,12 +308,14 @@ export default class MultiplayerGame {
         if (this.InProgress)
             return;
 
+        Logger.Success(`[${this.Id}] Multiplayer Game Started!`);
         this.InProgress = true;
         this.PlayersGameStartedWith = this.Players.filter(x => !this.PlayersWithoutMap.includes(x.Id));
         this.FinishedPlayers = [];
         this.PlayersWithGameScreenLoaded = [];
         this.PlayersSkipped = [];
         this.PlayersReady = [];
+        this.CountdownStartTime = -1;
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameStart());
         this.InformLobbyUsers();
@@ -313,6 +328,8 @@ export default class MultiplayerGame {
         if (!this.InProgress)
             return;
 
+        Logger.Success(`[${this.Id}] Multiplayer Game Ended!`);
+
         this.InProgress = false;
         this.MatchSkipped = false;
         this.PlayersGameStartedWith = [];
@@ -320,6 +337,7 @@ export default class MultiplayerGame {
         this.PlayersWithGameScreenLoaded = [];
         this.PlayersSkipped = [];
         this.PlayersReady = [];
+        this.StopMatchCountdown();
 
         // Send packet to all users that the game has finished.
         Albatross.SendToUsers(this.Players, new ServerPacketGameEnded());
@@ -339,6 +357,38 @@ export default class MultiplayerGame {
     public HandleAllPlayersSkipped(): void {
         this.MatchSkipped = true;
         Albatross.SendToUsers(this.PlayersGameStartedWith, new ServerPacketAllPlayersSkipped());
+    }
+
+    /**
+     * Starts the countdown before the game starts
+     */
+    public StartMatchCountdown(): void {
+        if (this.CountdownStartTime != -1)
+            return Logger.Warning(`[${this.Id}] Multiplayer Match Countdown Already Running (Cannot Start Again)`);
+            
+        Logger.Success(`[${this.Id}] Multiplayer Match Countdown Started`);
+
+        this.CountdownStartTime = Date.now();
+        this.CountdownTimer = setTimeout(() => this.Start(), 5000);
+
+        Albatross.SendToUsers(this.Players, new ServerPacketGameStartCountdown(this.CountdownStartTime));
+        this.InformLobbyUsers();
+    }
+
+    /**
+     * Cancels the match countdown
+     */
+    public StopMatchCountdown(): void {
+        if (this.CountdownStartTime == -1)
+            return;
+
+        Logger.Success(`[${this.Id}] Multiplayer Match Countdown Cancelled`);
+
+        this.CountdownStartTime = -1;
+        clearTimeout(this.CountdownTimer);
+
+        Albatross.SendToUsers(this.Players, new ServerPacketGameStopCountdown());
+        this.InformLobbyUsers();
     }
 
     /**
