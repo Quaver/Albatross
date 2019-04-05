@@ -47,6 +47,10 @@ import GamePlayerReadyHandler from "./GamePlayerReadyHandler";
 import ClientPacketGamePlayerReady from "../packets/client/ClientPacketGamePlayerReady";
 import GamePlayerNotReadyHandler from "./GamePlayerNotReadyHandler";
 import ClientPacketGamePlayerNotReady from "../packets/client/ClientPacketGamePlayerNotReady";
+import GameStartCountdownHandler from "./GameStartCountdownHandler";
+import ClientPacketGameStartCountdown from "../packets/client/ClientPacketGameStartCountdown";
+import GameStopCountdownHandler from "./GameStopCountdownHandler";
+import ClientPacketGameStopCountdown from "../packets/client/ClientPacketGameStopCountdown";
 const config = require("../config/config.json");
 
 export default class PacketHandler {
@@ -141,6 +145,12 @@ export default class PacketHandler {
                     break;
                 case PacketId.ClientGamePlayerNotReady:
                     await GamePlayerNotReadyHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGamePlayerNotReady));
+                    break;
+                case PacketId.ClientGameStartCountdown:
+                    await GameStartCountdownHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGameStartCountdown));
+                    break;
+                case PacketId.ClientGameStopCountdown:
+                    await GameStopCountdownHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGameStopCountdown));
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS

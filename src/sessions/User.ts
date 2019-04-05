@@ -590,6 +590,42 @@ export default class User implements IPacketWritable, IStringifyable {
     }
 
     /**
+     * Handles starting the multiplayer game countdown start (if host)
+     */
+    public HandleMultiplayerCountdownStart(): void {
+        if (!this.CurrentGame)
+            return Logger.Warning(`${this.ToNameIdString()} said they want to start the match countdown, but they aren't in a multiplayer game.`);
+
+        const game: MultiplayerGame = this.CurrentGame;
+
+        if (game.Host != this)
+            return Logger.Warning(`${this.ToNameIdString()} said they want to start the match countdown, but they aren't host!`);
+
+        if (game.InProgress)
+            return Logger.Warning(`${this.ToNameIdString()} said they want to start the match countdown, but the game is already in progress.`);
+
+        game.StartMatchCountdown();
+    }
+
+    /**
+     * Handles stopping the multiplayer game countdown.
+     */
+    public HandleMultiplayerCountdownStop(): void {
+        if (!this.CurrentGame)
+            return Logger.Warning(`${this.ToNameIdString()} said they want to stop the match countdown, but they aren't in a multiplayer game.`);
+
+        const game: MultiplayerGame = this.CurrentGame;
+
+        if (game.Host != this)
+            return Logger.Warning(`${this.ToNameIdString()} said they want to stop the match countdown, but they aren't host!`);
+
+        if (game.CountdownStartTime == -1)
+            return Logger.Warning(`${this.ToNameIdString()} said they want to stop the match countdown, but the countdown isn't active!`);
+
+        game.StopMatchCountdown();
+    }
+
+    /**
      * Sends a packet to the user stating that they are unable to join a game
      * for a specified reason
      * @param reason 

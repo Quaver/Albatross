@@ -82,6 +82,7 @@ export default class Lobby {
      * @param game 
      */
     public static DeleteGame(game: MultiplayerGame): void {
+        game.StopMatchCountdown();
         delete Lobby.Games[game.Id];
 
         // Removes the multiplayer chat channel.
