@@ -507,7 +507,7 @@ export default class Bot {
                 if (!sender.CurrentGame.Host || args.length < 2)
                     return;
 
-                const maxDiff = parseFloat(args[1]);
+                const maxDiff = parseInt(args[1]);
 
                 if (isNaN(maxDiff) || maxDiff < 0)
                     return await Bot.SendMessage(game.GetChatChannelName(), "The maximum difficulty number must be a number and 0 or greater.");
@@ -517,6 +517,18 @@ export default class Bot {
 
                 game.ChangeMaximumDifficulty(maxDiff);
                 await Bot.SendMessage(game.GetChatChannelName(), `The maximum difficulty has been changed to: ${maxDiff}.`);             
+                break;
+            case "maxlength":
+                if (!sender.CurrentGame.Host || args.length < 2)
+                    return;
+
+                const length = parseInt(args[1]);
+
+                if (isNaN(length) || length <= 0)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "The maximum length must be greater than 0 seconds.");
+
+                game.ChangeMaximumSongLength(length);
+                await Bot.SendMessage(game.GetChatChannelName(), `The maximum length allowed for this game has been changed to: ${length} seconds.`);
                 break;
         }
     }

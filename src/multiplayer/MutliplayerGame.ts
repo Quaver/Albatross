@@ -18,6 +18,7 @@ import Logger from "../logging/Logger";
 import ServerPacketGameStartCountdown from "../packets/server/ServerPacketGameStartCountdown";
 import ServerPacketGameStopCountdown from "../packets/server/ServerPacketGameStopCountdown";
 import ServerPacketDifficultyRangeChanged from "../packets/server/ServerPacketGameDifficultyRangeChanged";
+import ServerPacketGameMaxSongLengthChanged from "../packets/server/ServerPacketGameMaxSongLengthChanged";
 const md5 = require("md5");
 
 @JsonObject("MultiplayerGame")
@@ -154,6 +155,12 @@ export default class MultiplayerGame {
     public MaximumDifficultyRating: number = 9999;
 
     /**
+     * The maximum length allowed for songs in the lobby
+     */
+    @JsonProperty("maxl")
+    public MaximumSongLength: number = 999999999;
+
+    /**
      * The players that are currently in the game
      */
     public Players: User[] = [];
@@ -230,6 +237,7 @@ export default class MultiplayerGame {
         game.CountdownTimer = -1;
         game.MinimumDifficultyRating = 0;
         game.MaximumDifficultyRating = 9999;
+        game.MaximumSongLength = 999999999;
         game.Password = password;
         if (password) game.HasPassword = true;
 
@@ -460,6 +468,18 @@ export default class MultiplayerGame {
         Logger.Info(`[${this.Id}] Multiplayer game maximum difficulty rating changed: ${this.MaximumDifficultyRating}`);
 
         Albatross.SendToUsers(this.Players, new ServerPacketDifficultyRangeChanged(this));
+        this.InformLobbyUsers();
+    }
+
+    /**
+     * Changes the maximum allowed length of songs for the match
+     * @param num 
+     */
+    public ChangeMaximumSongLength(num: number): void {
+        this.MaximumSongLength = num;
+        Logger.Info(`[${this.Id}] Multiplayer game maximum song length changed: ${num}`);
+
+        Albatross.SendToUsers(this.Players, new ServerPacketGameMaxSongLengthChanged(this.MaximumSongLength));
         this.InformLobbyUsers();
     }
 }
