@@ -18,6 +18,8 @@ import Logger from "../logging/Logger";
 import ServerPacketGameStartCountdown from "../packets/server/ServerPacketGameStartCountdown";
 import ServerPacketGameStopCountdown from "../packets/server/ServerPacketGameStopCountdown";
 import ServerPacketDifficultyRangeChanged from "../packets/server/ServerPacketGameDifficultyRangeChanged";
+import ServerPacketGameMaxSongLengthChanged from "../packets/server/ServerPacketGameMaxSongLengthChanged";
+import ServerPacketGameAllowedModesChanged from "../packets/server/ServerPacketGameAllowedGameModesChanged";
 const md5 = require("md5");
 
 @JsonObject("MultiplayerGame")
@@ -154,6 +156,18 @@ export default class MultiplayerGame {
     public MaximumDifficultyRating: number = 9999;
 
     /**
+     * The maximum length allowed for songs in the lobby
+     */
+    @JsonProperty("maxl")
+    public MaximumSongLength: number = 999999999;
+
+    /**
+     * The game modes that are allowed to be selected in this multiplayer match
+     */
+    @JsonProperty("ag")
+    public AllowedGameModes: GameMode[] = [GameMode.Keys4, GameMode.Keys7];
+
+    /**
      * The players that are currently in the game
      */
     public Players: User[] = [];
@@ -230,6 +244,8 @@ export default class MultiplayerGame {
         game.CountdownTimer = -1;
         game.MinimumDifficultyRating = 0;
         game.MaximumDifficultyRating = 9999;
+        game.MaximumSongLength = 999999999;
+        game.AllowedGameModes = [GameMode.Keys4, GameMode.Keys7];
         game.Password = password;
         if (password) game.HasPassword = true;
 
@@ -291,8 +307,13 @@ export default class MultiplayerGame {
      * Changes the selected map of the game
      */
     public ChangeMap(md5: string, mapId: number, mapsetId: number, map: string, mode: GameMode, difficulty: number): void {
+        // Prevent diffs not in range
         if (difficulty < this.MinimumDifficultyRating || difficulty > this.MaximumDifficultyRating)
             return Logger.Warning(`[${this.Id}] Multiplayer map change failed. Difficulty rating not in min-max range.`);
+
+        // Prevent disallowed game modes
+        if (!this.AllowedGameModes.includes(mode))
+            return Logger.Warning(`[${this.Id}] Multiplayer map change failed. Game mode not allowed`);
 
         this.MapMd5 = md5;
         this.MapId = mapId;
@@ -460,6 +481,48 @@ export default class MultiplayerGame {
         Logger.Info(`[${this.Id}] Multiplayer game maximum difficulty rating changed: ${this.MaximumDifficultyRating}`);
 
         Albatross.SendToUsers(this.Players, new ServerPacketDifficultyRangeChanged(this));
+        this.InformLobbyUsers();
+    }
+
+    /**
+     * Changes the maximum allowed length of songs for the match
+     * @param num 
+     */
+    public ChangeMaximumSongLength(num: number): void {
+        this.MaximumSongLength = num;
+        Logger.Info(`[${this.Id}] Multiplayer game maximum song length changed: ${num}`);
+
+        Albatross.SendToUsers(this.Players, new ServerPacketGameMaxSongLengthChanged(this.MaximumSongLength));
+        this.InformLobbyUsers();
+    }
+
+    /**
+     * Allows a game mode to be selected for this game mode.
+     * @param mode 
+     */
+    public AllowGameMode(mode: GameMode): void {
+        if (this.AllowedGameModes.includes(mode))
+            return;
+
+        this.AllowedGameModes.push(mode);
+        Logger.Info(`[${this.Id}] Allowed game mode: ${mode} for this multiplayer game.`);
+
+        Albatross.SendToUsers(this.Players, new ServerPacketGameAllowedModesChanged(this));
+        this.InformLobbyUsers();
+    }
+
+    /**
+     * Disallows a game mode to be selected for this game mode.
+     * @param mode 
+     */
+    public DisallowGameMode(mode: GameMode): void {
+        if (!this.AllowedGameModes.includes(mode))
+            return;
+
+        this.AllowedGameModes = this.AllowedGameModes.filter(x => x != mode);
+        Logger.Info(`[${this.Id}] Disallowed game mode: ${mode} for this multiplayer game.`);
+
+        Albatross.SendToUsers(this.Players, new ServerPacketGameAllowedModesChanged(this));
         this.InformLobbyUsers();
     }
 }

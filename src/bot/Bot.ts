@@ -13,6 +13,7 @@ import MultiplayerGame from "../multiplayer/MutliplayerGame";
 import MultiplayerGameType from "../multiplayer/MultiplayerGameType";
 import MultiplayerGameRuleset from "../multiplayer/MultiplayerGameRuleset";
 import GameMode from "../enums/GameMode";
+import GameModeHelper from "../utils/GameModeHelper";
 const config = require("../config/config.json");
 
 export default class Bot {
@@ -442,27 +443,27 @@ export default class Bot {
         switch (args[0]) {
             // Starts the match immediately.
             case "start":
-                if (!sender.CurrentGame.Host || args.length < 2)
+                if (!sender.CurrentGame.Host)
                     return;              
 
                 sender.CurrentGame.Start();
                 break;
             // Starts the match countdown
             case "startcountdown":
-                if (!sender.CurrentGame.Host || args.length < 2)
+                if (!sender.CurrentGame.Host)
                     return;              
 
                 sender.CurrentGame.StartMatchCountdown();
                 break;
             // Ends the match
             case "end":
-                if (!sender.CurrentGame.Host || args.length < 2)
+                if (!sender.CurrentGame.Host)
                     return;  
                  
                 sender.CurrentGame.End();         
                 break;       
             case "stopcountdown":
-                if (!sender.CurrentGame.Host || args.length < 2)
+                if (!sender.CurrentGame.Host)
                     return;
 
                 sender.CurrentGame.StopMatchCountdown();
@@ -507,7 +508,7 @@ export default class Bot {
                 if (!sender.CurrentGame.Host || args.length < 2)
                     return;
 
-                const maxDiff = parseFloat(args[1]);
+                const maxDiff = parseInt(args[1]);
 
                 if (isNaN(maxDiff) || maxDiff < 0)
                     return await Bot.SendMessage(game.GetChatChannelName(), "The maximum difficulty number must be a number and 0 or greater.");
@@ -517,6 +518,54 @@ export default class Bot {
 
                 game.ChangeMaximumDifficulty(maxDiff);
                 await Bot.SendMessage(game.GetChatChannelName(), `The maximum difficulty has been changed to: ${maxDiff}.`);             
+                break;
+            // Changes the maximum length requirement of the song
+            case "maxlength":
+                if (!sender.CurrentGame.Host || args.length < 2)
+                    return;
+
+                const length = parseInt(args[1]);
+
+                if (isNaN(length) || length <= 0)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "The maximum length must be greater than 0 seconds.");
+
+                game.ChangeMaximumSongLength(length);
+                await Bot.SendMessage(game.GetChatChannelName(), `The maximum length allowed for this game has been changed to: ${length} seconds.`);
+                break;
+            // Allows maps for a specific game mode to be selected
+            case "allowmode":
+                if (!sender.CurrentGame.Host || args.length < 2)
+                    return;
+                    
+                const allowedMode: GameMode | undefined = GameModeHelper.GetGameModeFromShortString(args[1]);
+
+                if (!allowedMode)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "Invalid game mode specified! (Example: '4k' or '7k')");
+                    
+                if (game.AllowedGameModes.includes(allowedMode))
+                    return await Bot.SendMessage(game.GetChatChannelName(), "This mode is already allowed for this match!");
+
+                game.AllowGameMode(allowedMode);
+                await Bot.SendMessage(game.GetChatChannelName(), "Game mode has been successfully allowed for this multiplayer match.");
+                break;
+            // Disallows maps for a specific game mode to be selected
+            case "disallowmode":
+                if (!sender.CurrentGame.Host || args.length < 2)
+                    return;
+
+                const disallowedMode: GameMode | undefined = GameModeHelper.GetGameModeFromShortString(args[1]);
+
+                if (!disallowedMode)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "Invalid game mode specified! (Example: '4k' or '7k')");
+                    
+                if (!game.AllowedGameModes.includes(disallowedMode))
+                    return await Bot.SendMessage(game.GetChatChannelName(), "This mode isn't currently allowed!");
+
+                if (game.AllowedGameModes.length == 1)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "You cannot disallow this game mode because there will be none allowed!");
+
+                game.DisallowGameMode(disallowedMode);
+                await Bot.SendMessage(game.GetChatChannelName(), "Game mode has been successfully disallowed for this multiplayer match.");               
                 break;
         }
     }
