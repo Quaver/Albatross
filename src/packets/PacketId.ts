@@ -59,7 +59,8 @@ enum PacketId {
     ClientGameStopCountdown,
     ServerGameStopCountdown,
     ServerGameDifficultyRangeChanged,
-    ServerGameMaxSongLengthChanged
+    ServerGameMaxSongLengthChanged,
+    ServerGameAllowedModesChanged
 }
 
 export default PacketId;
