@@ -17,6 +17,7 @@ import ServerPacketGamePlayerNotReady from "../packets/server/ServerPacketGamePl
 import Logger from "../logging/Logger";
 import ServerPacketGameStartCountdown from "../packets/server/ServerPacketGameStartCountdown";
 import ServerPacketGameStopCountdown from "../packets/server/ServerPacketGameStopCountdown";
+import ServerPacketDifficultyRangeChanged from "../packets/server/ServerPacketGameDifficultyRangeChanged";
 const md5 = require("md5");
 
 @JsonObject("MultiplayerGame")
@@ -141,6 +142,18 @@ export default class MultiplayerGame {
     public CountdownStartTime: number = -1;
 
     /**
+     * The minimium difficulty rating allowed for maps in this lobby
+     */
+    @JsonProperty("mind")
+    public MinimumDifficultyRating: number = 0;
+
+    /**
+     * THe maximum difficulty rating allowed for maps in this lobby
+     */
+    @JsonProperty("maxd")
+    public MaximumDifficultyRating: number = 9999;
+
+    /**
      * The players that are currently in the game
      */
     public Players: User[] = [];
@@ -214,6 +227,9 @@ export default class MultiplayerGame {
         game.GameMode = mode;
         game.DifficultyRating = difficultyRating;
         game.InProgress = false;
+        game.CountdownTimer = -1;
+        game.MinimumDifficultyRating = 0;
+        game.MaximumDifficultyRating = 9999;
         game.Password = password;
         if (password) game.HasPassword = true;
 
@@ -275,6 +291,9 @@ export default class MultiplayerGame {
      * Changes the selected map of the game
      */
     public ChangeMap(md5: string, mapId: number, mapsetId: number, map: string, mode: GameMode, difficulty: number): void {
+        if (difficulty < this.MinimumDifficultyRating || difficulty > this.MaximumDifficultyRating)
+            return Logger.Warning(`[${this.Id}] Multiplayer map change failed. Difficulty rating not in min-max range.`);
+
         this.MapMd5 = md5;
         this.MapId = mapId;
         this.MapsetId = mapsetId;
@@ -411,6 +430,36 @@ export default class MultiplayerGame {
      */
     public InformPlayerNotReady(user: User): void {
         Albatross.SendToUsers(this.Players, new ServerPacketGamePlayerNotReady(user));
+        this.InformLobbyUsers();
+    }
+
+    /**
+     * Returns the name of the multiplayer chat channel w/ its unique id.
+     */
+    public GetChatChannelName(): string { 
+        return `#multiplayer_${this.Id}`;
+    }
+
+    /**
+     * Changes the minimum difficulty rating allowed for the match
+     * @param num 
+     */
+    public ChangeMinimumDifficulty(num: number): void {
+        this.MinimumDifficultyRating = num;
+        Logger.Info(`[${this.Id}] Multiplayer game minimum difficulty rating changed: ${this.MinimumDifficultyRating}`);
+
+        Albatross.SendToUsers(this.Players, new ServerPacketDifficultyRangeChanged(this));
+        this.InformLobbyUsers();
+    }
+
+    /**
+     * Changes the maximum difficulty rating allowed for the match
+     */
+    public ChangeMaximumDifficulty(num: number): void {
+        this.MaximumDifficultyRating = num;
+        Logger.Info(`[${this.Id}] Multiplayer game maximum difficulty rating changed: ${this.MaximumDifficultyRating}`);
+
+        Albatross.SendToUsers(this.Players, new ServerPacketDifficultyRangeChanged(this));
         this.InformLobbyUsers();
     }
 }

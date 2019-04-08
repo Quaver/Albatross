@@ -114,75 +114,9 @@ export default class Bot {
             case "mute":
                 await Bot.ExecuteMuteCommand(sender, to, args);
                 break;
-            case "start":
-                if (sender.CurrentGame) {
-                    if (sender.CurrentGame.Host == sender)
-                        sender.CurrentGame.Start();
-                }
+            case "mp":
+                await Bot.HandleMultiplayerCommands(sender, to, args);
                 break;
-            case "host":
-                if (sender.CurrentGame) {
-                    if (sender.CurrentGame.Host == sender) {
-                        if (args.length == 0)
-                            return;
-
-                        const targetUsername: string = args[0].replace(/_/g, " ");
-                        const target: User = Albatross.Instance.OnlineUsers.GetUserByUsername(targetUsername);
-
-                        if (!target)
-                            return;
-
-                        if (target.CurrentGame == sender.CurrentGame)
-                            sender.CurrentGame.ChangeHost(target);
-                    }
-                }
-                break;
-            case "end":
-                if (sender.CurrentGame) {
-                    if (sender.CurrentGame.Host == sender)
-                        sender.CurrentGame.End();
-                }
-                break;
-            case "starttimer":
-                if (sender.CurrentGame) {
-                    if (sender.CurrentGame.Host == sender)
-                        sender.CurrentGame.StartMatchCountdown();
-                }
-                break;
-            /*case "d":
-                for (let i in Lobby.Games) {
-                    Lobby.DeleteGame(Lobby.Games[i]);
-                    break;
-                }
-                break;
-            case "dall":
-                for (let i in Lobby.Games) {
-                    Lobby.DeleteGame(Lobby.Games[i]);
-                }
-                break;
-            case "a":
-                for (let i = 0; i < 100; i++) {
-                    Lobby.CreateGame(MultiplayerGame.Create(MultiplayerGameType.Friendly, "Game: " + i.toString(), i % 2 == 0 ? "test" : null, 16, "none", i, i + 1, "Artist - Title [meme]",
-                    MultiplayerGameRuleset.Free_For_All, false, GameMode.Keys4, 60.21));
-                }
-                break;
-            case "u":
-                for (let i in Lobby.Games) {
-                    Lobby.Games[i].ChangeName("My Game");
-                }
-                break;
-            case "cm":
-                for (let i in Lobby.Games) {
-                    Lobby.Games[i].ChangeMap("none", 150, 150, "New Artist - New Title [New Diff]", GameMode.Keys7, 1.00);
-                    break;
-                }
-                break;
-            case "cp":
-                for (let i in Lobby.Games) {
-                    Lobby.Games[i].ChangePassword(null);
-                    break;
-                }
-                break;*/
         }
     }
 
@@ -488,5 +422,102 @@ export default class Bot {
      */
     private static async ShowInvalidMuteCommandMessage(to: string): Promise<void> {
         await Bot.SendMessage(to, `Invalid command usage. Try using it like '!mute <user_name> <length> <s/m/h/d> <reason>'.`);
+    }
+
+    /**
+     * Handles multiplayer lobby commands
+     * @param sender 
+     * @param to 
+     * @param args 
+     */
+    private static async HandleMultiplayerCommands(sender: User, to: string, args: string[]): Promise<void> {
+        if (args.length == 0)
+            return;
+
+        if (!sender.CurrentGame)
+            return;
+
+        const game: MultiplayerGame = sender.CurrentGame;
+
+        switch (args[0]) {
+            // Starts the match immediately.
+            case "start":
+                if (!sender.CurrentGame.Host || args.length < 2)
+                    return;              
+
+                sender.CurrentGame.Start();
+                break;
+            // Starts the match countdown
+            case "startcountdown":
+                if (!sender.CurrentGame.Host || args.length < 2)
+                    return;              
+
+                sender.CurrentGame.StartMatchCountdown();
+                break;
+            // Ends the match
+            case "end":
+                if (!sender.CurrentGame.Host || args.length < 2)
+                    return;  
+                 
+                sender.CurrentGame.End();         
+                break;       
+            case "stopcountdown":
+                if (!sender.CurrentGame.Host || args.length < 2)
+                    return;
+
+                sender.CurrentGame.StopMatchCountdown();
+                break;         
+            // Changes the map's host 
+            case "host":
+                if (!sender.CurrentGame.Host || args.length < 2)
+                    return;
+ 
+                const targetUsername: string = args[1].replace(/_/g, " ");
+                const target: User = Albatross.Instance.OnlineUsers.GetUserByUsername(targetUsername);
+
+                if (target == sender)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "You're already host!");
+
+                if (!target)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "That user is not online!");
+
+                if (target.CurrentGame == sender.CurrentGame)
+                    sender.CurrentGame.ChangeHost(target);
+                else
+                    return await Bot.SendMessage(game.GetChatChannelName(), "That user isn't in the game!");
+                break;
+            // Changes the minimum difficulty requirements of the match
+            case "mindiff":
+                if (!sender.CurrentGame.Host || args.length < 2)
+                    return;
+
+                const minDiff = parseFloat(args[1]);
+
+                if (isNaN(minDiff) || minDiff < 0)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "The minimum difficulty number must be a number and 0 or greater.");
+
+                if (minDiff > game.MaximumDifficultyRating)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "The minimum difficulty rating must be lower than the maximmum.");
+
+                game.ChangeMinimumDifficulty(minDiff);
+                await Bot.SendMessage(game.GetChatChannelName(), `The minimum difficulty has been changed to: ${minDiff}.`);   
+                break;
+            // Changes the maximum difficulty requirements of the match
+            case "maxdiff":
+                if (!sender.CurrentGame.Host || args.length < 2)
+                    return;
+
+                const maxDiff = parseFloat(args[1]);
+
+                if (isNaN(maxDiff) || maxDiff < 0)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "The maximum difficulty number must be a number and 0 or greater.");
+
+                if (maxDiff < game.MinimumDifficultyRating)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "The maximum difficulty rating must be greater than the minimum.");
+
+                game.ChangeMaximumDifficulty(maxDiff);
+                await Bot.SendMessage(game.GetChatChannelName(), `The maximum difficulty has been changed to: ${maxDiff}.`);             
+                break;
+        }
     }
 }
