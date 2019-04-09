@@ -257,6 +257,7 @@ export default class MultiplayerGame {
         game.MaximumSongLength = 999999999;
         game.AllowedGameModes = [GameMode.Keys4, GameMode.Keys7];
         game.Password = password;
+        game.Modifiers = "0";
         if (password) game.HasPassword = true;
 
         return game;
@@ -539,7 +540,10 @@ export default class MultiplayerGame {
     /**
      * Changes the modifiers for the game & advertised difficulty rating
      */
-    public ChangeModifiers(mods: string, difficultyRating: number): void {
+    public ChangeModifiers(mods: string | any, difficultyRating: number): void {
+        if (isNaN(mods))
+            return Logger.Warning(`[${this.Id}] Multiplayer Mods Can't Be Changed (Mods given was NaN).`);
+
         this.Modifiers = mods;
         this.DifficultyRating = difficultyRating;
         Logger.Info(`[${this.Id}] Multiplayer Game Mods Changed: ${this.Modifiers} | Rating: ${difficultyRating}`);
