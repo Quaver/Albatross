@@ -406,7 +406,7 @@ export default class Bot {
      * @param to 
      * @param message 
      */
-    private static async SendMessage(to: string, message: string): Promise<void> {
+    public static async SendMessage(to: string, message: string): Promise<void> {
         await ChatManager.SendMessage(Bot.User, to, message);
     } 
 
