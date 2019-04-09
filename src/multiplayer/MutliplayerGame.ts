@@ -20,6 +20,10 @@ import ServerPacketGameStopCountdown from "../packets/server/ServerPacketGameSto
 import ServerPacketDifficultyRangeChanged from "../packets/server/ServerPacketGameDifficultyRangeChanged";
 import ServerPacketGameMaxSongLengthChanged from "../packets/server/ServerPacketGameMaxSongLengthChanged";
 import ServerPacketGameAllowedModesChanged from "../packets/server/ServerPacketGameAllowedGameModesChanged";
+import ModIdentifiers from "../enums/ModIdentifiers";
+import ServerPacketGameChangeModifiers from "../packets/server/ServerPacketGameChangeModifiers";
+import Bot from "../bot/Bot";
+import ModHelper from "../utils/ModHelper";
 const md5 = require("md5");
 
 @JsonObject("MultiplayerGame")
@@ -166,6 +170,12 @@ export default class MultiplayerGame {
      */
     @JsonProperty("ag")
     public AllowedGameModes: GameMode[] = [GameMode.Keys4, GameMode.Keys7];
+
+    /**
+     * The currently activated mods for the match
+     */
+    @JsonProperty("md")
+    public Modifiers: string = "0";
 
     /**
      * The players that are currently in the game
@@ -523,6 +533,18 @@ export default class MultiplayerGame {
         Logger.Info(`[${this.Id}] Disallowed game mode: ${mode} for this multiplayer game.`);
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameAllowedModesChanged(this));
+        this.InformLobbyUsers();
+    }
+
+    /**
+     * Changes the modifiers for the game & advertised difficulty rating
+     */
+    public ChangeModifiers(mods: string, difficultyRating: number): void {
+        this.Modifiers = mods;
+        this.DifficultyRating = difficultyRating;
+        Logger.Info(`[${this.Id}] Multiplayer Game Mods Changed: ${this.Modifiers} | Rating: ${difficultyRating}`);
+
+        Albatross.SendToUsers(this.Players, new ServerPacketGameChangeModifiers(this));
         this.InformLobbyUsers();
     }
 }
