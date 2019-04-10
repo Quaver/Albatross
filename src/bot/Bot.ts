@@ -14,6 +14,8 @@ import MultiplayerGameType from "../multiplayer/MultiplayerGameType";
 import MultiplayerGameRuleset from "../multiplayer/MultiplayerGameRuleset";
 import GameMode from "../enums/GameMode";
 import GameModeHelper from "../utils/GameModeHelper";
+import MultiplayerFreeModType from "../multiplayer/MultiplayerFreeModType";
+import Logger from "../logging/Logger";
 const config = require("../config/config.json");
 
 export default class Bot {
@@ -566,6 +568,18 @@ export default class Bot {
 
                 game.DisallowGameMode(disallowedMode);
                 await Bot.SendMessage(game.GetChatChannelName(), "Game mode has been successfully disallowed for this multiplayer match.");               
+                break;
+            case "freemod":
+                if (!sender.CurrentGame.Host)
+                    return;
+
+                if ((game.FreeModType & MultiplayerFreeModType.Regular) != 0) {
+                    game.DisableFreeModType(MultiplayerFreeModType.Regular);
+                    await Bot.SendMessage(game.GetChatChannelName(), "Free Mod has been disabled for this match.");
+                } else {
+                    game.EnableFreeModType(MultiplayerFreeModType.Regular);
+                    await Bot.SendMessage(game.GetChatChannelName(), "Free Mod has been enabled for this match.");
+                }
                 break;
         }
     }
