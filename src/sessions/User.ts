@@ -37,6 +37,7 @@ import ServerPacketGameNoMap from "../packets/server/ServerPacketGameNoMap";
 import ServerPacketGamePlayerHasMap from "../packets/server/ServerPacketGamePlayerHasMap";
 import ServerPacketGameJudgements from "../packets/server/ServerPacketGameJudgements";
 import ServerPacketAllPlayersLoaded from "../packets/server/ServerPacketAllPlayersLoaded";
+import MultiplayerPlayerMods from "../multiplayer/MultiplayerPlayerMods";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -389,6 +390,7 @@ export default class User implements IPacketWritable, IStringifyable {
         this.CurrentGame = game;
         game.Players.push(this);
         game.PlayerIds.push(this.Id);
+        game.PlayerMods.push(new MultiplayerPlayerMods(this, "0"));
 
         this.JoinChatChannel(ChatManager.Channels[`#multiplayer_${game.Id}`]);
 
@@ -415,6 +417,7 @@ export default class User implements IPacketWritable, IStringifyable {
         _.remove(game.PlayersGameStartedWith, this);
         _.remove(game.PlayersWithGameScreenLoaded, this);
         _.remove(game.PlayersSkipped, this);
+        game.PlayerMods = game.PlayerMods.filter((x: MultiplayerPlayerMods) => x.Id != this.Id);
         game.PlayerIds = game.PlayerIds.filter((x: number) => x != this.Id);
         game.PlayersReady = game.PlayersReady.filter((x: number) => x != this.Id);
         this.LeaveChatChannel(ChatManager.Channels[`#multiplayer_${game.Id}`]);

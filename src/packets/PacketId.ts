@@ -62,7 +62,10 @@ enum PacketId {
     ServerGameMaxSongLengthChanged,
     ServerGameAllowedModesChanged,
     ClientGameChangeModifiers,
-    ServerGameChangeModifiers
+    ServerGameChangeModifiers,
+    ServerGameFreeModTypeChanged,
+    ClientGamePlayerChangeModifiers,
+    ServerGamePlayerChangeModifiers
 }
 
 export default PacketId;

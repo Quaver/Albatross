@@ -24,6 +24,10 @@ import ModIdentifiers from "../enums/ModIdentifiers";
 import ServerPacketGameChangeModifiers from "../packets/server/ServerPacketGameChangeModifiers";
 import Bot from "../bot/Bot";
 import ModHelper from "../utils/ModHelper";
+import MultiplayerFreeModType from "./MultiplayerFreeModType";
+import ServerPacketFreeModTypeChanged from "../packets/server/ServerPacketFreeModTypeChanged";
+import MultiplayerPlayerMods from "./MultiplayerPlayerMods";
+import ServerPacketGamePlayerChangeModifiers from "../packets/server/ServerPacketGamePlayerChangeModifiers";
 const md5 = require("md5");
 
 @JsonObject("MultiplayerGame")
@@ -178,6 +182,18 @@ export default class MultiplayerGame {
     public Modifiers: string = "0";
 
     /**
+     *  Free mod & which type is enabled for this match
+     */
+    @JsonProperty("fm")
+    public FreeModType: MultiplayerFreeModType = 0;
+
+    /**
+     * The modifiers that each individual player has activated (in free mod)
+     */
+    @JsonProperty("pm")
+    public PlayerMods: MultiplayerPlayerMods[] = [];
+
+    /**
      * The players that are currently in the game
      */
     public Players: User[] = [];
@@ -258,6 +274,8 @@ export default class MultiplayerGame {
         game.AllowedGameModes = [GameMode.Keys4, GameMode.Keys7];
         game.Password = password;
         game.Modifiers = "0";
+        game.FreeModType = MultiplayerFreeModType.None;
+        game.PlayerMods = [];
         if (password) game.HasPassword = true;
 
         return game;
@@ -549,6 +567,58 @@ export default class MultiplayerGame {
         Logger.Info(`[${this.Id}] Multiplayer Game Mods Changed: ${this.Modifiers} | Rating: ${difficultyRating}`);
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameChangeModifiers(this));
+        this.InformLobbyUsers();
+    }
+
+    /**
+     * Changes the modifiers for an individual player
+     * @param mods 
+     */
+    public ChangePlayerModifiers(user: User, mods: string | any): void {
+        if (this.FreeModType == 0)
+            return Logger.Warning(`[${this.Id}] Multiplayer - ${user.ToNameIdString()} Mods Can't Be Changed (Free Mod Not Enabled).`);
+
+        if (isNaN(mods))
+            return Logger.Warning(`[${this.Id}] Multiplayer - ${user.ToNameIdString()} Mods Can't Be Changed (Mods given was NaN).`);
+
+        const playerMods: MultiplayerPlayerMods | undefined = this.PlayerMods.find(x => x.Id == user.Id);
+
+        if (!playerMods)
+            return Logger.Warning(`[${this.Id}] Multiplayer - ${user.ToNameIdString()} Mods Can't Be Changed (Player Mods don't exist???).`);
+
+        playerMods.Mods = mods;
+        Logger.Info(`[${this.Id}] Multiplayer - ${user.ToNameIdString()} <pds Changed: ${playerMods.Mods}.`);
+
+        Albatross.SendToUsers(this.Players, new ServerPacketGamePlayerChangeModifiers(user, mods));
+        this.InformLobbyUsers();
+    }
+
+    /**
+     * Enables a specific free mod type for the match
+     */
+    public EnableFreeModType(type: MultiplayerFreeModType): void {
+        if ((this.FreeModType & type) != 0)
+            return;
+
+        this.FreeModType |= type;
+        
+
+        Albatross.SendToUsers(this.Players, new ServerPacketFreeModTypeChanged(this));
+        this.ChangeModifiers("0", this.DifficultyRating);
+        this.InformLobbyUsers();
+    }
+
+    /**
+     * Disables a specific free mod type for the match
+     * @param type 
+     */
+    public DisableFreeModType(type: MultiplayerFreeModType): void {
+        if ((this.FreeModType & type) != 0) {
+            this.FreeModType -= type;
+        }
+
+        Albatross.SendToUsers(this.Players, new ServerPacketFreeModTypeChanged(this));
+        this.ChangeModifiers("0", this.DifficultyRating);
         this.InformLobbyUsers();
     }
 }
