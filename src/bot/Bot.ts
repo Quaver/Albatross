@@ -575,10 +575,22 @@ export default class Bot {
 
                 if ((game.FreeModType & MultiplayerFreeModType.Regular) != 0) {
                     game.DisableFreeModType(MultiplayerFreeModType.Regular);
-                    await Bot.SendMessage(game.GetChatChannelName(), "Free Mod has been disabled for this match.");
+                    await Bot.SendMessage(game.GetChatChannelName(), "Free Mod has been disabled for this match. All player mods have been reset!");
                 } else {
                     game.EnableFreeModType(MultiplayerFreeModType.Regular);
-                    await Bot.SendMessage(game.GetChatChannelName(), "Free Mod has been enabled for this match.");
+                    await Bot.SendMessage(game.GetChatChannelName(), "Free Mod has been enabled for this match. All player mods have been reset!");
+                }
+                break;
+            case "freerate":
+                if (!sender.CurrentGame.Host)
+                    return;
+
+                if ((game.FreeModType & MultiplayerFreeModType.Rate) != 0) {
+                    game.DisableFreeModType(MultiplayerFreeModType.Rate);
+                    await Bot.SendMessage(game.GetChatChannelName(), "Free Rate has been disabled for this match. All player mods have been reset!");
+                } else {
+                    game.EnableFreeModType(MultiplayerFreeModType.Rate);
+                    await Bot.SendMessage(game.GetChatChannelName(), "Free Rate has been enabled for this match. All player mods have been reset!");
                 }
                 break;
         }

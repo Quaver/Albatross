@@ -574,8 +574,8 @@ export default class MultiplayerGame {
      * Changes the modifiers for an individual player
      * @param mods 
      */
-    public ChangePlayerModifiers(user: User, mods: string | any): void {
-        if (this.FreeModType == 0)
+    public ChangePlayerModifiers(user: User, mods: string | any, force: boolean = false): void {
+        if (this.FreeModType == 0 && !force)
             return Logger.Warning(`[${this.Id}] Multiplayer - ${user.ToNameIdString()} Mods Can't Be Changed (Free Mod Not Enabled).`);
 
         if (isNaN(mods))
@@ -602,9 +602,12 @@ export default class MultiplayerGame {
 
         this.FreeModType |= type;
         
-
         Albatross.SendToUsers(this.Players, new ServerPacketFreeModTypeChanged(this));
         this.ChangeModifiers("0", this.DifficultyRating);
+
+        for (let i = 0; i < this.Players.length; i++)
+            this.ChangePlayerModifiers(this.Players[i], "0", true);
+
         this.InformLobbyUsers();
     }
 
@@ -619,6 +622,10 @@ export default class MultiplayerGame {
 
         Albatross.SendToUsers(this.Players, new ServerPacketFreeModTypeChanged(this));
         this.ChangeModifiers("0", this.DifficultyRating);
+
+        for (let i = 0; i < this.Players.length; i++)
+            this.ChangePlayerModifiers(this.Players[i], "0", true);
+
         this.InformLobbyUsers();
     }
 }
