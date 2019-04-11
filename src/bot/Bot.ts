@@ -16,6 +16,7 @@ import GameMode from "../enums/GameMode";
 import GameModeHelper from "../utils/GameModeHelper";
 import MultiplayerFreeModType from "../multiplayer/MultiplayerFreeModType";
 import Logger from "../logging/Logger";
+import ModHelper from "../utils/ModHelper";
 const config = require("../config/config.json");
 
 export default class Bot {
@@ -575,10 +576,10 @@ export default class Bot {
 
                 if ((game.FreeModType & MultiplayerFreeModType.Regular) != 0) {
                     game.DisableFreeModType(MultiplayerFreeModType.Regular);
-                    await Bot.SendMessage(game.GetChatChannelName(), "Free Mod has been disabled for this match. All player mods have been reset!");
+                    await Bot.SendMessage(game.GetChatChannelName(), "Free Mod has been disabled for this match. All mods have been reset!");
                 } else {
                     game.EnableFreeModType(MultiplayerFreeModType.Regular);
-                    await Bot.SendMessage(game.GetChatChannelName(), "Free Mod has been enabled for this match. All player mods have been reset!");
+                    await Bot.SendMessage(game.GetChatChannelName(), "Free Mod has been enabled for this match. All mods have been reset!");
                 }
                 break;
             case "freerate":
@@ -587,11 +588,28 @@ export default class Bot {
 
                 if ((game.FreeModType & MultiplayerFreeModType.Rate) != 0) {
                     game.DisableFreeModType(MultiplayerFreeModType.Rate);
-                    await Bot.SendMessage(game.GetChatChannelName(), "Free Rate has been disabled for this match. All player mods have been reset!");
+                    await Bot.SendMessage(game.GetChatChannelName(), "Free Rate has been disabled for this match. All mods have been reset!");
                 } else {
                     game.EnableFreeModType(MultiplayerFreeModType.Rate);
-                    await Bot.SendMessage(game.GetChatChannelName(), "Free Rate has been enabled for this match. All player mods have been reset!");
+                    await Bot.SendMessage(game.GetChatChannelName(), "Free Rate has been enabled for this match. All mods have been reset!");
                 }
+                break;
+            case "playermods":
+                let playerModsString: string = "Here are all the mods each player is using:\n---------------------------\n";
+
+                for (let i = 0; i < game.Players.length; i++) {
+                    const pms = game.PlayerMods.find(x => x.Id == game.Players[i].Id);
+
+                    if (!pms)
+                        return;
+
+                    playerModsString += `${game.Players[i].Username} - ${ModHelper.GetModsString(parseInt(pms.Mods))}\n`;
+                }
+
+                await Bot.SendMessage(game.GetChatChannelName(), playerModsString);
+                break;
+            case "globalmods":
+                await Bot.SendMessage(game.GetChatChannelName(), `The currently active global mods are: ${ModHelper.GetModsString(parseInt(game.Modifiers))}`);
                 break;
         }
     }
