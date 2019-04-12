@@ -29,6 +29,7 @@ import ServerPacketFreeModTypeChanged from "../packets/server/ServerPacketFreeMo
 import MultiplayerPlayerMods from "./MultiplayerPlayerMods";
 import ServerPacketGamePlayerChangeModifiers from "../packets/server/ServerPacketGamePlayerChangeModifiers";
 import ServerPacketGameKicked from "../packets/server/ServerPacketGameKicked";
+import ServerPacketGameNameChanged from "../packets/server/ServerPacketGameNameChanged";
 const md5 = require("md5");
 
 @JsonObject("MultiplayerGame")
@@ -328,8 +329,7 @@ export default class MultiplayerGame {
     public ChangeName(name: string): void {
         this.Name = name;
 
-        // TODO: Send packet to users currently in the game.
-
+        Albatross.SendToUsers(this.Players, new ServerPacketGameNameChanged(this));
         this.InformLobbyUsers();
     }
 

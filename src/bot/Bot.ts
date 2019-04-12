@@ -612,19 +612,41 @@ export default class Bot {
                 await Bot.SendMessage(game.GetChatChannelName(), `The currently active global mods are: ${ModHelper.GetModsString(parseInt(game.Modifiers))}`);
                 break;
             case "kick":
-                if (!sender.CurrentGame.Host || args.length < 2)
+                if (!sender.CurrentGame.Host)
                     return;
                     
+                if (args.length < 2)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "You need to specify a player to kick.");
+
                 const kickTargetUsername: string = args[1].replace(/_/g, " ");
                 const kickTarget: User = Albatross.Instance.OnlineUsers.GetUserByUsername(kickTargetUsername);
 
                 if (!kickTarget)
                     return await Bot.SendMessage(game.GetChatChannelName(), "That user is not online!");
 
-                if (kickTarget.CurrentGame == sender.CurrentGame)
+                if (kickTarget.CurrentGame == sender.CurrentGame) {
                     sender.CurrentGame.KickPlayer(kickTarget);
+                    await Bot.SendMessage(game.GetChatChannelName(), `${kickTarget.Username} has been kicked from the game!`);
+                }
                 else
                     return await Bot.SendMessage(game.GetChatChannelName(), "That user isn't in the game!");
+                break;
+            case "name":
+                if (!sender.CurrentGame.Host)
+                    return;
+
+                if (args.length < 2)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "You need to specify a new name for the game");
+
+                args.splice(0, 1);
+
+                const name: string = args.join(" ");
+
+                if (name.length >= 100)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "The name you have specified is too long. It must be under 100 characters");
+
+                game.ChangeName(name);
+                await Bot.SendMessage(game.GetChatChannelName(), `The game name has been changed to: "${name}"`);
                 break;
         }
     }
