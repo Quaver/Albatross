@@ -28,6 +28,7 @@ import MultiplayerFreeModType from "./MultiplayerFreeModType";
 import ServerPacketFreeModTypeChanged from "../packets/server/ServerPacketFreeModTypeChanged";
 import MultiplayerPlayerMods from "./MultiplayerPlayerMods";
 import ServerPacketGamePlayerChangeModifiers from "../packets/server/ServerPacketGamePlayerChangeModifiers";
+import ServerPacketGameKicked from "../packets/server/ServerPacketGameKicked";
 const md5 = require("md5");
 
 @JsonObject("MultiplayerGame")
@@ -627,5 +628,19 @@ export default class MultiplayerGame {
             this.ChangePlayerModifiers(this.Players[i], "0", true);
 
         this.InformLobbyUsers();
+    }
+
+    /**
+     * Kicks a player from the multiplayer game
+     * @param user 
+     */
+    public KickPlayer(user: User): void {
+        if (user.CurrentGame != this)
+            return Logger.Warning(`[${this.Id}] Multiplayer - Could not kick ${user.ToNameIdString()} because they aren't in the game.`);
+
+        Logger.Info(`[${this.Id}] Multiplayer - User Kicked: ${user.ToNameIdString()}`);
+        
+        user.LeaveMultiplayerGame();
+        Albatross.SendToUser(user, new ServerPacketGameKicked());
     }
 }

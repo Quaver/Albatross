@@ -611,6 +611,21 @@ export default class Bot {
             case "globalmods":
                 await Bot.SendMessage(game.GetChatChannelName(), `The currently active global mods are: ${ModHelper.GetModsString(parseInt(game.Modifiers))}`);
                 break;
+            case "kick":
+                if (!sender.CurrentGame.Host || args.length < 2)
+                    return;
+                    
+                const kickTargetUsername: string = args[1].replace(/_/g, " ");
+                const kickTarget: User = Albatross.Instance.OnlineUsers.GetUserByUsername(kickTargetUsername);
+
+                if (!kickTarget)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "That user is not online!");
+
+                if (kickTarget.CurrentGame == sender.CurrentGame)
+                    sender.CurrentGame.KickPlayer(kickTarget);
+                else
+                    return await Bot.SendMessage(game.GetChatChannelName(), "That user isn't in the game!");
+                break;
         }
     }
 }
