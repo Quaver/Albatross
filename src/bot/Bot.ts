@@ -621,8 +621,10 @@ export default class Bot {
                 if (!kickTarget)
                     return await Bot.SendMessage(game.GetChatChannelName(), "That user is not online!");
 
-                if (kickTarget.CurrentGame == sender.CurrentGame)
+                if (kickTarget.CurrentGame == sender.CurrentGame) {
                     sender.CurrentGame.KickPlayer(kickTarget);
+                    await Bot.SendMessage(game.GetChatChannelName(), `${kickTarget.Username} has been kicked from the game!`);
+                }
                 else
                     return await Bot.SendMessage(game.GetChatChannelName(), "That user isn't in the game!");
                 break;
