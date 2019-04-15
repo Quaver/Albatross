@@ -711,7 +711,7 @@ export default class Bot {
                 rules += `Ruleset - ${MultiplayerGameRuleset[game.Ruleset]}\n`;
                 rules += `Map - ${game.Map}\n`;
                 rules += `Mods - ${ModHelper.GetModsString(parseInt(game.Modifiers))}\n`;
-                rules += `Auto Host Rotation - ${game.HostRotation}\n`;
+                rules += `Auto Host Rotation - ${game.AutoHostRotation}\n`;
                 rules += `Minimum Difficulty Rating - ${game.MinimumDifficultyRating}\n`;
                 rules += `Maximum Difficulty Rating - ${game.MaximumDifficultyRating}\n`;
                 rules += `Maximum Song Length - ${game.MaximumSongLength}\n`;
@@ -721,6 +721,13 @@ export default class Bot {
                 rules += `Lives - ${game.Lives}`;
 
                 await Bot.SendMessage(game.GetChatChannelName(), rules);
+                break;
+            case "hostrotation":
+                if (!sender.CurrentGame.Host)
+                    return;
+                    
+                game.ChangeAutoHostRotation(!game.AutoHostRotation);
+                await Bot.SendMessage(game.GetChatChannelName(), `Auto Host Rotation is now turned ${(game.AutoHostRotation ? "on" : "off")}.`);
                 break;
         }
     }

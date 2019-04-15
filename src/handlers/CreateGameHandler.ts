@@ -31,7 +31,7 @@ export default class CreateGameHandler {
                 return Logger.Warning(`${user.Username} (#${user.Id}) tried to create a game with an invalid game type.`);
 
             const game: MultiplayerGame = MultiplayerGame.Create(packet.Game.Type, packet.Game.Name, packet.Game.Password, packet.Game.MaxPlayers, 
-                packet.Game.MapMd5, packet.Game.MapId, packet.Game.MapsetId, packet.Game.Map, packet.Game.Ruleset, packet.Game.HostRotation,
+                packet.Game.MapMd5, packet.Game.MapId, packet.Game.MapsetId, packet.Game.Map, packet.Game.Ruleset, packet.Game.AutoHostRotation,
                 packet.Game.GameMode, packet.Game.DifficultyRating);
 
             // Just set the game to null to prevent accidental usage of it since we now have two games.
