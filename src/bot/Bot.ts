@@ -658,8 +658,8 @@ export default class Bot {
                 if (!inviteTarget)
                     return await Bot.SendMessage(game.GetChatChannelName(), "That user is not online!");
 
-                //if (inviteTarget.CurrentGame == sender.CurrentGame) 
-                //    return await Bot.SendMessage(game.GetChatChannelName(), `That user is already in the game!`);
+                if (inviteTarget.CurrentGame == sender.CurrentGame) 
+                    return await Bot.SendMessage(game.GetChatChannelName(), `That user is already in the game!`);
 
                 game.InvitePlayer(inviteTarget, sender);
                 return await Bot.SendMessage(game.GetChatChannelName(), `Successfully invited ${inviteTarget.Username} to the game.`);
