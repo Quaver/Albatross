@@ -340,8 +340,8 @@ export default class MultiplayerGame {
      */
     public ChangeHost(user: User, informLobbyUsers: boolean = true): void {
         // User is already host
-        //if (this.Host == user)
-        //    return;
+        if (this.Host == user)
+            return;
 
         this.Host = user;
         this.HostId = user.Id;
