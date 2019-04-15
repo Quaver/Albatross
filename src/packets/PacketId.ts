@@ -67,7 +67,9 @@ enum PacketId {
     ClientGamePlayerChangeModifiers,
     ServerGamePlayerChangeModifiers,
     ServerGameKicked,
-    ServerGameNameChanged
+    ServerGameNameChanged,
+    ServerGameInvite,
+    ClientGameAcceptInvite
 }
 
 export default PacketId;

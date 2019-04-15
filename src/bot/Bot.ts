@@ -648,6 +648,22 @@ export default class Bot {
                 game.ChangeName(name);
                 await Bot.SendMessage(game.GetChatChannelName(), `The game name has been changed to: "${name}"`);
                 break;
+             case "invite":
+                if (args.length < 2)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "You need to specify a player to invite.");
+
+                const inviteTargetUsername: string = args[1].replace(/_/g, " ");
+                const inviteTarget: User = Albatross.Instance.OnlineUsers.GetUserByUsername(inviteTargetUsername);
+
+                if (!inviteTarget)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "That user is not online!");
+
+                if (inviteTarget.CurrentGame == sender.CurrentGame) 
+                    return await Bot.SendMessage(game.GetChatChannelName(), `That user is already in the game!`);
+
+                game.InvitePlayer(inviteTarget, sender);
+                return await Bot.SendMessage(game.GetChatChannelName(), `Successfully invited ${inviteTarget.Username} to the game.`);
+                break;
         }
     }
 }

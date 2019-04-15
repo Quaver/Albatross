@@ -30,6 +30,7 @@ import MultiplayerPlayerMods from "./MultiplayerPlayerMods";
 import ServerPacketGamePlayerChangeModifiers from "../packets/server/ServerPacketGamePlayerChangeModifiers";
 import ServerPacketGameKicked from "../packets/server/ServerPacketGameKicked";
 import ServerPacketGameNameChanged from "../packets/server/ServerPacketGameNameChanged";
+import ServerPacketGameInvite from "../packets/server/ServerPacketGameInvite";
 const md5 = require("md5");
 
 @JsonObject("MultiplayerGame")
@@ -240,6 +241,11 @@ export default class MultiplayerGame {
      * The physical countdown timeout handler.
      */
     public CountdownTimer: any;
+
+    /**
+     * A list of players that have been invited to the game
+     */
+    public PlayersInvited: User[] = [];
 
     /**
      * Creates and returns a multiplayer game
@@ -640,7 +646,19 @@ export default class MultiplayerGame {
 
         Logger.Info(`[${this.Id}] Multiplayer - User Kicked: ${user.ToNameIdString()}`);
         
+        _.remove(this.PlayersInvited, user);
         user.LeaveMultiplayerGame();
         Albatross.SendToUser(user, new ServerPacketGameKicked());
+    }
+
+    /**
+     * Invites a player the multiplayer game
+     * @param invitee 
+     */
+    public InvitePlayer(invitee: User, sender: User): void {
+        if (!this.PlayersInvited.includes(invitee))
+            this.PlayersInvited.push(invitee);
+
+        Albatross.SendToUser(invitee, new ServerPacketGameInvite(this, sender));
     }
 }
