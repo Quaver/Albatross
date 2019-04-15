@@ -704,6 +704,23 @@ export default class Bot {
                 game.ChangeLivesCount(lives);
                 await Bot.SendMessage(game.GetChatChannelName(), `Life count has now been changed to: ${lives}.`);
                 break;
+            case "rules":
+                let rules: string = "Multiplayer Game Rules:\n" + 
+                                        "----------------\n";
+                
+                rules += `Ruleset - ${MultiplayerGameRuleset[game.Ruleset]}\n`;
+                rules += `Map - ${game.Map}\n`;
+                rules += `Host Rotation - ${game.HostRotation}\n`;
+                rules += `Minimum Difficulty Rating - ${game.MinimumDifficultyRating}\n`;
+                rules += `Maximum Difficulty Rating - ${game.MaximumDifficultyRating}\n`;
+                rules += `Maximum Song Length - ${game.MaximumSongLength}\n`;
+                rules += `Allowed Game Modes - ${game.AllowedGameModes.join(", ")}\n`;
+                rules += `Free Mod Type - ${game.FreeModType}\n`;
+                rules += `Health Type - ${game.HealthType}\n`;
+                rules += `Lives - ${game.Lives}`;
+
+                await Bot.SendMessage(game.GetChatChannelName(), rules);
+                break;
         }
     }
 }
