@@ -31,6 +31,9 @@ import ServerPacketGamePlayerChangeModifiers from "../packets/server/ServerPacke
 import ServerPacketGameKicked from "../packets/server/ServerPacketGameKicked";
 import ServerPacketGameNameChanged from "../packets/server/ServerPacketGameNameChanged";
 import ServerPacketGameInvite from "../packets/server/ServerPacketGameInvite";
+import MultiplayerHealthType from "./MultiplayerHealthType";
+import ServerPacketGameHealthTypeChanged from "../packets/server/ServerPacketGameHealthTypeChanged";
+import ServerPacketGameLivesChanged from "../packets/server/ServerPacketGameLivesChanged";
 const md5 = require("md5");
 
 @JsonObject("MultiplayerGame")
@@ -197,6 +200,18 @@ export default class MultiplayerGame {
     public PlayerMods: MultiplayerPlayerMods[] = [];
 
     /**
+     * The way health is handled in this multiplayer game
+     */
+    @JsonProperty("ht")
+    public HealthType: MultiplayerHealthType = MultiplayerHealthType.ManualRegeneration;
+
+    /**
+     * The amount of lives for each player in the multiplayer game
+     */
+    @JsonProperty("lv")
+    public Lives: number = 3;
+
+    /**
      * The players that are currently in the game
      */
     public Players: User[] = [];
@@ -284,6 +299,8 @@ export default class MultiplayerGame {
         game.Modifiers = "0";
         game.FreeModType = MultiplayerFreeModType.None;
         game.PlayerMods = [];
+        game.HealthType = MultiplayerHealthType.ManualRegeneration;
+        game.Lives = 3;
         if (password) game.HasPassword = true;
 
         return game;
@@ -660,5 +677,36 @@ export default class MultiplayerGame {
             this.PlayersInvited.push(invitee);
 
         Albatross.SendToUser(invitee, new ServerPacketGameInvite(this, sender));
+    }
+
+    /**
+     * Changes the health type ofthe multiplayer game
+     * @param type 
+     */
+    public ChangeHealthType(type: MultiplayerHealthType): void {
+        if (this.InProgress)
+            return Logger.Warning(`[${this.Id}] Multiplayer - Tried to change health type, but the game is already in progress.`);
+
+        this.HealthType = type;
+
+        Albatross.SendToUsers(this.Players, new ServerPacketGameHealthTypeChanged(this));
+        this.InformLobbyUsers();
+    }
+
+    /**
+     * Changes the amount of lives in the game.
+     * @param lives 
+     */
+    public ChangeLivesCount(lives: number): void {
+        if (this.InProgress)
+            return Logger.Warning(`[${this.Id}] Multiplayer - Tried to change life count, but the game is already in progress.`);
+
+        if (lives <= 0 || lives > Number.MAX_VALUE)
+            return Logger.Warning(`[${this.Id}] Multiplayer - Tried to change life count, but number isn't in range: ${lives}`);
+
+        this.Lives = lives;
+
+        Albatross.SendToUsers(this.Players, new ServerPacketGameLivesChanged(this));
+        this.InformLobbyUsers();
     }
 }
