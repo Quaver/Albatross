@@ -17,6 +17,7 @@ import GameModeHelper from "../utils/GameModeHelper";
 import MultiplayerFreeModType from "../multiplayer/MultiplayerFreeModType";
 import Logger from "../logging/Logger";
 import ModHelper from "../utils/ModHelper";
+import MultiplayerHealthType from "../multiplayer/MultiplayerHealthType";
 const config = require("../config/config.json");
 
 export default class Bot {
@@ -663,6 +664,63 @@ export default class Bot {
 
                 game.InvitePlayer(inviteTarget, sender);
                 return await Bot.SendMessage(game.GetChatChannelName(), `Successfully invited ${inviteTarget.Username} to the game.`);
+                break;
+            case "health":
+                if (!sender.CurrentGame.Host)
+                    return;
+
+                if (args.length < 2)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "You must specify either `regen` or `lives`.");
+
+                switch (args[1].toLowerCase()) {
+                    case "regen":
+                        game.ChangeHealthType(MultiplayerHealthType.ManualRegeneration);
+                        await Bot.SendMessage(game.GetChatChannelName(), "Health type has been changed to: 'Manual Regeneration.'");
+                        break;
+                    case "lives":
+                        game.ChangeHealthType(MultiplayerHealthType.Lives);
+                        await Bot.SendMessage(game.GetChatChannelName(), `Health type has been changed to: 'Lives (${game.Lives}).'`);
+                        break;
+                }
+                break;
+            case "lives":
+                if (!sender.CurrentGame.Host)
+                    return;
+
+                if (game.HealthType != MultiplayerHealthType.Lives)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "You cannot change the number of lives if the health type is Manual Regeneration.");
+
+                if (args.length < 2)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "You must specify a number of lives.");
+
+                const lives: any = parseInt(args[1]);
+
+                if (isNaN(lives))
+                    return await Bot.SendMessage(game.GetChatChannelName(), "You must specify a valid number of lives.");
+
+                if (lives <= 0 || lives > Number.MAX_VALUE)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "Number of lives must be greater than 0 and less than 2 billion.");
+
+                game.ChangeLivesCount(lives);
+                await Bot.SendMessage(game.GetChatChannelName(), `Life count has now been changed to: ${lives}.`);
+                break;
+            case "rules":
+                let rules: string = "Multiplayer Game Rules:\n" + 
+                                        "----------------\n";
+                
+                rules += `Ruleset - ${MultiplayerGameRuleset[game.Ruleset]}\n`;
+                rules += `Map - ${game.Map}\n`;
+                rules += `Mods - ${ModHelper.GetModsString(parseInt(game.Modifiers))}\n`;
+                rules += `Auto Host Rotation - ${game.HostRotation}\n`;
+                rules += `Minimum Difficulty Rating - ${game.MinimumDifficultyRating}\n`;
+                rules += `Maximum Difficulty Rating - ${game.MaximumDifficultyRating}\n`;
+                rules += `Maximum Song Length - ${game.MaximumSongLength}\n`;
+                rules += `Allowed Game Modes - ${game.AllowedGameModes.join(", ")}\n`;
+                rules += `Free Mod Type - ${game.FreeModType}\n`;
+                rules += `Health Type - ${game.HealthType}\n`;
+                rules += `Lives - ${game.Lives}`;
+
+                await Bot.SendMessage(game.GetChatChannelName(), rules);
                 break;
         }
     }
