@@ -34,6 +34,7 @@ import ServerPacketGameInvite from "../packets/server/ServerPacketGameInvite";
 import MultiplayerHealthType from "./MultiplayerHealthType";
 import ServerPacketGameHealthTypeChanged from "../packets/server/ServerPacketGameHealthTypeChanged";
 import ServerPacketGameLivesChanged from "../packets/server/ServerPacketGameLivesChanged";
+import ServerPacketGameHostRotationChanged from "../packets/server/ServerPacketGameHostRotationChanged";
 const md5 = require("md5");
 
 @JsonObject("MultiplayerGame")
@@ -119,7 +120,7 @@ export default class MultiplayerGame {
      * Whether the server will control host rotation for the match
      */
     @JsonProperty("hr")
-    public HostRotation: boolean = false;
+    public AutoHostRotation: boolean = false;
 
     /**
      * The game mode for the currently selected map
@@ -286,7 +287,7 @@ export default class MultiplayerGame {
         game.MapsetId = mapsetId;
         game.Map = map;
         game.Ruleset = ruleset;
-        game.HostRotation = hostRotation;
+        game.AutoHostRotation = hostRotation;
         game.GameMode = mode;
         game.DifficultyRating = difficultyRating;
         game.InProgress = false;
@@ -337,13 +338,19 @@ export default class MultiplayerGame {
      * Changes the host of the game.
      * @param user 
      */
-    public ChangeHost(user: User): void {
+    public ChangeHost(user: User, informLobbyUsers: boolean = true): void {
+        // User is already host
+        //if (this.Host == user)
+        //    return;
+
         this.Host = user;
         this.HostId = user.Id;
 
         this.StopMatchCountdown(false);
         Albatross.SendToUsers(this.Players, new ServerPacketChangeGameHost(user));
-        this.InformLobbyUsers();
+
+        if (informLobbyUsers)
+            this.InformLobbyUsers();
     } 
 
     /**
@@ -437,6 +444,17 @@ export default class MultiplayerGame {
 
         // Send packet to all users that the game has finished.
         Albatross.SendToUsers(this.Players, new ServerPacketGameEnded());
+
+        // Give host to the next person if auto host rotation is enabled
+        if (this.AutoHostRotation && this.Host) {
+            const index: number = this.Players.indexOf(this.Host);
+
+            if (index + 1 < this.Players.length)
+                this.ChangeHost(this.Players[index + 1], false);
+            else
+                this.ChangeHost(this.Players[0], false);
+        }
+
         this.InformLobbyUsers();
     }
 
@@ -707,6 +725,17 @@ export default class MultiplayerGame {
         this.Lives = lives;
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameLivesChanged(this));
+        this.InformLobbyUsers();
+    }
+
+    /**
+     * Changes whether or not auto host rotation is on or off for the multiplayer game
+     * @param on 
+     */
+    public ChangeAutoHostRotation(on: boolean): void {
+        this.AutoHostRotation = on;
+        
+        Albatross.SendToUsers(this.Players, new ServerPacketGameHostRotationChanged(this));
         this.InformLobbyUsers();
     }
 }
