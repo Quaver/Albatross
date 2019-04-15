@@ -710,7 +710,8 @@ export default class Bot {
                 
                 rules += `Ruleset - ${MultiplayerGameRuleset[game.Ruleset]}\n`;
                 rules += `Map - ${game.Map}\n`;
-                rules += `Host Rotation - ${game.HostRotation}\n`;
+                rules += `Mods - ${ModHelper.GetModsString(parseInt(game.Modifiers))}\n`;
+                rules += `Auto Host Rotation - ${game.HostRotation}\n`;
                 rules += `Minimum Difficulty Rating - ${game.MinimumDifficultyRating}\n`;
                 rules += `Maximum Difficulty Rating - ${game.MaximumDifficultyRating}\n`;
                 rules += `Maximum Song Length - ${game.MaximumSongLength}\n`;
