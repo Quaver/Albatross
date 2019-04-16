@@ -2,6 +2,7 @@ import JudgementToNumberMap from "./JudgementToNumberMap";
 import ModIdentifiers from "../enums/ModIdentifiers";
 import ModHelper from "../utils/ModHelper";
 import Judgement from "../enums/Judgement";
+import ScoreProcessorMultiplayer from "./ScoreProcessorMultiplayer";
 
 export default abstract class ScoreProcessor {
     /**
@@ -65,9 +66,19 @@ export default abstract class ScoreProcessor {
     public JudgementList: Judgement[] = [];
 
     /**
+     * If a multiplayer score processor, this'll handle scoring for it
      */
-    constructor(mods: ModIdentifiers) {
+    public Multiplayer: ScoreProcessorMultiplayer | undefined;
+
+    /**
+     */
+    constructor(mods: ModIdentifiers, multiplayer: ScoreProcessorMultiplayer | undefined = undefined) {
         this.Mods = mods;
+        this.Multiplayer = multiplayer;
+
+        if (this.Multiplayer)
+            this.Multiplayer.Processor = this;
+            
         this.InitializeCurrentJudgements();
         this.InitializeMods();
     }
