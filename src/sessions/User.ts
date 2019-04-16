@@ -498,6 +498,7 @@ export default class User implements IPacketWritable, IStringifyable {
         if (!game.InProgress)
             return Logger.Warning(`${this.ToNameIdString()} gave us multiplayer judgements, but the game is not in progress!`);
 
+        game.CalculateUserScore(this, judgements);
         Albatross.SendToUsers(game.Players, new ServerPacketGameJudgements(this, judgements));
     }
 
