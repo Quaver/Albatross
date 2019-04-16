@@ -35,6 +35,9 @@ import MultiplayerHealthType from "./MultiplayerHealthType";
 import ServerPacketGameHealthTypeChanged from "../packets/server/ServerPacketGameHealthTypeChanged";
 import ServerPacketGameLivesChanged from "../packets/server/ServerPacketGameLivesChanged";
 import ServerPacketGameHostRotationChanged from "../packets/server/ServerPacketGameHostRotationChanged";
+import PlayerIdToScoreProccessorMap from "./maps/PlayerIdToScoreProcesorMap";
+import ScoreProcessorKeys from "../processors/ScoreProcessorKeys";
+import Judgement from "../enums/Judgement";
 const md5 = require("md5");
 
 @JsonObject("MultiplayerGame")
@@ -256,12 +259,17 @@ export default class MultiplayerGame {
     /**
      * The physical countdown timeout handler.
      */
-    public CountdownTimer: any;
-
+    private CountdownTimer: any;
+    
     /**
      * A list of players that have been invited to the game
      */
     public PlayersInvited: User[] = [];
+
+    /**
+     * Calculated player scores server side
+     */
+    public PlayerScoreProcessors: PlayerIdToScoreProccessorMap = {};
 
     /**
      * Creates and returns a multiplayer game
@@ -336,7 +344,8 @@ export default class MultiplayerGame {
 
     /**
      * Changes the host of the game.
-     * @param user 
+     * @param user
+     * @param informLobbyUsers
      */
     public ChangeHost(user: User, informLobbyUsers: boolean = true): void {
         // User is already host
@@ -419,6 +428,7 @@ export default class MultiplayerGame {
         this.PlayersSkipped = [];
         this.PlayersReady = [];
         this.CountdownStartTime = -1;
+        this.ClearAndPopulateScoreProcessors();
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameStart());
         this.InformLobbyUsers();
@@ -454,6 +464,11 @@ export default class MultiplayerGame {
             else
                 this.ChangeHost(this.Players[0], false);
         }
+
+        // Calculate all players' total scores (done after the match completes, so we can calculate the *real* value
+        // with the total amount of udgements)
+        for (let p in this.PlayerScoreProcessors)
+            this.PlayerScoreProcessors[p].CalculateTotalScore();
 
         this.InformLobbyUsers();
     }
@@ -506,7 +521,7 @@ export default class MultiplayerGame {
         if (informLobbyUsers)
             this.InformLobbyUsers();
     }
-
+    
     /**
      * Informs all players in the game and the lobby that a player is ready.
      * @param user 
@@ -737,5 +752,35 @@ export default class MultiplayerGame {
         
         Albatross.SendToUsers(this.Players, new ServerPacketGameHostRotationChanged(this));
         this.InformLobbyUsers();
+    }
+
+    /**
+     * Calculates score for a given user
+     * @param user 
+     * @param judgements 
+     */
+    public CalculateUserScore(user: User, judgements: Judgement[]): void {
+        if (!this.PlayerScoreProcessors[user.Id])
+            return Logger.Warning(`[${this.Id}] Multiplayer - Failed to calculate ${user.ToNameIdString()}'s score (did not start game with them)`);
+
+        for (let i = 0; i < judgements.length; i++)
+            this.PlayerScoreProcessors[user.Id].CalculateScore(judgements[i]);
+    }
+
+    /**
+     *  
+     */
+    private ClearAndPopulateScoreProcessors(): void {
+        this.PlayerScoreProcessors = {};
+        
+        for (let i = 0; i < this.PlayersGameStartedWith.length; i++) {
+            let mods = parseInt(this.Modifiers);
+            const playerMods = this.PlayerMods.find(x => x.Id == this.PlayersGameStartedWith[i].Id);
+
+            if (playerMods)
+                mods |= parseInt(playerMods.Mods);
+
+            this.PlayerScoreProcessors[this.PlayersGameStartedWith[i].Id] = new ScoreProcessorKeys(mods);
+        }
     }
 }
