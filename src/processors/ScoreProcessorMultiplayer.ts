@@ -46,8 +46,6 @@ export default class ScoreProcessorMultiplayer {
         if (this.Processor.Health <= 0)
             this.HasFailed = true;
 
-        console.log(this.Processor.Health);
-        
         switch (this.HealthType) {
             // When player reaches 0 health, place them in a state where they have to reach 100 health
             // in order to be considered alive again            
