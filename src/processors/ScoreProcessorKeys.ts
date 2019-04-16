@@ -2,6 +2,7 @@ import ScoreProcessor from "./ScoreProcessor";
 import ModIdentifiers from "../enums/ModIdentifiers";
 import JudgementToNumberMap from "./JudgementToNumberMap";
 import Judgement from "../enums/Judgement";
+import ScoreProcessorMultiplayer from "./ScoreProcessorMultiplayer";
 
 export default class ScoreProcessorKeys extends ScoreProcessor {
     /**
@@ -63,8 +64,8 @@ export default class ScoreProcessorKeys extends ScoreProcessor {
 
     /**
      */
-    constructor(mods: ModIdentifiers) {
-        super(mods);
+    constructor(mods: ModIdentifiers, multiplayer: ScoreProcessorMultiplayer | undefined = undefined) {
+        super(mods, multiplayer);
 
         this.InitializeJudgementWindows();
         this.InitializeScoreWeightingValues();
@@ -97,13 +98,15 @@ export default class ScoreProcessorKeys extends ScoreProcessor {
         let newHealth = this.Health + this.JudgementHealthWeighting[judgement];
 
         if (newHealth <= 0)
-            newHealth = 0;
+            this.Health = 0;
         else if (newHealth >= 100)
-            newHealth = 100;
+            this.Health = 100;
         else
             this.Health = newHealth;
 
         // Handle multiplayer stuff accordingly.
+        if (this.Multiplayer)
+            this.Multiplayer.CalculateHealth();
     }
 
     /**

@@ -38,6 +38,7 @@ import ServerPacketGameHostRotationChanged from "../packets/server/ServerPacketG
 import PlayerIdToScoreProccessorMap from "./maps/PlayerIdToScoreProcesorMap";
 import ScoreProcessorKeys from "../processors/ScoreProcessorKeys";
 import Judgement from "../enums/Judgement";
+import ScoreProcessorMultiplayer from "../processors/ScoreProcessorMultiplayer";
 const md5 = require("md5");
 
 @JsonObject("MultiplayerGame")
@@ -780,7 +781,7 @@ export default class MultiplayerGame {
             if (playerMods)
                 mods |= parseInt(playerMods.Mods);
 
-            this.PlayerScoreProcessors[this.PlayersGameStartedWith[i].Id] = new ScoreProcessorKeys(mods);
+            this.PlayerScoreProcessors[this.PlayersGameStartedWith[i].Id] = new ScoreProcessorKeys(mods, new ScoreProcessorMultiplayer(this.HealthType, this.Lives));
         }
     }
 }
