@@ -39,8 +39,15 @@ import PlayerIdToScoreProccessorMap from "./maps/PlayerIdToScoreProcesorMap";
 import ScoreProcessorKeys from "../processors/ScoreProcessorKeys";
 import Judgement from "../enums/Judgement";
 import ScoreProcessorMultiplayer from "../processors/ScoreProcessorMultiplayer";
+import MultiplayerTeam from "./MultiplayerTeam";
+import ServerPacketGamePlayerTeamChanged from "../packets/server/ServerPacketGamePlayerTeamChanged";
+import ServerPacketGameRulesetChanged from "../packets/server/ServerPacketGameRulesetChanged";
 const md5 = require("md5");
 
+/**
+ * Command List:
+ * https://gist.github.com/Swan/f0a0b5beb581190ce1a267511f60ac98
+ */
 @JsonObject("MultiplayerGame")
 export default class MultiplayerGame {
     /**
@@ -217,6 +224,18 @@ export default class MultiplayerGame {
     public Lives: number = 3;
 
     /**
+     * Players that are on the red team
+     */
+    @JsonProperty("rtp")
+    public RedTeamPlayers: number[] = [];
+
+    /**
+     * Players that are on the blue team
+     */
+    @JsonProperty("btp")
+    public BlueTeamPlayers: number[] = [];
+
+    /**
      * The players that are currently in the game
      */
     public Players: User[] = [];
@@ -311,6 +330,8 @@ export default class MultiplayerGame {
         game.PlayerMods = [];
         game.HealthType = MultiplayerHealthType.ManualRegeneration;
         game.Lives = 3;
+        game.RedTeamPlayers = [];
+        game.BlueTeamPlayers = [];
         if (password) game.HasPassword = true;
 
         return game;
@@ -766,6 +787,89 @@ export default class MultiplayerGame {
 
         for (let i = 0; i < judgements.length; i++)
             this.PlayerScoreProcessors[user.Id].CalculateScore(judgements[i]);
+    }
+
+    /**
+     * Changes the team for a player in the game
+     * @param user 
+     * @param team 
+     */
+    public ChangeUserTeam(user: User, team: MultiplayerTeam, informLobbyUsers: boolean = true): void {
+        this.RedTeamPlayers = this.RedTeamPlayers.filter(x => x != user.Id);
+        this.BlueTeamPlayers = this.BlueTeamPlayers.filter(x => x != user.Id);
+
+        switch (team) {
+            case MultiplayerTeam.Red:
+                this.RedTeamPlayers.push(user.Id);
+                break;
+            case MultiplayerTeam.Blue:
+                this.BlueTeamPlayers.push(user.Id);
+                break;
+        }
+
+        Logger.Info(`[${this.Id}] Multiplayer - ${user.ToNameIdString()} has been switched to the ${MultiplayerTeam[team]} team!`);
+
+        Albatross.SendToUsers(this.Players, new ServerPacketGamePlayerTeamChanged(user, team));
+
+        if (informLobbyUsers)
+            this.InformLobbyUsers();
+    }
+
+    /**
+     * Returns the most unbalanced team in terms of player count. If they're the same, it'll
+     * return red.
+     */
+    public GetUnbalancedOrAvailableTeam(): MultiplayerTeam {
+        if (this.RedTeamPlayers.length < this.BlueTeamPlayers.length)
+            return MultiplayerTeam.Red;
+        else if (this.RedTeamPlayers.length > this.BlueTeamPlayers.length)
+            return MultiplayerTeam.Blue;
+
+        return MultiplayerTeam.Red;
+    }
+
+    /**
+     * Places a player on an unbalanced team in the game
+     * @param user 
+     */
+    public PlaceUserOnUnbalancedTeam(user: User, informLobbyUsers: boolean = true): void {
+        this.ChangeUserTeam(user, this.GetUnbalancedOrAvailableTeam(), informLobbyUsers);
+    }
+
+    /**
+     * Changes the ruleset of the game.
+     * 
+     * If going from any other ruleset to teams, we need to place every player on a team,
+     * otherwise clear the teams
+     * @param ruleset 
+     */
+    public ChangeRuleset(ruleset: MultiplayerGameRuleset): void {
+        if (ruleset == this.Ruleset)
+            return;
+
+        this.Ruleset = ruleset;
+
+        // Clear all teams to start off with
+        this.RedTeamPlayers = [];
+        this.BlueTeamPlayers = [];
+
+        // Send packet first to all players in the current game that the ruleset has changed, so they're
+        // aware of if the game is team based or not
+        Albatross.SendToUsers(this.Players, new ServerPacketGameRulesetChanged(this));
+
+        switch (this.Ruleset) {
+            // Moving to teams, so populate each team with players
+            case MultiplayerGameRuleset.Team:
+                for (let i = 0; i < this.Players.length; i++) {
+                    let team: MultiplayerTeam = (i < this.Players.length / 2) ? MultiplayerTeam.Red : MultiplayerTeam.Blue;
+                    this.ChangeUserTeam(this.Players[i], team, false);
+                }
+                break;
+            case MultiplayerGameRuleset.Free_For_All:
+                break;
+        }
+
+        this.InformLobbyUsers();
     }
 
     /**

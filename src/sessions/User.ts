@@ -38,6 +38,7 @@ import ServerPacketGamePlayerHasMap from "../packets/server/ServerPacketGamePlay
 import ServerPacketGameJudgements from "../packets/server/ServerPacketGameJudgements";
 import ServerPacketAllPlayersLoaded from "../packets/server/ServerPacketAllPlayersLoaded";
 import MultiplayerPlayerMods from "../multiplayer/MultiplayerPlayerMods";
+import MultiplayerGameRuleset from "../multiplayer/MultiplayerGameRuleset";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -392,10 +393,15 @@ export default class User implements IPacketWritable, IStringifyable {
         game.PlayerIds.push(this.Id);
         game.PlayerMods.push(new MultiplayerPlayerMods(this, "0"));
 
+
         this.JoinChatChannel(ChatManager.Channels[`#multiplayer_${game.Id}`]);
 
         // Let the player know they've joined the game.
         Albatross.SendToUser(this, new ServerPacketJoinGame(game));
+
+        // Place the user on a team
+        if (game.Ruleset == MultiplayerGameRuleset.Team)
+            game.PlaceUserOnUnbalancedTeam(this, false);
 
         // Let players in the lobby be aware of this change
         game.InformLobbyUsers();
@@ -420,6 +426,8 @@ export default class User implements IPacketWritable, IStringifyable {
         game.PlayerMods = game.PlayerMods.filter((x: MultiplayerPlayerMods) => x.Id != this.Id);
         game.PlayerIds = game.PlayerIds.filter((x: number) => x != this.Id);
         game.PlayersReady = game.PlayersReady.filter((x: number) => x != this.Id);
+        game.RedTeamPlayers = game.RedTeamPlayers.filter(x => x != this.Id);
+        game.BlueTeamPlayers = game.BlueTeamPlayers.filter(x => x != this.Id);
         this.LeaveChatChannel(ChatManager.Channels[`#multiplayer_${game.Id}`]);
 
         this.CurrentGame = null;
