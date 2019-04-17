@@ -42,6 +42,8 @@ import ScoreProcessorMultiplayer from "../processors/ScoreProcessorMultiplayer";
 import MultiplayerTeam from "./MultiplayerTeam";
 import ServerPacketGamePlayerTeamChanged from "../packets/server/ServerPacketGamePlayerTeamChanged";
 import ServerPacketGameRulesetChanged from "../packets/server/ServerPacketGameRulesetChanged";
+import ChatManager from "../chat/ChatManager";
+import ChatChannel from "../chat/ChatChannel";
 const md5 = require("md5");
 
 /**
@@ -570,6 +572,13 @@ export default class MultiplayerGame {
     }
 
     /**
+     * Returns the name of the multiplayer team chat channel w/ its unique id
+     */
+    public GetTeamChatChannelName(): string {
+        return `#multi_team_${this.Id}`;
+    }
+
+    /**
      * Changes the minimum difficulty rating allowed for the match
      * @param num 
      */
@@ -811,6 +820,11 @@ export default class MultiplayerGame {
 
         Albatross.SendToUsers(this.Players, new ServerPacketGamePlayerTeamChanged(user, team));
 
+        const teamChat: ChatChannel = ChatManager.Channels[this.GetTeamChatChannelName()];
+
+        if (!teamChat.UsersInChannel.includes(user))
+            user.JoinChatChannel(teamChat);
+
         if (informLobbyUsers)
             this.InformLobbyUsers();
     }
@@ -826,6 +840,37 @@ export default class MultiplayerGame {
             return MultiplayerTeam.Blue;
 
         return MultiplayerTeam.Red;
+    }
+
+    /**
+     * Get the team that a user is on
+     */
+    public GetUserTeam(user: User): MultiplayerTeam {
+        if (this.RedTeamPlayers.includes(user.Id))
+            return MultiplayerTeam.Red;
+        if (this.BlueTeamPlayers.includes(user.Id))
+            return MultiplayerTeam.Blue;
+
+        return MultiplayerTeam.Red;
+    }
+
+    /**
+     * Retrieves a list of users in the team
+     * @param team 
+     */
+    public GetUsersInTeam(team: MultiplayerTeam): User[] {
+        const users: User[] = [];
+
+        switch (team) {
+            case MultiplayerTeam.Red:
+                this.RedTeamPlayers.forEach((x: number) => users.push(Albatross.Instance.OnlineUsers.GetUserById(x)));
+                break;
+            case MultiplayerTeam.Blue:
+                this.BlueTeamPlayers.forEach((x: number) => users.push(Albatross.Instance.OnlineUsers.GetUserById(x)));
+                break;
+        }
+
+        return users;
     }
 
     /**
@@ -866,6 +911,8 @@ export default class MultiplayerGame {
                 }
                 break;
             case MultiplayerGameRuleset.Free_For_All:
+                for (let i = 0; i < this.Players.length; i++)
+                    this.Players[i].LeaveChatChannel(ChatManager.Channels[this.GetTeamChatChannelName()]);
                 break;
         }
 

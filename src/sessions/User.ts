@@ -429,6 +429,7 @@ export default class User implements IPacketWritable, IStringifyable {
         game.RedTeamPlayers = game.RedTeamPlayers.filter(x => x != this.Id);
         game.BlueTeamPlayers = game.BlueTeamPlayers.filter(x => x != this.Id);
         this.LeaveChatChannel(ChatManager.Channels[`#multiplayer_${game.Id}`]);
+        this.LeaveChatChannel(ChatManager.Channels[game.GetTeamChatChannelName()]);
 
         this.CurrentGame = null;
 

@@ -111,7 +111,17 @@ export default class ChatManager {
         if (channel.IsModerated && (!sender.IsAdmin() && !sender.IsDeveloper() && sender != Bot.User))
             return;
 
-        Albatross.SendToUsers(channel.UsersInChannel, new ServerPacketChatMessage(sender, to, message));
+        // Send messages only to the players on the team that the user is on
+        if (channel.Name.startsWith("#multi_team")) {
+            if (!sender.CurrentGame)
+                return Logger.Warning(`${sender.ToNameIdString()} sent message to team channel: ${channel.Name}, but they aren't in a game.`);
+
+                Albatross.SendToUsers(sender.CurrentGame.GetUsersInTeam(sender.CurrentGame.GetUserTeam(sender)), 
+                    new ServerPacketChatMessage(sender, to, message));
+        }
+        else
+            Albatross.SendToUsers(channel.UsersInChannel, new ServerPacketChatMessage(sender, to, message));
+
         await Bot.HandlePublicMessageCommands(sender, channel, message);
         await ChatManager.LogPublicMessageToDiscord(sender, channel, message);
     }
