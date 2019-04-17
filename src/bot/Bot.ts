@@ -729,6 +729,27 @@ export default class Bot {
                 game.ChangeAutoHostRotation(!game.AutoHostRotation);
                 await Bot.SendMessage(game.GetChatChannelName(), `Auto Host Rotation is now turned ${(game.AutoHostRotation ? "on" : "off")}.`);
                 break;
+            case "ruleset":
+                if (!sender.CurrentGame.Host)
+                    return;
+
+                if (args.length < 2)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "Not enough arguments. Specify either `team` or `freeforall` to change the ruleset.");
+
+                switch (args[1].toLowerCase()) {
+                    case "team":
+                        game.ChangeRuleset(MultiplayerGameRuleset.Team);
+                        await Bot.SendMessage(game.GetChatChannelName(), `Ruleset has been changed to: Team.`);
+                        break;
+                    case "freeforall":
+                        game.ChangeRuleset(MultiplayerGameRuleset.Free_For_All);
+                        await Bot.SendMessage(game.GetChatChannelName(), `Ruleset has been changed to: Free-For-All.`);
+                        break;
+                    default:
+                        await Bot.SendMessage(game.GetChatChannelName(), "You must specify either `team` or `freeforall`.");
+                        break;
+                }
+                break;
         }
     }
 }
