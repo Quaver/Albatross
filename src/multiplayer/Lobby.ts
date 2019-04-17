@@ -73,6 +73,12 @@ export default class Lobby {
 
         ChatManager.Channels[channelName] = chan;
 
+        // Create team chat channel
+        const teamChan: ChatChannel = new ChatChannel(game.GetTeamChatChannelName(), "Multiplayer Team Chat", UserGroups.Normal, false, false,
+            DiscordWebhookHelper.MultiplayerMessageHook);
+
+        ChatManager.Channels[game.GetTeamChatChannelName()] = teamChan;
+
         Albatross.SendToUsers(Lobby.Users, new ServerPacketMultiplayerGameInfo(game));
         Logger.Success(`Multiplayer Game: "${game.Name}" <${game.Id}> has been created.`);
     }
@@ -88,6 +94,7 @@ export default class Lobby {
         // Removes the multiplayer chat channel.
         const channelName: string = `#multiplayer_${game.Id}`; 
         delete ChatManager.Channels[channelName];
+        delete ChatManager.Channels[game.GetTeamChatChannelName()];
 
         Albatross.SendToUsers(Lobby.Users, new ServerPacketGameDisbanded(game));
         Logger.Success(`Multiplayer Game: "${game.Name}" <${game.Id}> has been disbanded.`);
