@@ -773,7 +773,7 @@ export default class Bot {
                 if (!sender.CurrentGame.Host)
                     return;    
                     
-                    if (args.length < 2)
+                if (args.length < 2)
                     return await Bot.SendMessage(game.GetChatChannelName(), "You must specify the maximum long note percentage.");
 
                 const maxPercent = parseInt(args[1]);
@@ -786,6 +786,26 @@ export default class Bot {
 
                 game.ChangeMaximumLongNotePercentage(maxPercent);
                 await Bot.SendMessage(game.GetChatChannelName(), `Maximum long note percentage has been changed to: ${game.MaximumLongNotePercentage}%.`);    
+                break;
+            case "maxplayers":
+                if (!sender.CurrentGame.Host)
+                    return;    
+                    
+                if (args.length < 2)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "You must specify the number of players.");
+                    
+                let maxPlayers = parseInt(args[1]);
+                
+                if (isNaN(maxPlayers))
+                    return await Bot.SendMessage(game.GetChatChannelName(), "You must specify a valid number of players.");
+
+                maxPlayers = game.ClampMaxPlayers(maxPlayers);
+
+                if (maxPlayers < game.Players.length)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "You cannot set the max players greater than the amount of people in the game. Try kicking some players first.");
+
+                game.ChangeMaxPlayers(maxPlayers);
+                await Bot.SendMessage(game.GetChatChannelName(), `Max player count has changed to: ${maxPlayers}.`);
                 break;
         }
     }
