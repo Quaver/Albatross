@@ -45,6 +45,7 @@ import ServerPacketGameRulesetChanged from "../packets/server/ServerPacketGameRu
 import ChatManager from "../chat/ChatManager";
 import ChatChannel from "../chat/ChatChannel";
 import ServerPacketLongNotePercentageChanged from "../packets/server/ServerPacketLongNotePercentageChanged";
+import ServerPacketGameMaxPlayersChanged from "../packets/server/ServerPacketGameMaxPlayersChanged";
 const md5 = require("md5");
 
 /**
@@ -367,7 +368,7 @@ export default class MultiplayerGame {
      * Gives administrators the privilege to create massive games.
      * @param numPlayers 
      */
-    private ClampMaxPlayers(numPlayers: number): number {
+    public ClampMaxPlayers(numPlayers: number): number {
         if (this.Host && this.Host.IsDeveloper())
             return _.clamp(numPlayers, 2, 100);
         else
@@ -961,6 +962,22 @@ export default class MultiplayerGame {
                 break;
         }
 
+        this.InformLobbyUsers();
+    }
+
+    /**
+     * Changes the number of players allowed in the game
+     * @param numPlayers 
+     */
+    public ChangeMaxPlayers(numPlayers: number): void {
+        const players: number = this.ClampMaxPlayers(numPlayers);
+        
+        if (players < this.Players.length)
+            return Logger.Warning(`[${this.Id}] Multiplayer - Could not change max player count. Higher than players in-game.`);
+
+        this.MaxPlayers = players;
+        
+        Albatross.SendToUsers(this.Players, new ServerPacketGameMaxPlayersChanged(this));
         this.InformLobbyUsers();
     }
 
