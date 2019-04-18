@@ -44,6 +44,7 @@ import ServerPacketGamePlayerTeamChanged from "../packets/server/ServerPacketGam
 import ServerPacketGameRulesetChanged from "../packets/server/ServerPacketGameRulesetChanged";
 import ChatManager from "../chat/ChatManager";
 import ChatChannel from "../chat/ChatChannel";
+import ServerPacketLongNotePercentageChanged from "../packets/server/ServerPacketLongNotePercentageChanged";
 const md5 = require("md5");
 
 /**
@@ -238,6 +239,18 @@ export default class MultiplayerGame {
     public BlueTeamPlayers: number[] = [];
 
     /**
+     * The minimum percentage of long notes the map has to contain
+     */
+    @JsonProperty("lnmin")
+    public MinimumLongNotePercentage: number = 0;
+
+    /**
+     * The maximum percentage of long notes the map has to contain
+     */
+    @JsonProperty("lnmax")
+    public MaximumLongNotePercentage: number = 100;
+
+    /**
      * The players that are currently in the game
      */
     public Players: User[] = [];
@@ -334,6 +347,8 @@ export default class MultiplayerGame {
         game.Lives = 3;
         game.RedTeamPlayers = [];
         game.BlueTeamPlayers = [];
+        game.MinimumLongNotePercentage = 0;
+        game.MaximumLongNotePercentage = 100;
         if (password) game.HasPassword = true;
 
         return game;
@@ -610,6 +625,36 @@ export default class MultiplayerGame {
         Logger.Info(`[${this.Id}] Multiplayer game maximum song length changed: ${num}`);
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameMaxSongLengthChanged(this.MaximumSongLength));
+        this.InformLobbyUsers();
+    }
+
+    /**
+     * Changes the minimum long note percentage for the game
+     * @param percent 
+     */
+    public ChangeMinimumLongNotePercentage(percent: number): void {
+        if (percent < 0 || percent > 100)
+            return Logger.Warning(`[${this.Id}] Multiplayer - Could not change minimum LN%. Out of range: ${percent}`);
+
+        this.MinimumLongNotePercentage = percent;
+        Logger.Info(`[${this.Id}] Multiplayer - Minimum Long Note Percentage changed to: ${this.MinimumLongNotePercentage}%.`);
+
+        Albatross.SendToUsers(this.Players, new ServerPacketLongNotePercentageChanged(this));
+        this.InformLobbyUsers();
+    }
+
+    /**
+     * Changes the maximum long note percentage for the game
+     * @param percent 
+     */
+    public ChangeMaximumLongNotePercentage(percent: number): void {
+        if (percent < 0 || percent > 100)
+            return Logger.Warning(`[${this.Id}] Multiplayer - Could not change maximum LN%. Out of range: ${percent}`);
+
+        this.MaximumLongNotePercentage = percent;
+        Logger.Info(`[${this.Id}] Multiplayer - Maximum Long Note Percentage changed to: ${this.MaximumLongNotePercentage}%.`);
+
+        Albatross.SendToUsers(this.Players, new ServerPacketLongNotePercentageChanged(this));
         this.InformLobbyUsers();
     }
 
