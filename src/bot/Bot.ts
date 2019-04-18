@@ -709,12 +709,13 @@ export default class Bot {
                                         "----------------\n";
                 
                 rules += `Ruleset - ${MultiplayerGameRuleset[game.Ruleset]}\n`;
-                rules += `Map - ${game.Map}\n`;
                 rules += `Mods - ${ModHelper.GetModsString(parseInt(game.Modifiers))}\n`;
                 rules += `Auto Host Rotation - ${game.AutoHostRotation}\n`;
                 rules += `Minimum Difficulty Rating - ${game.MinimumDifficultyRating}\n`;
                 rules += `Maximum Difficulty Rating - ${game.MaximumDifficultyRating}\n`;
                 rules += `Maximum Song Length - ${game.MaximumSongLength}\n`;
+                rules += `Minimum LN% - ${game.MinimumLongNotePercentage}%\n`;
+                rules += `Maximum LN% - ${game.MaximumLongNotePercentage}%\n`;
                 rules += `Allowed Game Modes - ${game.AllowedGameModes.join(", ")}\n`;
                 rules += `Free Mod Type - ${game.FreeModType}\n`;
                 rules += `Health Type - ${game.HealthType}\n`;
@@ -749,6 +750,42 @@ export default class Bot {
                         await Bot.SendMessage(game.GetChatChannelName(), "You must specify either `team` or `freeforall`.");
                         break;
                 }
+                break;
+            case "lnmin":
+                if (!sender.CurrentGame.Host)
+                    return;        
+                    
+                if (args.length < 2)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "You must specify the minimum long note percentage.");
+
+                const percent = parseInt(args[1]);
+
+                if (isNaN(percent) || percent < 0 || percent > 100)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "Minimum long note percentage must be a number betwen 0-100%.");
+
+                if (percent > game.MaximumLongNotePercentage)
+                    return await Bot.SendMessage(game.GetChatChannelName(), `Minimum long note percentage must not be greater than the maximum: ${game.MaximumLongNotePercentage}%.`);
+
+                game.ChangeMinimumLongNotePercentage(percent);
+                await Bot.SendMessage(game.GetChatChannelName(), `Minimum long note percentage has been changed to: ${game.MinimumLongNotePercentage}%.`);     
+                break;
+            case "lnmax":
+                if (!sender.CurrentGame.Host)
+                    return;    
+                    
+                    if (args.length < 2)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "You must specify the maximum long note percentage.");
+
+                const maxPercent = parseInt(args[1]);
+
+                if (isNaN(maxPercent) || maxPercent < 0 || maxPercent > 100)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "Maximum long note percentage must be a number betwen 0-100%.");
+
+                if (maxPercent < game.MinimumLongNotePercentage)
+                    return await Bot.SendMessage(game.GetChatChannelName(), `Maximum long note percentage must not be lower than the minimum: ${game.MinimumLongNotePercentage}%.`);
+
+                game.ChangeMaximumLongNotePercentage(maxPercent);
+                await Bot.SendMessage(game.GetChatChannelName(), `Maximum long note percentage has been changed to: ${game.MaximumLongNotePercentage}%.`);    
                 break;
         }
     }
