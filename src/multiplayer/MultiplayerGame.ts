@@ -46,6 +46,8 @@ import ChatManager from "../chat/ChatManager";
 import ChatChannel from "../chat/ChatChannel";
 import ServerPacketLongNotePercentageChanged from "../packets/server/ServerPacketLongNotePercentageChanged";
 import ServerPacketGameMaxPlayersChanged from "../packets/server/ServerPacketGameMaxPlayersChanged";
+import ServerPacketGameMinimumRateChanged from "../packets/server/ServerPacketGameMinimumRateChanged";
+import SqlDatabase from "../database/SqlDatabase";
 const md5 = require("md5");
 
 /**
@@ -59,6 +61,11 @@ export default class MultiplayerGame {
      */
     @JsonProperty("id")
     public Id: string = "";
+
+    /**
+     * The id of the game in the database
+     */
+    public DatabaseId: number = -1;
 
     /**
      * The type of multiplayer game this is.
@@ -252,6 +259,12 @@ export default class MultiplayerGame {
     public MaximumLongNotePercentage: number = 100;
 
     /**
+     * The minimum rate allowed for free rate
+     */
+    @JsonProperty("mr")
+    public MinimumRate: number = 0.5;
+
+    /**
      * The players that are currently in the game
      */
     public Players: User[] = [];
@@ -350,6 +363,7 @@ export default class MultiplayerGame {
         game.BlueTeamPlayers = [];
         game.MinimumLongNotePercentage = 0;
         game.MaximumLongNotePercentage = 100;
+        game.MinimumRate = 0.5;
         if (password) game.HasPassword = true;
 
         return game;
@@ -359,7 +373,7 @@ export default class MultiplayerGame {
      * Returns a unique identifier for this game.
      */
     private GenerateGameIdentifier(): string {
-        return md5(Date.now() + this.Name + this.MaxPlayers + this.Type + this.HasPassword);
+        return md5(Math.round((new Date()).getTime()) + this.Name + this.MaxPlayers + this.Type + this.HasPassword);
     }
 
     /**
@@ -407,6 +421,8 @@ export default class MultiplayerGame {
      */
     public ChangeName(name: string): void {
         this.Name = name;
+
+        SqlDatabase.Execute("UPDATE multiplayer_games SET name = ? WHERE id = ?", [this.Name, this.DatabaseId]);
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameNameChanged(this));
         this.InformLobbyUsers();
@@ -477,40 +493,44 @@ export default class MultiplayerGame {
     /**
      * Ends the multiplayer game
      */
-    public End(): void {
+    public End(abortedEarly: boolean = false): void {
         if (!this.InProgress)
             return;
 
         Logger.Success(`[${this.Id}] Multiplayer Game Ended!`);
-
-        this.InProgress = false;
-        this.MatchSkipped = false;
-        this.PlayersGameStartedWith = [];
-        this.FinishedPlayers = [];
-        this.PlayersWithGameScreenLoaded = [];
-        this.PlayersSkipped = [];
-        this.PlayersReady = [];
-        this.StopMatchCountdown();
-
-        // Send packet to all users that the game has finished.
-        Albatross.SendToUsers(this.Players, new ServerPacketGameEnded());
-
-        // Give host to the next person if auto host rotation is enabled
-        if (this.AutoHostRotation && this.Host) {
-            const index: number = this.Players.indexOf(this.Host);
-
-            if (index + 1 < this.Players.length)
-                this.ChangeHost(this.Players[index + 1], false);
-            else
-                this.ChangeHost(this.Players[0], false);
-        }
 
         // Calculate all players' total scores (done after the match completes, so we can calculate the *real* value
         // with the total amount of udgements)
         for (let p in this.PlayerScoreProcessors)
             this.PlayerScoreProcessors[p].CalculateTotalScore();
 
-        this.InformLobbyUsers();
+        this.InsertMatchIntoDatabase(abortedEarly)
+            .then(() => {
+                this.InProgress = false;
+                this.MatchSkipped = false;
+                this.PlayersGameStartedWith = [];
+                this.FinishedPlayers = [];
+                this.PlayersWithGameScreenLoaded = [];
+                this.PlayersSkipped = [];
+                this.PlayersReady = [];
+                this.StopMatchCountdown();
+        
+                // Send packet to all users that the game has finished.
+                Albatross.SendToUsers(this.Players, new ServerPacketGameEnded());
+        
+                // Give host to the next person if auto host rotation is enabled
+                if (this.AutoHostRotation && this.Host) {
+                    const index: number = this.Players.indexOf(this.Host);
+        
+                    if (index + 1 < this.Players.length)
+                        this.ChangeHost(this.Players[index + 1], false);
+                    else
+                        this.ChangeHost(this.Players[0], false);
+                }
+        
+        
+                this.InformLobbyUsers();
+            });
     }
 
     /**
@@ -537,7 +557,7 @@ export default class MultiplayerGame {
             
         Logger.Success(`[${this.Id}] Multiplayer Match Countdown Started`);
 
-        this.CountdownStartTime = Date.now();
+        this.CountdownStartTime = Math.round((new Date()).getTime());
         this.CountdownTimer = setTimeout(() => this.Start(), 5000);
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameStartCountdown(this.CountdownStartTime));
@@ -976,9 +996,109 @@ export default class MultiplayerGame {
             return Logger.Warning(`[${this.Id}] Multiplayer - Could not change max player count. Higher than players in-game.`);
 
         this.MaxPlayers = players;
-        
+
         Albatross.SendToUsers(this.Players, new ServerPacketGameMaxPlayersChanged(this));
         this.InformLobbyUsers();
+    }
+
+    /**
+     * Changes the minimum rate allowed for players to use if Free Rate is enabled
+     */
+    public ChangeMinimumRate(rate: number): void {
+        rate = Math.round(10 * rate) / 10;
+
+        Albatross.SendToUsers(this.Players, new ServerPacketGameMinimumRateChanged(this));
+        this.InformLobbyUsers();
+    }
+
+    /**
+     * Inserts the overall game (NOT RESULTS OF A MATCH) into the database.
+     */
+    public InsertGameIntoDatabase(): void {
+        try {
+            SqlDatabase.Execute("INSERT INTO multiplayer_games (unique_id, name, type, time_created) " + 
+                                "VALUES (?, ?, ?, ?)", [this.Id, this.Name, this.Type, Math.round((new Date()).getTime())])
+                                .then((results: any) => {
+                                    this.DatabaseId = results.insertId;
+                                })
+                                .catch ((err) => {
+                                    Logger.Error(err);
+                                });
+        } catch (err) {
+            Logger.Error(err);
+            throw err;
+        }
+    }
+
+    /**
+     * Inserts an entire match and scores into the database
+     */
+    public async InsertMatchIntoDatabase(abortedEarly: boolean): Promise<void> {
+        try {
+            // Check if the map actually exists inside of the database first
+            const mapResults = await SqlDatabase.Execute("SELECT id FROM maps WHERE md5 = ?", [this.MapMd5]);
+
+            if (mapResults.length == 0)
+                return Logger.Warning(`[${this.Id}] Multiplayer - Skipping match database entry (map doesn't exist)!`);
+
+            // Insert the match into the database.
+            await SqlDatabase.Execute("INSERT INTO multiplayer_game_matches (game_id, time_played, map_md5, map, host_id, ruleset, game_mode, global_modifiers, free_mod_type, health_type, lives, aborted) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+                    [this.DatabaseId, Math.round((new Date()).getTime()), this.MapMd5, this.Map, this.HostId, this.Ruleset, 
+                        this.GameMode, this.Modifiers, this.FreeModType, this.HealthType, this.Lives, Number(abortedEarly)])
+                        .then((results: any) => this.InsertScoresIntoDatabase(results.insertId))
+                        .catch((err) => {
+                            Logger.Error(err);
+                        });
+        } catch (err) {
+            Logger.Error(err);
+            throw err;
+        }
+    }
+
+    /**
+     * Inserts all scores from the match into the database
+     */
+    private InsertScoresIntoDatabase(matchId: number): void {
+        for (let i = 0; i < this.PlayersGameStartedWith.length; i++) {
+            const player: User = this.PlayersGameStartedWith[i];
+            const scoreProcessor: ScoreProcessorKeys = this.PlayerScoreProcessors[player.Id];
+            let mods: MultiplayerPlayerMods | any = this.PlayerMods.find(x => x.Id == player.Id);
+
+            if (!mods)
+                mods = 0;
+            else
+                mods = mods.Mods;
+
+            const team: number = this.Ruleset == MultiplayerGameRuleset.Team ? this.GetUserTeam(player) : -1;
+            const rating: number = 0;
+
+            if (!scoreProcessor.Multiplayer)
+                throw new Error("Multiplayer Score Processor not defined???");
+
+            SqlDatabase.Execute("INSERT INTO multiplayer_match_scores (user_id, match_id, team, mods, performance_rating, score, accuracy, max_combo, " + 
+                "count_marv, count_perf, count_great, count_good, count_okay, count_miss, full_combo, lives_left, has_failed, won) " + 
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+                [player.Id, matchId, team, mods, rating, scoreProcessor.Score, scoreProcessor.Accuracy,
+                scoreProcessor.MaxCombo, 
+                scoreProcessor.CurrentJudgements[Judgement.Marvelous],
+                scoreProcessor.CurrentJudgements[Judgement.Perfect],
+                scoreProcessor.CurrentJudgements[Judgement.Great],
+                scoreProcessor.CurrentJudgements[Judgement.Good],
+                scoreProcessor.CurrentJudgements[Judgement.Okay],
+                scoreProcessor.CurrentJudgements[Judgement.Miss],
+                Number(scoreProcessor.IsFullCombo()),
+                scoreProcessor.Multiplayer.Lives,
+                Number(scoreProcessor.Multiplayer.HasFailed),
+                Number(this.CheckIfPlayerWonMatch(player))]);
+        }
+    }
+
+    /**
+     * Checks if an individual player has won the match
+     */
+    private CheckIfPlayerWonMatch(player: User): boolean {
+        return false;
     }
 
     /**

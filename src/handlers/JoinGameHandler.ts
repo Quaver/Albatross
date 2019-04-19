@@ -2,7 +2,7 @@ import ClientPacketJoinGame from "../packets/client/ClientPacketJoinGame";
 import Logger from "../logging/Logger";
 import User from "../sessions/User";
 import Lobby from "../multiplayer/Lobby";
-import MultiplayerGame from "../multiplayer/MutliplayerGame";
+import MultiplayerGame from "../multiplayer/MultiplayerGame";
 
 export default class JoinGameHandler {
     /**

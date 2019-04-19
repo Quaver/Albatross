@@ -1,7 +1,7 @@
 import User from "../sessions/User";
 import ClientPacketLeaveGame from "../packets/client/ClientPacketLeaveGame";
 import Logger from "../logging/Logger";
-import MultiplayerGame from "../multiplayer/MutliplayerGame";
+import MultiplayerGame from "../multiplayer/MultiplayerGame";
 
 export default class GameLeaveHandler {
     /**

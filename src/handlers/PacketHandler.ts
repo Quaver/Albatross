@@ -24,7 +24,7 @@ import LobbyLeaveHandler from "./LobbyLeaveHandler";
 import ClientPacketLobbyLeave from "../packets/client/ClientPacketLobbyLeave";
 import ClientPacketCreateGame from "../packets/client/ClientPacketCreateGame";
 import CreateGameHandler from "./CreateGameHandler";
-import MultiplayerGame from "../multiplayer/MutliplayerGame";
+import MultiplayerGame from "../multiplayer/MultiplayerGame";
 import GameLeaveHandler from "./GameLeaveHandler";
 import ClientPacketLeaveGame from "../packets/client/ClientPacketLeaveGame";
 import JoinGameHandler from "./JoinGameHandler";

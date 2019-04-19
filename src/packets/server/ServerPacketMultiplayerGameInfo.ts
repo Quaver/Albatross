@@ -1,6 +1,6 @@
 import Packet from "../Packet";
 import PacketId from "../PacketId";
-import MultiplayerGame from "../../multiplayer/MutliplayerGame";
+import MultiplayerGame from "../../multiplayer/MultiplayerGame";
 import { JsonObject, JsonProperty, JsonConvert } from "json2typescript";
 
 @JsonObject("ServerPacketMultiplayerGameInfo")

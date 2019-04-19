@@ -2,7 +2,7 @@ import Packet from "../Packet";
 import { JsonProperty } from "json2typescript";
 import PacketId from "../PacketId";
 import MultiplayerHealthType from "../../multiplayer/MultiplayerHealthType";
-import MultiplayerGame from "../../multiplayer/MutliplayerGame";
+import MultiplayerGame from "../../multiplayer/MultiplayerGame";
 
 @JsonProperty("ServerPacketGameHealthTypeChanged")
 export default class ServerPacketGameHealthTypeChanged extends Packet {

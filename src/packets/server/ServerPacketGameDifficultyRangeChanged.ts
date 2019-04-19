@@ -1,6 +1,6 @@
 import Packet from "../Packet";
 import { JsonObject, JsonProperty } from "json2typescript";
-import MultiplayerGame from "../../multiplayer/MutliplayerGame";
+import MultiplayerGame from "../../multiplayer/MultiplayerGame";
 import PacketId from "../PacketId";
 
 @JsonObject("ServerPacketDifficultyRangeChanged")

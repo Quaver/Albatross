@@ -1,7 +1,7 @@
 import Packet from "../Packet";
 import { JsonObject, JsonProperty } from "json2typescript";
 import PacketId from "../PacketId";
-import MultiplayerGame from "../../multiplayer/MutliplayerGame";
+import MultiplayerGame from "../../multiplayer/MultiplayerGame";
 
 @JsonObject("ServerPacketGameLivesChanged")
 export default class ServerPacketGameLivesChanged extends Packet {
