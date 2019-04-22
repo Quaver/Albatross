@@ -17,7 +17,7 @@ export default class CreateGameHandler {
         try {
             // First run a check to see if the user is in a multiplayer game.
             if (user.IsInMultiplayerGame()) {
-                user.LeaveMultiplayerGame();
+                await user.LeaveMultiplayerGame();
                 Logger.Warning(`${user.Username} (#${user.Id}) is in multiplayer game, but trying to create a new one. Leaving previous`);
             }
 
@@ -39,11 +39,11 @@ export default class CreateGameHandler {
 
             // Create the actual game.
             await Lobby.CreateGame(game);
-            user.JoinMultiplayerGame(game, game.Password);
+            await user.JoinMultiplayerGame(game, game.Password);
             
             // Set the host
             if (game.Type == MultiplayerGameType.Friendly)
-                game.ChangeHost(user);
+                await game.ChangeHost(user);
                 
             if (!DiscordWebhookHelper.EventsHook)
                 return;

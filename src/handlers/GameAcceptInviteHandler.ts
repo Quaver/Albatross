@@ -25,7 +25,7 @@ export default class GameAcceptInviteHandler {
 
             // Send them game info and then place them into the game
             Albatross.SendToUser(user, new ServerPacketMultiplayerGameInfo(game));
-            user.JoinMultiplayerGame(game);
+            await user.JoinMultiplayerGame(game);
         } catch (err) {
             return Logger.Error(err);
         }

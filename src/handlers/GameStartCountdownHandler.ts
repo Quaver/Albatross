@@ -10,7 +10,7 @@ export default class GameStartCountdownHandler {
      */
     public static async Handle(user: User, packet: ClientPacketGameStartCountdown): Promise<void>{
         try {
-            user.HandleMultiplayerCountdownStart();
+            await user.HandleMultiplayerCountdownStart();
         } catch (err) {
             Logger.Error(err);
         }

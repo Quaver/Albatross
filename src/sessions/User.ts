@@ -365,9 +365,9 @@ export default class User implements IPacketWritable, IStringifyable {
      * Joins the player into a multiplayer match
      * @param game 
      */
-    public JoinMultiplayerGame(game: MultiplayerGame, password: string | null = null): void {
+    public async JoinMultiplayerGame(game: MultiplayerGame, password: string | null = null): Promise<void> {
         // Have the player leave their already existing match if they're in one.
-        this.LeaveMultiplayerGame();
+        await this.LeaveMultiplayerGame();
 
         if (!game)
             return this.SendJoinGameFailurePacket(JoinGameFailureReason.MatchNoExists);
@@ -411,7 +411,7 @@ export default class User implements IPacketWritable, IStringifyable {
      * Leaves the current multiplayer game if in one.
      * @param game 
      */
-    public LeaveMultiplayerGame(): void {
+    public async LeaveMultiplayerGame(): Promise<void> {
         // User isn't in a game, so there's no need to handle it.
         if (!this.CurrentGame)
             return;
@@ -430,16 +430,17 @@ export default class User implements IPacketWritable, IStringifyable {
         game.BlueTeamPlayers = game.BlueTeamPlayers.filter(x => x != this.Id);
         this.LeaveChatChannel(ChatManager.Channels[`#multiplayer_${game.Id}`]);
         this.LeaveChatChannel(ChatManager.Channels[game.GetTeamChatChannelName()]);
+        await game.RemoveCachedPlayer(this);
 
         this.CurrentGame = null;
 
         // No more players, so the game should be disbanded.
         if (game.Players.length == 0)
-            return Lobby.DeleteGame(game);
+            return await Lobby.DeleteGame(game);
         
         // The current host of the game was us, so we'll need to find a new host.   
         if (game.Type == MultiplayerGameType.Friendly && game.Host == this)
-            game.ChangeHost(game.Players[0]);
+            await game.ChangeHost(game.Players[0]);
 
         // Send a packet to users already in the game.
         Albatross.SendToUsers(game.Players, new ServerPacketUserLeftGame(this));   
@@ -498,7 +499,7 @@ export default class User implements IPacketWritable, IStringifyable {
     /**
      * Handles when the client gives us more multiplayer judgements
      */
-    public HandleMultiplayerJudgements(judgements: number[]): void {
+    public async HandleMultiplayerJudgements(judgements: number[]): Promise<void> {
         if (!this.CurrentGame)
             return Logger.Warning(`${this.ToNameIdString()} gave us multiplayer judgements, but they aren't in one!`);
 
@@ -508,6 +509,8 @@ export default class User implements IPacketWritable, IStringifyable {
             return Logger.Warning(`${this.ToNameIdString()} gave us multiplayer judgements, but the game is not in progress!`);
 
         game.CalculateUserScore(this, judgements);
+        await game.CachePlayerCurrentScore(this);
+
         Albatross.SendToUsers(game.Players, new ServerPacketGameJudgements(this, judgements));
     }
 
@@ -567,7 +570,7 @@ export default class User implements IPacketWritable, IStringifyable {
     /**
      * Handles when the user is ready in their multiplayer game.
      */
-    public HandleMultiplayerGameReady(): void {
+    public async HandleMultiplayerGameReady(): Promise<void> {
         if (!this.CurrentGame)
             return Logger.Warning(`${this.ToNameIdString()} said they were ready, but they aren't in a multiplayer game.`);
 
@@ -580,13 +583,13 @@ export default class User implements IPacketWritable, IStringifyable {
             return Logger.Warning(`${this.ToNameIdString()} said they were ready, but they are already ready.`);
 
         game.PlayersReady.push(this.Id);
-        game.InformPlayerIsReady(this);
+        await game.InformPlayerIsReady(this);
     }
 
     /**
      * Handles when the user is not ready in their multiplayer game
      */
-    public HandleMultiplayerGameNotReady(): void {
+    public async HandleMultiplayerGameNotReady(): Promise<void> {
         if (!this.CurrentGame)
             return Logger.Warning(`${this.ToNameIdString()} said they were not ready, but they aren't in a multiplayer game.`);
 
@@ -599,13 +602,13 @@ export default class User implements IPacketWritable, IStringifyable {
             return Logger.Warning(`${this.ToNameIdString()} said they were ready, but they aren't even ready`);
 
         game.PlayersReady = game.PlayersReady.filter((x: number) => x != this.Id);
-        game.InformPlayerNotReady(this);
+        await game.InformPlayerNotReady(this);
     }
 
     /**
      * Handles starting the multiplayer game countdown start (if host)
      */
-    public HandleMultiplayerCountdownStart(): void {
+    public async HandleMultiplayerCountdownStart(): Promise<void> {
         if (!this.CurrentGame)
             return Logger.Warning(`${this.ToNameIdString()} said they want to start the match countdown, but they aren't in a multiplayer game.`);
 
@@ -617,13 +620,13 @@ export default class User implements IPacketWritable, IStringifyable {
         if (game.InProgress)
             return Logger.Warning(`${this.ToNameIdString()} said they want to start the match countdown, but the game is already in progress.`);
 
-        game.StartMatchCountdown();
+        await game.StartMatchCountdown();
     }
 
     /**
      * Handles stopping the multiplayer game countdown.
      */
-    public HandleMultiplayerCountdownStop(): void {
+    public async HandleMultiplayerCountdownStop(): Promise<void> {
         if (!this.CurrentGame)
             return Logger.Warning(`${this.ToNameIdString()} said they want to stop the match countdown, but they aren't in a multiplayer game.`);
 
@@ -635,7 +638,7 @@ export default class User implements IPacketWritable, IStringifyable {
         if (game.CountdownStartTime == -1)
             return Logger.Warning(`${this.ToNameIdString()} said they want to stop the match countdown, but the countdown isn't active!`);
 
-        game.StopMatchCountdown();
+        await game.StopMatchCountdown();
     }
 
     /**

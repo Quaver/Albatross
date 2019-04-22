@@ -10,7 +10,7 @@ export default class GamePlayerNotReadyHandler {
      */
     public static async Handle(user: User, packet: ClientPacketGamePlayerNotReady): Promise<void> {
         try {
-            user.HandleMultiplayerGameNotReady();
+            await user.HandleMultiplayerGameNotReady();
         } catch (err) {
             return Logger.Error(err);
         }

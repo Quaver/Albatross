@@ -15,6 +15,7 @@ import * as Discord from "discord.js";
 import ChatManager from "../chat/ChatManager";
 import ChatChannel from "../chat/ChatChannel";
 import UserGroups from "../enums/UserGroups";
+import RedisHelper from "../database/RedisHelper";
 
 export default class Lobby {
     /**
@@ -80,6 +81,9 @@ export default class Lobby {
         ChatManager.Channels[game.GetTeamChatChannelName()] = teamChan;
 
         await game.InsertGameIntoDatabase();
+        await RedisHelper.incr("quaver:server:multiplayer_matches");
+        await game.CacheMatchSettings();
+
         Albatross.SendToUsers(Lobby.Users, new ServerPacketMultiplayerGameInfo(game));
         Logger.Success(`Multiplayer Game: "${game.Name}" <${game.Id}> has been created.`);
     }
@@ -88,14 +92,18 @@ export default class Lobby {
      * Disbands a multiplayer game
      * @param game 
      */
-    public static DeleteGame(game: MultiplayerGame): void {
-        game.StopMatchCountdown();
+    public static async DeleteGame(game: MultiplayerGame): Promise<void> {
+        await game.StopMatchCountdown();
         delete Lobby.Games[game.Id];
 
         // Removes the multiplayer chat channel.
         const channelName: string = `#multiplayer_${game.Id}`; 
         delete ChatManager.Channels[channelName];
         delete ChatManager.Channels[game.GetTeamChatChannelName()];
+
+        await RedisHelper.decr("quaver:server:multiplayer_matches");
+        await game.DeleteCachedMatchScores();
+        await game.DeleteCachedMatchSettings();
 
         Albatross.SendToUsers(Lobby.Users, new ServerPacketGameDisbanded(game));
         Logger.Success(`Multiplayer Game: "${game.Name}" <${game.Id}> has been disbanded.`);

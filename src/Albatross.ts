@@ -76,9 +76,10 @@ export default class Albatross {
      */
     public async Start(): Promise<void> {
         await this.CleanPreviousSessions();
+        await this.CleanPreviousMultiplayerMatches();
+
         await Bot.Initialize();
         
-
         this.StartBackgroundWorker();
         this.Server = new WebSocketServer({ port: this.Port });
         
@@ -117,6 +118,21 @@ export default class Albatross {
             await RedisHelper.del(statusKeys[i]);
 
         Logger.Success(`Successfully deleted all previous ${statusKeys.length} user status keys from Redis!`);
+    }
+
+    /**
+     * Clears all the previous multiplayer matches from Redis
+     */
+    private async CleanPreviousMultiplayerMatches(): Promise<void> {
+        await RedisHelper.set("quaver:server:multiplayer_matches", "0");
+        Logger.Success(`Successfully set Redis multiplayer match count to 0.`);
+
+        const multiplayerMatches = await RedisHelper.keys("quaver:server:multiplayer:*");
+
+        for (let i = 0; i < multiplayerMatches.length; i++)
+            await RedisHelper.del(multiplayerMatches[i]);
+
+        Logger.Success(`Successfully deleted all previous ${multiplayerMatches.length} multiplayer matches from Redis!`);
     }
 
     /**

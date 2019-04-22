@@ -51,6 +51,7 @@ import SqlDatabase from "../database/SqlDatabase";
 import MapsHelper from "../utils/MapsHelper";
 import QuaHelper from "../utils/QuaHelper";
 import MultiplayerWinResult from "./MultiplayerWinResult";
+import RedisHelper from "../database/RedisHelper";
 const md5 = require("md5");
 
 /**
@@ -418,7 +419,7 @@ export default class MultiplayerGame {
      * @param user
      * @param informLobbyUsers
      */
-    public ChangeHost(user: User, informLobbyUsers: boolean = true): void {
+    public async ChangeHost(user: User, informLobbyUsers: boolean = true): Promise<void> {
         // User is already host
         if (this.Host == user)
             return;
@@ -426,23 +427,23 @@ export default class MultiplayerGame {
         this.Host = user;
         this.HostId = user.Id;
 
-        this.StopMatchCountdown(false);
+        await this.StopMatchCountdown(false);
         Albatross.SendToUsers(this.Players, new ServerPacketChangeGameHost(user));
 
         if (informLobbyUsers)
-            this.InformLobbyUsers();
+            await this.InformLobbyUsers();
     } 
 
     /**
      * Changes the name of the game
      */
-    public ChangeName(name: string): void {
+    public async ChangeName(name: string): Promise<void> {
         this.Name = name;
 
         SqlDatabase.Execute("UPDATE multiplayer_games SET name = ? WHERE id = ?", [this.Name, this.DatabaseId]);
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameNameChanged(this));
-        this.InformLobbyUsers();
+        await this.InformLobbyUsers();
     }
 
     /**
@@ -468,9 +469,9 @@ export default class MultiplayerGame {
         this.PlayersReady = [];
         this.CalculatedDifficultyRatings = {};
 
-        this.StopMatchCountdown(false); 
+        await this.StopMatchCountdown(false); 
         Albatross.SendToUsers(this.Players, new ServerPacketGameMapChanged(md5, mapId, mapsetId, map, mode, difficulty));    
-        this.InformLobbyUsers();
+        await this.InformLobbyUsers();
 
         await this.CacheSelectedMap();
     }
@@ -479,14 +480,14 @@ export default class MultiplayerGame {
      * Changes the password of the game
      * @param password 
      */
-    public ChangePassword(password: string | null): void {
+    public async ChangePassword(password: string | null): Promise<void> {
         this.Password = password;
         this.HasPassword = password != null;
 
 
         // TODO: Send packet to users currently in the game.
 
-        this.InformLobbyUsers();
+        await this.InformLobbyUsers();
     }
 
     /**
@@ -507,7 +508,7 @@ export default class MultiplayerGame {
         await this.ClearAndPopulateScoreProcessors();
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameStart());
-        this.InformLobbyUsers();
+        await this.InformLobbyUsers();
     }
 
     /**
@@ -525,6 +526,7 @@ export default class MultiplayerGame {
             this.PlayerScoreProcessors[p].CalculateTotalScore();
 
         await this.InsertMatchIntoDatabase(abortedEarly);
+        await this.DeleteCachedMatchScores();
 
         this.InProgress = false;
         this.MatchSkipped = false;
@@ -533,7 +535,7 @@ export default class MultiplayerGame {
         this.PlayersWithGameScreenLoaded = [];
         this.PlayersSkipped = [];
         this.PlayersReady = [];
-        this.StopMatchCountdown();
+        await this.StopMatchCountdown();
 
         // Send packet to all users that the game has finished.
         Albatross.SendToUsers(this.Players, new ServerPacketGameEnded());
@@ -543,19 +545,20 @@ export default class MultiplayerGame {
             const index: number = this.Players.indexOf(this.Host);
 
             if (index + 1 < this.Players.length)
-                this.ChangeHost(this.Players[index + 1], false);
+                await this.ChangeHost(this.Players[index + 1], false);
             else
-                this.ChangeHost(this.Players[0], false);
+                await this.ChangeHost(this.Players[0], false);
         }
 
-        this.InformLobbyUsers();
+        await this.InformLobbyUsers();
     }
 
     /**
      * Sends a packet to all users in the lobby that the settings/changes of/in the game has been updated.
      */
-    public InformLobbyUsers(): void {
+    public async InformLobbyUsers(): Promise<void> {
         Albatross.SendToUsers(Lobby.Users, new ServerPacketMultiplayerGameInfo(this));
+        await this.CacheMatchSettings();
     }
 
     /**
@@ -569,7 +572,7 @@ export default class MultiplayerGame {
     /**
      * Starts the countdown before the game starts
      */
-    public StartMatchCountdown(): void {
+    public async StartMatchCountdown(): Promise<void> {
         if (this.CountdownStartTime != -1)
             return Logger.Warning(`[${this.Id}] Multiplayer Match Countdown Already Running (Cannot Start Again)`);
             
@@ -579,13 +582,13 @@ export default class MultiplayerGame {
         this.CountdownTimer = setTimeout(async () => await this.Start(), 5000);
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameStartCountdown(this.CountdownStartTime));
-        this.InformLobbyUsers();
+        await this.InformLobbyUsers();
     }
 
     /**
      * Cancels the match countdown
      */
-    public StopMatchCountdown(informLobbyUsers: boolean = true): void {
+    public async StopMatchCountdown(informLobbyUsers: boolean = true): Promise<void> {
         if (this.CountdownStartTime == -1)
             return;
 
@@ -597,25 +600,25 @@ export default class MultiplayerGame {
         Albatross.SendToUsers(this.Players, new ServerPacketGameStopCountdown());
 
         if (informLobbyUsers)
-            this.InformLobbyUsers();
+            await this.InformLobbyUsers();
     }
     
     /**
      * Informs all players in the game and the lobby that a player is ready.
      * @param user 
      */
-    public InformPlayerIsReady(user: User): void {
+    public async InformPlayerIsReady(user: User): Promise<void> {
         Albatross.SendToUsers(this.Players, new ServerPacketGamePlayerReady(user));
-        this.InformLobbyUsers();
+        await this.InformLobbyUsers();
     }
 
     /**
      * Informs all players in the game and the lobby that a player isn't ready
      * @param user 
      */
-    public InformPlayerNotReady(user: User): void {
+    public async InformPlayerNotReady(user: User): Promise<void> {
         Albatross.SendToUsers(this.Players, new ServerPacketGamePlayerNotReady(user));
-        this.InformLobbyUsers();
+        await this.InformLobbyUsers();
     }
 
     /**
@@ -805,14 +808,14 @@ export default class MultiplayerGame {
      * Kicks a player from the multiplayer game
      * @param user 
      */
-    public KickPlayer(user: User): void {
+    public async KickPlayer(user: User): Promise<void> {
         if (user.CurrentGame != this)
             return Logger.Warning(`[${this.Id}] Multiplayer - Could not kick ${user.ToNameIdString()} because they aren't in the game.`);
 
         Logger.Info(`[${this.Id}] Multiplayer - User Kicked: ${user.ToNameIdString()}`);
         
         _.remove(this.PlayersInvited, user);
-        user.LeaveMultiplayerGame();
+        await user.LeaveMultiplayerGame();
         Albatross.SendToUser(user, new ServerPacketGameKicked());
     }
 
@@ -1000,7 +1003,7 @@ export default class MultiplayerGame {
                 break;
         }
 
-        this.InformLobbyUsers();
+       this.InformLobbyUsers();
     }
 
     /**
@@ -1248,5 +1251,111 @@ export default class MultiplayerGame {
      */
     private async CacheSelectedMap(): Promise<void> { 
         this.IsMapCached = await MapsHelper.CacheMap({ md5: this.MapMd5, id: this.MapId });
+    }
+
+    /**
+     * Caches an individual player's current score in redis.
+     */
+    public async CachePlayerCurrentScore(player: User): Promise<void> {
+        const processor = this.PlayerScoreProcessors[player.Id];
+
+        if (!processor)
+            return;
+
+        if (!processor.Multiplayer)
+            return;
+
+        const team: number = this.Ruleset == MultiplayerGameRuleset.Team ? this.GetUserTeam(player) : -1;
+
+        let mods: any = this.PlayerMods.find(x => x.Id == player.Id);
+        if (mods) mods = mods.Mods;
+
+        const key =`quaver:server:multiplayer:${this.DatabaseId}:${player.Id}`;
+
+        await RedisHelper.hset(key, "t", team.toString());
+        await RedisHelper.hset(key, "m", mods);
+        await RedisHelper.hset(key, "pr", processor.PerformanceRating.toString());
+        await RedisHelper.hset(key, "sc", processor.Score.toString());
+        await RedisHelper.hset(key, "a", processor.Accuracy.toString());
+        await RedisHelper.hset(key, "mc", processor.MaxCombo.toString());
+        await RedisHelper.hset(key, "ma", processor.CurrentJudgements[Judgement.Marvelous].toString());
+        await RedisHelper.hset(key, "pf", processor.CurrentJudgements[Judgement.Perfect].toString());
+        await RedisHelper.hset(key, "gr", processor.CurrentJudgements[Judgement.Great].toString());
+        await RedisHelper.hset(key, "gd", processor.CurrentJudgements[Judgement.Good].toString());
+        await RedisHelper.hset(key, "ok", processor.CurrentJudgements[Judgement.Okay].toString());
+        await RedisHelper.hset(key, "ms", processor.CurrentJudgements[Judgement.Miss].toString());
+        await RedisHelper.hset(key, "cm", processor.Combo.toString());
+        await RedisHelper.hset(key, "hl", processor.Health.toString());
+        await RedisHelper.hset(key, "fc", Number(processor.IsFullCombo()).toString());
+        await RedisHelper.hset(key, "lv", processor.Multiplayer.Lives.toString());
+        await RedisHelper.hset(key, "hf", Number(processor.Multiplayer.HasFailed).toString()); 
+    }
+
+    /**
+     * Caches the match settings in redis
+     */
+    public async CacheMatchSettings(): Promise<void> {
+        const key = `quaver:server:multiplayer:${this.DatabaseId}`;
+
+        await RedisHelper.hset(key, "t", Number(this.Type).toString());
+        await RedisHelper.hset(key, "n", this.Name);
+        await RedisHelper.hset(key, "pw", Number(this.HasPassword).toString());
+        await RedisHelper.hset(key, "mp", this.MaxPlayers.toString());
+        await RedisHelper.hset(key, "md5", this.MapMd5);
+        await RedisHelper.hset(key, "mid", this.MapId.toString());
+        await RedisHelper.hset(key, "msid", this.MapsetId.toString());
+        await RedisHelper.hset(key, "map", this.Map);
+        await RedisHelper.hset(key, "h", this.HostId.toString());
+        await RedisHelper.hset(key, "r", Number(this.Ruleset).toString());
+        await RedisHelper.hset(key, "hr", Number(this.AutoHostRotation).toString());
+        await RedisHelper.hset(key, "gm", Number(this.GameMode).toString());
+        await RedisHelper.hset(key, "d", Number(this.DifficultyRating).toString());
+        await RedisHelper.hset(key, "inp", Number(this.InProgress).toString());
+        await RedisHelper.hset(key, "m", this.Modifiers);
+        await RedisHelper.hset(key, "fm", Number(this.FreeModType).toString());
+        await RedisHelper.hset(key, "h", Number(this.HealthType).toString());
+        await RedisHelper.hset(key, "lv", this.Lives.toString());
+
+        await this.CacheAllPlayers();
+    }
+
+    /**
+     * Deletes the current match cache from Redis
+     */
+    public async DeleteCachedMatchSettings(): Promise<void> {
+        await RedisHelper.del(`quaver:server:multiplayer:${this.DatabaseId}`);
+    }
+
+    /**
+     * Deletes the current match scores from redis
+     */
+    public async DeleteCachedMatchScores(): Promise<void> {
+        const scores = await RedisHelper.keys(`quaver:server:multiplayer:${this.DatabaseId}:*`);
+
+        for (let i = 0; i < scores.length; i++)
+            await RedisHelper.del(scores[i]);
+    }
+
+    /**
+     * Caches the state of all players in the multiplayer match
+     */
+    public async CacheAllPlayers(): Promise<void> {
+        for (let i = 0; i < this.Players.length; i++) {
+            const key = `quaver:server:multiplayer:${this.DatabaseId}:player:${this.Players[i].Id}`;
+
+            await RedisHelper.hset(key, "id", this.Players[i].Id.toString());
+            await RedisHelper.hset(key, "u", this.Players[i].Username);
+            await RedisHelper.hset(key, "sid", this.Players[i].SteamId);
+            await RedisHelper.hset(key, "a", this.Players[i].AvatarUrl);
+            await RedisHelper.hset(key, "t", Number(this.GetUserTeam(this.Players[i])).toString());
+        }
+    }
+
+    /**
+     * Removes a cached player from redis
+     * @param player 
+     */
+    public async RemoveCachedPlayer(player: User): Promise<void> {
+        await RedisHelper.del(`quaver:Server:multiplayer:${this.DatabaseId}:player:${player.Id}`);
     }
 }
