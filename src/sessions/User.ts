@@ -430,7 +430,6 @@ export default class User implements IPacketWritable, IStringifyable {
         game.BlueTeamPlayers = game.BlueTeamPlayers.filter(x => x != this.Id);
         this.LeaveChatChannel(ChatManager.Channels[`#multiplayer_${game.Id}`]);
         this.LeaveChatChannel(ChatManager.Channels[game.GetTeamChatChannelName()]);
-        await game.RemoveCachedPlayer(this);
 
         this.CurrentGame = null;
 
@@ -446,7 +445,8 @@ export default class User implements IPacketWritable, IStringifyable {
         Albatross.SendToUsers(game.Players, new ServerPacketUserLeftGame(this));   
         
         // Let players in the lobby be aware of this change
-        game.InformLobbyUsers();  
+        game.InformLobbyUsers(); 
+        await game.RemoveCachedPlayer(this);  
     }
 
     /**
