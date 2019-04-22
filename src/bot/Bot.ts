@@ -457,7 +457,7 @@ export default class Bot {
                 if (!sender.CurrentGame.Host)
                     return;              
 
-                sender.CurrentGame.StartMatchCountdown();
+                await sender.CurrentGame.StartMatchCountdown();
                 break;
             // Ends the match
             case "end":
@@ -470,7 +470,7 @@ export default class Bot {
                 if (!sender.CurrentGame.Host)
                     return;
 
-                sender.CurrentGame.StopMatchCountdown();
+                await sender.CurrentGame.StopMatchCountdown();
                 break;         
             // Changes the map's host 
             case "host":
@@ -487,7 +487,7 @@ export default class Bot {
                     return await Bot.SendMessage(game.GetChatChannelName(), "That user is not online!");
 
                 if (target.CurrentGame == sender.CurrentGame)
-                    sender.CurrentGame.ChangeHost(target);
+                    await sender.CurrentGame.ChangeHost(target);
                 else
                     return await Bot.SendMessage(game.GetChatChannelName(), "That user isn't in the game!");
                 break;
@@ -626,7 +626,7 @@ export default class Bot {
                     return await Bot.SendMessage(game.GetChatChannelName(), "That user is not online!");
 
                 if (kickTarget.CurrentGame == sender.CurrentGame) {
-                    sender.CurrentGame.KickPlayer(kickTarget);
+                    await sender.CurrentGame.KickPlayer(kickTarget);
                     await Bot.SendMessage(game.GetChatChannelName(), `${kickTarget.Username} has been kicked from the game!`);
                 }
                 else
@@ -646,7 +646,7 @@ export default class Bot {
                 if (name.length >= 100)
                     return await Bot.SendMessage(game.GetChatChannelName(), "The name you have specified is too long. It must be under 100 characters");
 
-                game.ChangeName(name);
+                await game.ChangeName(name);
                 await Bot.SendMessage(game.GetChatChannelName(), `The game name has been changed to: "${name}"`);
                 break;
              case "invite":

@@ -10,7 +10,7 @@ export default class GameStopCountdownHandler {
      */
     public static async Handle(user: User, packet: ClientPacketGameStopCountdown): Promise<void> {
         try {
-            user.HandleMultiplayerCountdownStop();
+            await user.HandleMultiplayerCountdownStop();
         } catch (err) {
             return Logger.Error(err);
         }

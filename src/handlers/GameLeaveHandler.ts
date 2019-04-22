@@ -11,7 +11,7 @@ export default class GameLeaveHandler {
      */
     public static async Handle(user: User, packet: ClientPacketLeaveGame): Promise<void> {
         try {
-            user.LeaveMultiplayerGame();
+            await user.LeaveMultiplayerGame();
         } catch (err) {
             Logger.Error(err);
         }

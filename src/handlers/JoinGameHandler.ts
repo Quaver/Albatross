@@ -12,7 +12,7 @@ export default class JoinGameHandler {
      */
     public static async Handle(user: User, packet: ClientPacketJoinGame): Promise<void> {
         try {
-            return user.JoinMultiplayerGame(Lobby.Games[packet.GameId], packet.Password);
+            return await user.JoinMultiplayerGame(Lobby.Games[packet.GameId], packet.Password);
         } catch (err) {
             Logger.Error(err); 
         }

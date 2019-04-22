@@ -10,7 +10,7 @@ export default class GameJudgementsHandler {
      */
     public static async Handle(user: User, packet: ClientPacketGameJudgements): Promise<void> {
         try {
-            return user.HandleMultiplayerJudgements(packet.Judgements);
+            return await user.HandleMultiplayerJudgements(packet.Judgements);
         } catch (err) {
             return Logger.Error(err);
         }
