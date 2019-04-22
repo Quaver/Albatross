@@ -1348,6 +1348,7 @@ export default class MultiplayerGame {
             await RedisHelper.hset(key, "sid", this.Players[i].SteamId);
             await RedisHelper.hset(key, "a", this.Players[i].AvatarUrl);
             await RedisHelper.hset(key, "t", Number(this.GetUserTeam(this.Players[i])).toString());
+            await RedisHelper.hset(key, "c", this.Players[i].Country);
         }
     }
 

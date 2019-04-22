@@ -12,6 +12,7 @@ export default class LobbyJoinHandler {
      */
     public static async Handle(user: User, packet: ClientPacketLobbyJoin): Promise<void> {
         try {
+            await user.LeaveMultiplayerGame();
             Lobby.AddUser(user);
         } catch (err) {
             return Logger.Error(err);
