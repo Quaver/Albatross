@@ -39,6 +39,12 @@
     "avatarUrl": "https://pbs.twimg.com/profile_images/1003731743990374400/QZjgWGlk_400x400.jpg"
   },
   "testClientKey": "",
+  "azure": {
+    "connectionString": ""
+  },
+  "api": {
+    "dataFolderPath": ""
+  },
   "chatChannels": [
     {
       "name": "#announcements",

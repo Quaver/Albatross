@@ -2,7 +2,7 @@ import Packet from "../Packet";
 import { JsonObject, JsonProperty } from "json2typescript";
 import PacketId from "../PacketId";
 import { json } from "express";
-import MultiplayerGame from "../../multiplayer/MutliplayerGame";
+import MultiplayerGame from "../../multiplayer/MultiplayerGame";
 
 @JsonObject("ServerPacketLongNotePercentageChanged")
 export default class ServerPacketLongNotePercentageChanged extends Packet {

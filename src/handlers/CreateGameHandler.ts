@@ -1,7 +1,7 @@
 import User from "../sessions/User";
 import ClientPacketCreateGame from "../packets/client/ClientPacketCreateGame";
 import Logger from "../logging/Logger";
-import MultiplayerGame from "../multiplayer/MutliplayerGame";
+import MultiplayerGame from "../multiplayer/MultiplayerGame";
 import MultiplayerGameType from "../multiplayer/MultiplayerGameType";
 import Lobby from "../multiplayer/Lobby";
 import DiscordWebhookHelper from "../discord/DiscordWebhookHelper";
@@ -38,7 +38,7 @@ export default class CreateGameHandler {
             packet.Game = null;
 
             // Create the actual game.
-            Lobby.CreateGame(game);
+            await Lobby.CreateGame(game);
             user.JoinMultiplayerGame(game, game.Password);
             
             // Set the host

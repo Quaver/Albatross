@@ -9,7 +9,7 @@ import ServerNotificationType from "../enums/ServerNotificationType";
 import AdminActionLogger from "../admin/AdminActionLogger";
 import AdminActionLogType from "../admin/AdminActionLogType";
 import Lobby from "../multiplayer/Lobby";
-import MultiplayerGame from "../multiplayer/MutliplayerGame";
+import MultiplayerGame from "../multiplayer/MultiplayerGame";
 import MultiplayerGameType from "../multiplayer/MultiplayerGameType";
 import MultiplayerGameRuleset from "../multiplayer/MultiplayerGameRuleset";
 import GameMode from "../enums/GameMode";
@@ -450,7 +450,7 @@ export default class Bot {
                 if (!sender.CurrentGame.Host)
                     return;              
 
-                sender.CurrentGame.Start();
+                await sender.CurrentGame.Start();
                 break;
             // Starts the match countdown
             case "startcountdown":
@@ -464,7 +464,7 @@ export default class Bot {
                 if (!sender.CurrentGame.Host)
                     return;  
                  
-                sender.CurrentGame.End();         
+                await sender.CurrentGame.End(true);         
                 break;       
             case "stopcountdown":
                 if (!sender.CurrentGame.Host)

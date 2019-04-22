@@ -24,7 +24,7 @@ import ServerPacketPing from "../packets/server/ServerPacketPing";
 import UserClientStatus from "../objects/UserClientStatus";
 import AdminActionLogger from "../admin/AdminActionLogger";
 import AdminActionLogType from "../admin/AdminActionLogType";
-import MultiplayerGame from "../multiplayer/MutliplayerGame";
+import MultiplayerGame from "../multiplayer/MultiplayerGame";
 import ServerPacketMultiplayerGameInfo from "../packets/server/ServerPacketMultiplayerGameInfo";
 import ServerPacketJoinGame from "../packets/server/ServerPacketJoinGame";
 import Lobby from "../multiplayer/Lobby";
@@ -482,7 +482,7 @@ export default class User implements IPacketWritable, IStringifyable {
     /**
      * Handles when the client has finished playing their multiplayer game play session
      */
-    public FinishPlayingMultiplayerGame(): void {
+    public async FinishPlayingMultiplayerGame(): Promise<void> {
         if (!this.CurrentGame)
             return Logger.Warning(`${this.ToNameIdString()} stated they finished playing a multiplayer game, but they aren't in one!`);
 
@@ -492,7 +492,7 @@ export default class User implements IPacketWritable, IStringifyable {
             game.FinishedPlayers.push(this);
 
         if (game.FinishedPlayers.length == game.PlayersGameStartedWith.length)
-            game.End();
+            await game.End();
     }
 
     /**

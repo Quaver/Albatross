@@ -15,7 +15,7 @@ export default class ScoreProcessorMultiplayer {
     /**
      * The amount of lives the player has
      */
-    public Lives: number;
+    public Lives: number = 3;
 
     /**
      * If the player has failed at any point during the game

@@ -63,10 +63,21 @@ export default class ScoreProcessorKeys extends ScoreProcessor {
     private ScoreCount: number = 0;
 
     /**
+     * The player's performance rating for the score
      */
-    constructor(mods: ModIdentifiers, multiplayer: ScoreProcessorMultiplayer | undefined = undefined) {
+    public PerformanceRating: number = 0;
+
+    /**
+     * The difficulty rating of the map
+     */
+    private DifficultyRating: number;
+
+    /**
+     */
+    constructor(mods: ModIdentifiers, multiplayer: ScoreProcessorMultiplayer | undefined = undefined, difficultyRating: number = 0.00) {
         super(mods, multiplayer);
 
+        this.DifficultyRating = difficultyRating;
         this.InitializeJudgementWindows();
         this.InitializeScoreWeightingValues();
         this.InitializeJudgementHealthWeightingValues();
@@ -107,6 +118,8 @@ export default class ScoreProcessorKeys extends ScoreProcessor {
         // Handle multiplayer stuff accordingly.
         if (this.Multiplayer)
             this.Multiplayer.CalculateHealth();
+
+        this.CalculatePerformanceRating();
     }
 
     /**
@@ -217,5 +230,18 @@ export default class ScoreProcessorKeys extends ScoreProcessor {
             summedScore += (this.JudgementList.length - (maxMultiplierCount - 1)) * (this.JudgementScoreWeighting[Judgement.Marvelous] + maxMultiplierCount);
 
         this.SummedScore = summedScore;
+    }
+
+    /**
+     * Calculates the performance rating of the current score.
+     */
+    private CalculatePerformanceRating(): void {
+        // Failures/Eliminations should count as 0 rating
+        if (this.IsFailed() || this.Multiplayer && (this.Multiplayer.IsRegeneratingHealth || this.Multiplayer.Lives == 0)) {
+            this.PerformanceRating = 0;
+            return;
+        }
+
+        this.PerformanceRating = this.DifficultyRating * Math.pow(this.Accuracy / 98, 6);
     }
 }

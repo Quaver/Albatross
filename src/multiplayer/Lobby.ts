@@ -1,6 +1,6 @@
 import * as _ from "lodash";
 import User from "../sessions/User";
-import MultiplayerGame from "./MutliplayerGame";
+import MultiplayerGame from "./MultiplayerGame";
 import IUniqueIdtoGameMap from "./maps/IUniqueIdToGameMap";
 import Logger from "../logging/Logger";
 import Albatross from "../Albatross";
@@ -63,7 +63,7 @@ export default class Lobby {
     /**
      * Creates a new multiplayer match
      */
-    public static CreateGame(game: MultiplayerGame): void {
+    public static async CreateGame(game: MultiplayerGame): Promise<void> {
         Lobby.Games[game.Id] = game;
 
         // Create a new chat channel for the multiplayer game.
@@ -79,6 +79,7 @@ export default class Lobby {
 
         ChatManager.Channels[game.GetTeamChatChannelName()] = teamChan;
 
+        await game.InsertGameIntoDatabase();
         Albatross.SendToUsers(Lobby.Users, new ServerPacketMultiplayerGameInfo(game));
         Logger.Success(`Multiplayer Game: "${game.Name}" <${game.Id}> has been created.`);
     }

@@ -46,6 +46,11 @@ import ChatManager from "../chat/ChatManager";
 import ChatChannel from "../chat/ChatChannel";
 import ServerPacketLongNotePercentageChanged from "../packets/server/ServerPacketLongNotePercentageChanged";
 import ServerPacketGameMaxPlayersChanged from "../packets/server/ServerPacketGameMaxPlayersChanged";
+import ServerPacketGameMinimumRateChanged from "../packets/server/ServerPacketGameMinimumRateChanged";
+import SqlDatabase from "../database/SqlDatabase";
+import MapsHelper from "../utils/MapsHelper";
+import QuaHelper from "../utils/QuaHelper";
+import MultiplayerWinResult from "./MultiplayerWinResult";
 const md5 = require("md5");
 
 /**
@@ -59,6 +64,11 @@ export default class MultiplayerGame {
      */
     @JsonProperty("id")
     public Id: string = "";
+
+    /**
+     * The id of the game in the database
+     */
+    public DatabaseId: number = -1;
 
     /**
      * The type of multiplayer game this is.
@@ -252,6 +262,12 @@ export default class MultiplayerGame {
     public MaximumLongNotePercentage: number = 100;
 
     /**
+     * The minimum rate allowed for free rate
+     */
+    @JsonProperty("mr")
+    public MinimumRate: number = 0.5;
+
+    /**
      * The players that are currently in the game
      */
     public Players: User[] = [];
@@ -308,6 +324,19 @@ export default class MultiplayerGame {
     public PlayerScoreProcessors: PlayerIdToScoreProccessorMap = {};
 
     /**
+     * Determines if the map is cached and ready to use
+     */
+    private IsMapCached: boolean = false;
+
+    /**
+     * Object containing calculated difficulty ratings of the map with mods each
+     * player is using - so they can have the absolutely correct performance rating.
+     * This should be used if the map is cacheable - if not, use the difficulty ratings
+     * the host has provided us.
+     */
+    private CalculatedDifficultyRatings: any = {};
+
+    /**
      * Creates and returns a multiplayer game
      * @param type 
      * @param name 
@@ -350,8 +379,10 @@ export default class MultiplayerGame {
         game.BlueTeamPlayers = [];
         game.MinimumLongNotePercentage = 0;
         game.MaximumLongNotePercentage = 100;
+        game.MinimumRate = 0.5;
         if (password) game.HasPassword = true;
 
+        game.CacheSelectedMap();
         return game;
     }
 
@@ -359,7 +390,7 @@ export default class MultiplayerGame {
      * Returns a unique identifier for this game.
      */
     private GenerateGameIdentifier(): string {
-        return md5(Date.now() + this.Name + this.MaxPlayers + this.Type + this.HasPassword);
+        return md5(Math.round((new Date()).getTime()) + this.Name + this.MaxPlayers + this.Type + this.HasPassword);
     }
 
     /**
@@ -408,6 +439,8 @@ export default class MultiplayerGame {
     public ChangeName(name: string): void {
         this.Name = name;
 
+        SqlDatabase.Execute("UPDATE multiplayer_games SET name = ? WHERE id = ?", [this.Name, this.DatabaseId]);
+
         Albatross.SendToUsers(this.Players, new ServerPacketGameNameChanged(this));
         this.InformLobbyUsers();
     }
@@ -415,7 +448,7 @@ export default class MultiplayerGame {
     /**
      * Changes the selected map of the game
      */
-    public ChangeMap(md5: string, mapId: number, mapsetId: number, map: string, mode: GameMode, difficulty: number): void {
+    public async ChangeMap(md5: string, mapId: number, mapsetId: number, map: string, mode: GameMode, difficulty: number): Promise<void> {
         // Prevent diffs not in range
         if (difficulty < this.MinimumDifficultyRating || difficulty > this.MaximumDifficultyRating)
             return Logger.Warning(`[${this.Id}] Multiplayer map change failed. Difficulty rating not in min-max range.`);
@@ -433,10 +466,13 @@ export default class MultiplayerGame {
 
         this.PlayersWithoutMap = [];
         this.PlayersReady = [];
+        this.CalculatedDifficultyRatings = {};
 
         this.StopMatchCountdown(false); 
         Albatross.SendToUsers(this.Players, new ServerPacketGameMapChanged(md5, mapId, mapsetId, map, mode, difficulty));    
         this.InformLobbyUsers();
+
+        await this.CacheSelectedMap();
     }
 
     /**
@@ -456,7 +492,7 @@ export default class MultiplayerGame {
     /**
      * Starts the multiplayer game
      */
-    public Start(): void {
+    public async Start(): Promise<void> {
         if (this.InProgress)
             return;
 
@@ -468,7 +504,7 @@ export default class MultiplayerGame {
         this.PlayersSkipped = [];
         this.PlayersReady = [];
         this.CountdownStartTime = -1;
-        this.ClearAndPopulateScoreProcessors();
+        await this.ClearAndPopulateScoreProcessors();
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameStart());
         this.InformLobbyUsers();
@@ -477,11 +513,18 @@ export default class MultiplayerGame {
     /**
      * Ends the multiplayer game
      */
-    public End(): void {
+    public async End(abortedEarly: boolean = false): Promise<void> {
         if (!this.InProgress)
             return;
 
         Logger.Success(`[${this.Id}] Multiplayer Game Ended!`);
+
+        // Calculate all players' total scores (done after the match completes, so we can calculate the *real* value
+        // with the total amount of udgements)
+        for (let p in this.PlayerScoreProcessors)
+            this.PlayerScoreProcessors[p].CalculateTotalScore();
+
+        await this.InsertMatchIntoDatabase(abortedEarly);
 
         this.InProgress = false;
         this.MatchSkipped = false;
@@ -504,11 +547,6 @@ export default class MultiplayerGame {
             else
                 this.ChangeHost(this.Players[0], false);
         }
-
-        // Calculate all players' total scores (done after the match completes, so we can calculate the *real* value
-        // with the total amount of udgements)
-        for (let p in this.PlayerScoreProcessors)
-            this.PlayerScoreProcessors[p].CalculateTotalScore();
 
         this.InformLobbyUsers();
     }
@@ -537,8 +575,8 @@ export default class MultiplayerGame {
             
         Logger.Success(`[${this.Id}] Multiplayer Match Countdown Started`);
 
-        this.CountdownStartTime = Date.now();
-        this.CountdownTimer = setTimeout(() => this.Start(), 5000);
+        this.CountdownStartTime = Math.round((new Date()).getTime());
+        this.CountdownTimer = setTimeout(async () => await this.Start(), 5000);
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameStartCountdown(this.CountdownStartTime));
         this.InformLobbyUsers();
@@ -976,15 +1014,189 @@ export default class MultiplayerGame {
             return Logger.Warning(`[${this.Id}] Multiplayer - Could not change max player count. Higher than players in-game.`);
 
         this.MaxPlayers = players;
-        
+
         Albatross.SendToUsers(this.Players, new ServerPacketGameMaxPlayersChanged(this));
         this.InformLobbyUsers();
     }
 
     /**
-     *  
+     * Changes the minimum rate allowed for players to use if Free Rate is enabled
      */
-    private ClearAndPopulateScoreProcessors(): void {
+    public ChangeMinimumRate(rate: number): void {
+        rate = Math.round(10 * rate) / 10;
+
+        Albatross.SendToUsers(this.Players, new ServerPacketGameMinimumRateChanged(this));
+        this.InformLobbyUsers();
+    }
+
+    /**
+     * Inserts the overall game (NOT RESULTS OF A MATCH) into the database.
+     */
+    public async InsertGameIntoDatabase(): Promise<void> {
+        try {
+            const results = await SqlDatabase.Execute("INSERT INTO multiplayer_games (unique_id, name, type, time_created) " + 
+                                "VALUES (?, ?, ?, ?)", [this.Id, this.Name, this.Type, Math.round((new Date()).getTime())])
+
+            this.DatabaseId = results.insertId;                    
+        } catch (err) {
+            Logger.Error(err);
+            throw err;
+        }
+    }
+
+    /**
+     * Inserts an entire match and scores into the database
+     */
+    public async InsertMatchIntoDatabase(abortedEarly: boolean): Promise<void> {
+        try {
+            // Check if the map actually exists inside of the database first
+            const mapResults = await SqlDatabase.Execute("SELECT id FROM maps WHERE md5 = ?", [this.MapMd5]);
+
+            if (mapResults.length == 0)
+                return Logger.Warning(`[${this.Id}] Multiplayer - Skipping match database entry (map doesn't exist)!`);
+
+            // Insert the match into the database.
+            const results = await SqlDatabase.Execute("INSERT INTO multiplayer_game_matches (game_id, time_played, map_md5, map, host_id, ruleset, game_mode, global_modifiers, free_mod_type, health_type, lives, aborted) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+                    [this.DatabaseId, Math.round((new Date()).getTime()), this.MapMd5, this.Map, this.HostId, this.Ruleset, 
+                        this.GameMode, this.Modifiers, this.FreeModType, this.HealthType, this.Lives, Number(abortedEarly)]);
+
+            await this.InsertScoresIntoDatabase(results.insertId);
+        } catch (err) {
+            Logger.Error(err);
+            throw err;
+        }
+    }
+
+    /**
+     * Inserts all scores from the match into the database
+     */
+    private async InsertScoresIntoDatabase(matchId: number): Promise<void> {
+        for (let i = 0; i < this.PlayersGameStartedWith.length; i++) {
+            const player: User = this.PlayersGameStartedWith[i];
+            const scoreProcessor: ScoreProcessorKeys = this.PlayerScoreProcessors[player.Id];
+            let mods: MultiplayerPlayerMods | any = this.PlayerMods.find(x => x.Id == player.Id);
+
+            if (!mods)
+                mods = 0;
+            else
+                mods = mods.Mods;
+
+            const team: number = this.Ruleset == MultiplayerGameRuleset.Team ? this.GetUserTeam(player) : -1;
+
+            if (!scoreProcessor.Multiplayer)
+                throw new Error("Multiplayer Score Processor not defined???");
+
+            await SqlDatabase.Execute("INSERT INTO multiplayer_match_scores (user_id, match_id, team, mods, performance_rating, score, accuracy, max_combo, " + 
+                "count_marv, count_perf, count_great, count_good, count_okay, count_miss, full_combo, lives_left, has_failed, won) " + 
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+                [player.Id, matchId, team, mods, scoreProcessor.PerformanceRating, scoreProcessor.Score, scoreProcessor.Accuracy,
+                scoreProcessor.MaxCombo, 
+                scoreProcessor.CurrentJudgements[Judgement.Marvelous],
+                scoreProcessor.CurrentJudgements[Judgement.Perfect],
+                scoreProcessor.CurrentJudgements[Judgement.Great],
+                scoreProcessor.CurrentJudgements[Judgement.Good],
+                scoreProcessor.CurrentJudgements[Judgement.Okay],
+                scoreProcessor.CurrentJudgements[Judgement.Miss],
+                Number(scoreProcessor.IsFullCombo()),
+                scoreProcessor.Multiplayer.Lives,
+                Number(scoreProcessor.Multiplayer.HasFailed),
+                Number(this.GetPlayerWinResult(player))]);
+        }
+    }
+
+    /**
+     * Checks if an individual player has won the match
+     */
+    private GetPlayerWinResult(player: User): MultiplayerWinResult {
+        switch (this.Ruleset) {
+            // FFA - Highest player score wins
+            case MultiplayerGameRuleset.Free_For_All:
+                return this.CheckIfPlayerFreeForAllWinner(player);
+            // Teams - Highest rating from a team wins.
+            case MultiplayerGameRuleset.Team:
+                return this.CheckIfPlayerTeamWinner(player);
+        }
+
+        return MultiplayerWinResult.Loss;
+    }
+
+    /**
+     * Checks if a player is a winner of the free for all ruleset
+     * @param player
+     */
+    private CheckIfPlayerFreeForAllWinner(player: User): MultiplayerWinResult {
+        for (let i = 0; i < this.PlayersGameStartedWith.length; i++) {
+            if (this.PlayersGameStartedWith[i] == player)
+                continue;
+
+            // Check if the user has a smaller performance rating than the rest of the players
+            if (this.PlayerScoreProcessors[player.Id].PerformanceRating < 
+                this.PlayerScoreProcessors[this.PlayersGameStartedWith[i].Id].PerformanceRating)
+                return MultiplayerWinResult.Loss;
+        }
+
+        // Check if the match was a tie.
+        if (this.PlayersGameStartedWith.every(x => this.PlayerScoreProcessors[x.Id].PerformanceRating == 
+            this.PlayerScoreProcessors[this.PlayersGameStartedWith[0].Id].PerformanceRating) && this.PlayersGameStartedWith.length > 1) {
+                return MultiplayerWinResult.Tie;
+            }
+        
+        return MultiplayerWinResult.Won;
+    }
+
+    /**
+     * Checks if a player is on the winning team
+     * @param player 
+     */
+    private CheckIfPlayerTeamWinner(player: User): MultiplayerWinResult { 
+        const redTeamAverage: number = this.GetTeamAveragePerformanceRating(MultiplayerTeam.Red);
+        const blueTeamAverage: number = this.GetTeamAveragePerformanceRating(MultiplayerTeam.Blue);
+        
+        if (redTeamAverage == blueTeamAverage)
+            return MultiplayerWinResult.Tie;
+
+        if (redTeamAverage > blueTeamAverage && this.GetUserTeam(player) == MultiplayerTeam.Red)
+            return MultiplayerWinResult.Won;
+        
+        return MultiplayerWinResult.Loss;
+    }
+
+    /**
+     * Gets the average performance rating of a multiplayer team
+     * @param team 
+     */
+    private GetTeamAveragePerformanceRating(team: MultiplayerTeam): number {
+        const teamPlayerIds: number[] = this.GetTeamFromMultiplayerTeam(team);
+
+        if (teamPlayerIds.length == 0)
+            return 0;
+            
+        let total: number = 0;
+
+        for (let i = 0; i < teamPlayerIds.length; i++)
+            total += this.PlayerScoreProcessors[teamPlayerIds[i]].PerformanceRating;
+
+        return total / teamPlayerIds.length;
+    }
+
+    /**
+     * Gets a whole team of players from a MultiplayerTeam
+     * @param team 
+     */
+    private GetTeamFromMultiplayerTeam(team: MultiplayerTeam): number[] {
+        switch (team) {
+            case MultiplayerTeam.Blue:
+                return this.BlueTeamPlayers;
+            case MultiplayerTeam.Red:
+                return this.RedTeamPlayers;
+        }
+    }
+
+    /**
+     *  Clears all previous score processors and creates one for the new game. Handles any difficulty calculations if necessary
+     */
+    private async ClearAndPopulateScoreProcessors(): Promise<void> {
         this.PlayerScoreProcessors = {};
         
         for (let i = 0; i < this.PlayersGameStartedWith.length; i++) {
@@ -994,7 +1206,39 @@ export default class MultiplayerGame {
             if (playerMods)
                 mods |= parseInt(playerMods.Mods);
 
-            this.PlayerScoreProcessors[this.PlayersGameStartedWith[i].Id] = new ScoreProcessorKeys(mods, new ScoreProcessorMultiplayer(this.HealthType, this.Lives));
+            let difficultyRating: number = this.DifficultyRating;
+
+            // Calculate difficulties for the map
+            if (this.IsMapCached) {
+                const rate = ModHelper.GetRateFromMods(mods);
+
+                // Run the difficulty calculator to get the most up to date one.
+                if (!this.CalculatedDifficultyRatings[rate]) {
+                    try {
+                        const result = await QuaHelper.RunDifficultyCalculator(MapsHelper.GetCachedMapPath(this.MapId), mods);
+
+                        this.CalculatedDifficultyRatings[rate] = result.Difficulty.OverallDifficulty;
+                        difficultyRating = this.CalculatedDifficultyRatings[rate];
+                    } catch (err) {
+                        Logger.Error(`ERROR CALCULATING MULTIPLAYER DIFFICULTY: ${err}`);
+
+                        // This technically shouldn't happen, but if it does, we should default to the user-defined difficulty rating
+                    }
+                // No need to calculate the difficulty once more. Use the one that is already calculated
+                } else {
+                    difficultyRating = this.CalculatedDifficultyRatings[rate];
+                }
+            }
+
+            this.PlayerScoreProcessors[this.PlayersGameStartedWith[i].Id] = new ScoreProcessorKeys(mods, new ScoreProcessorMultiplayer(this.HealthType, this.Lives), difficultyRating);
         }
+    }
+
+    /**
+     * Caches the selected map and returns if it is cached
+     */
+    private async CacheSelectedMap(): Promise<void> { 
+        this.IsMapCached = await MapsHelper.CacheMap({ md5: this.MapMd5, id: this.MapId });
+        Logger.Success(`MAP CACHED: ${this.IsMapCached}`);
     }
 }

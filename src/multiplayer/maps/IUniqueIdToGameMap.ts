@@ -1,4 +1,4 @@
-import MultiplayerGame from "../MutliplayerGame";
+import MultiplayerGame from "../MultiplayerGame";
 
 interface IUniqueIdtoGameMap {
     [id: string]: MultiplayerGame
