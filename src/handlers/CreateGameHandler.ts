@@ -38,7 +38,7 @@ export default class CreateGameHandler {
             packet.Game = null;
 
             // Create the actual game.
-            Lobby.CreateGame(game);
+            await Lobby.CreateGame(game);
             user.JoinMultiplayerGame(game, game.Password);
             
             // Set the host

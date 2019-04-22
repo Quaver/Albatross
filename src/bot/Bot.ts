@@ -450,7 +450,7 @@ export default class Bot {
                 if (!sender.CurrentGame.Host)
                     return;              
 
-                sender.CurrentGame.Start();
+                await sender.CurrentGame.Start();
                 break;
             // Starts the match countdown
             case "startcountdown":
@@ -464,7 +464,7 @@ export default class Bot {
                 if (!sender.CurrentGame.Host)
                     return;  
                  
-                sender.CurrentGame.End(true);         
+                await sender.CurrentGame.End(true);         
                 break;       
             case "stopcountdown":
                 if (!sender.CurrentGame.Host)

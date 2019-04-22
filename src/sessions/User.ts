@@ -482,7 +482,7 @@ export default class User implements IPacketWritable, IStringifyable {
     /**
      * Handles when the client has finished playing their multiplayer game play session
      */
-    public FinishPlayingMultiplayerGame(): void {
+    public async FinishPlayingMultiplayerGame(): Promise<void> {
         if (!this.CurrentGame)
             return Logger.Warning(`${this.ToNameIdString()} stated they finished playing a multiplayer game, but they aren't in one!`);
 
@@ -492,7 +492,7 @@ export default class User implements IPacketWritable, IStringifyable {
             game.FinishedPlayers.push(this);
 
         if (game.FinishedPlayers.length == game.PlayersGameStartedWith.length)
-            game.End();
+            await game.End();
     }
 
     /**

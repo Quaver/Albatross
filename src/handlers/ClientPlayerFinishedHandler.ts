@@ -10,7 +10,7 @@ export default class ClientPlayerFinishedHandler {
      */
     public static async Handle(user: User, packet: ClientPacketPlayerFinished): Promise<void> {
         try {
-            return user.FinishPlayingMultiplayerGame();
+            return await user.FinishPlayingMultiplayerGame();
         } catch (err) {
             return Logger.Error(err);
         }
