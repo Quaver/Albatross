@@ -1171,7 +1171,7 @@ export default class MultiplayerGame {
 
         if (teamPlayerIds.length == 0)
             return 0;
-            
+
         let total: number = 0;
 
         for (let i = 0; i < teamPlayerIds.length; i++)
@@ -1206,32 +1206,41 @@ export default class MultiplayerGame {
             if (playerMods)
                 mods |= parseInt(playerMods.Mods);
 
-            let difficultyRating: number = this.DifficultyRating;
+            const difficultyRating: number = await this.GetDifficultyRatingForPlayer(mods);
 
-            // Calculate difficulties for the map
-            if (this.IsMapCached) {
-                const rate = ModHelper.GetRateFromMods(mods);
-
-                // Run the difficulty calculator to get the most up to date one.
-                if (!this.CalculatedDifficultyRatings[rate]) {
-                    try {
-                        const result = await QuaHelper.RunDifficultyCalculator(MapsHelper.GetCachedMapPath(this.MapId), mods);
-
-                        this.CalculatedDifficultyRatings[rate] = result.Difficulty.OverallDifficulty;
-                        difficultyRating = this.CalculatedDifficultyRatings[rate];
-                    } catch (err) {
-                        Logger.Error(`ERROR CALCULATING MULTIPLAYER DIFFICULTY: ${err}`);
-
-                        // This technically shouldn't happen, but if it does, we should default to the user-defined difficulty rating
-                    }
-                // No need to calculate the difficulty once more. Use the one that is already calculated
-                } else {
-                    difficultyRating = this.CalculatedDifficultyRatings[rate];
-                }
-            }
-
-            this.PlayerScoreProcessors[this.PlayersGameStartedWith[i].Id] = new ScoreProcessorKeys(mods, new ScoreProcessorMultiplayer(this.HealthType, this.Lives), difficultyRating);
+            this.PlayerScoreProcessors[this.PlayersGameStartedWith[i].Id] = new ScoreProcessorKeys(mods, 
+                new ScoreProcessorMultiplayer(this.HealthType, this.Lives), difficultyRating);
         }
+    }
+
+    /**
+     * Gets the difficulty rating of a map for an individual player.
+     * @param player 
+     */
+    private async GetDifficultyRatingForPlayer(mods: ModIdentifiers): Promise<number> {
+        let difficultyRating: number = this.DifficultyRating;
+
+        // Calculate difficulties for the map
+        if (this.IsMapCached) {
+            const rate = ModHelper.GetRateFromMods(mods);
+
+            // Run the difficulty calculator to get the most up to date one.
+            if (!this.CalculatedDifficultyRatings[rate]) {
+                try {
+                    const result = await QuaHelper.RunDifficultyCalculator(MapsHelper.GetCachedMapPath(this.MapId), mods);
+
+                    this.CalculatedDifficultyRatings[rate] = result.Difficulty.OverallDifficulty;
+                    return this.CalculatedDifficultyRatings[rate];
+                } catch (err) {
+                    Logger.Error(`Error calculating multiplayer match difficulty: ${err}`);
+                }
+            // No need to calculate the difficulty once more. Use the one that is already calculated
+            } else {
+                return this.CalculatedDifficultyRatings[rate];
+            }
+        }
+
+        return difficultyRating;
     }
 
     /**
@@ -1239,6 +1248,5 @@ export default class MultiplayerGame {
      */
     private async CacheSelectedMap(): Promise<void> { 
         this.IsMapCached = await MapsHelper.CacheMap({ md5: this.MapMd5, id: this.MapId });
-        Logger.Success(`MAP CACHED: ${this.IsMapCached}`);
     }
 }
