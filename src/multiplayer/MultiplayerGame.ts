@@ -1161,6 +1161,8 @@ export default class MultiplayerGame {
 
         if (redTeamAverage > blueTeamAverage && this.GetUserTeam(player) == MultiplayerTeam.Red)
             return MultiplayerWinResult.Won;
+        else if (blueTeamAverage > redTeamAverage && this.GetUserTeam(player) == MultiplayerTeam.Blue)
+            return MultiplayerWinResult.Won;
         
         return MultiplayerWinResult.Loss;
     }
