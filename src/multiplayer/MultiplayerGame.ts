@@ -1359,6 +1359,6 @@ export default class MultiplayerGame {
      * @param player 
      */
     public async RemoveCachedPlayer(player: User): Promise<void> {
-        await RedisHelper.del(`quaver:Server:multiplayer:${this.DatabaseId}:player:${player.Id}`);
+        await RedisHelper.del(`quaver:server:multiplayer:${this.DatabaseId}:player:${player.Id}`);
     }
 }
