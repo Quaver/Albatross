@@ -1090,6 +1090,8 @@ export default class MultiplayerGame {
             if (!scoreProcessor.Multiplayer)
                 throw new Error("Multiplayer Score Processor not defined???");
 
+            const winResult: MultiplayerWinResult = this.GetPlayerWinResult(player);  
+
             await SqlDatabase.Execute("INSERT INTO multiplayer_match_scores (user_id, match_id, team, mods, performance_rating, score, accuracy, max_combo, " + 
                 "count_marv, count_perf, count_great, count_good, count_okay, count_miss, full_combo, lives_left, has_failed, won) " + 
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
@@ -1104,8 +1106,52 @@ export default class MultiplayerGame {
                 Number(scoreProcessor.IsFullCombo()),
                 scoreProcessor.Multiplayer.Lives,
                 Number(scoreProcessor.Multiplayer.HasFailed),
-                Number(this.GetPlayerWinResult(player))]);
+                Number()]);
+
+            await this.IncrementPlayerWinResultCount(this.PlayersGameStartedWith[i], winResult);
         }
+    }
+
+    /**
+     * Adds a +1 to the user's multiplayer win result stats for the current game mode.
+     * @param player 
+     * @param winResult 
+     */
+    private async IncrementPlayerWinResultCount(player: User, winResult: MultiplayerWinResult): Promise<void> {            
+        let columnName: string = "";
+
+        switch (winResult) {
+            case MultiplayerWinResult.Won:
+                columnName = "multiplayer_wins";
+                break;
+            case MultiplayerWinResult.Loss:
+                columnName = "multiplayer_losses";
+                break;
+            case MultiplayerWinResult.Tie:
+                columnName = "multiplayer_ties";
+                break;
+        }
+
+        let tableName: string = "";
+
+        switch (this.GameMode) {
+            case GameMode.Keys4:
+                tableName = "user_stats_keys4";
+                break;
+            case GameMode.Keys7:
+                tableName = "user_stats_keys7";
+                break;
+            default:
+                return Logger.Error(`[${this.Id}] Multiplayer - Could not save win result because the game mode was invalid: ${this.GameMode}`);
+        }
+
+        await SqlDatabase.Execute(`UPDATE ${tableName} SET ${columnName} = ${columnName} + 1 WHERE user_id = ?`, 
+            [player.Id]);
+
+        const result = await SqlDatabase.Execute(`SELECT multiplayer_wins FROM ${tableName} WHERE user_id = ?`, 
+            [player.Id]);
+
+        await RedisHelper.zadd(`quaver:multiplayer_win_leaderboard:${this.GameMode}`, result[0].multiplayer_wins, player.Id.toString());
     }
 
     /**
