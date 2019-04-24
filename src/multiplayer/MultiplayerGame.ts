@@ -1064,7 +1064,7 @@ export default class MultiplayerGame {
                     [this.DatabaseId, Math.round((new Date()).getTime()), this.MapMd5, this.Map, this.HostId, this.Ruleset, 
                         this.GameMode, this.Modifiers, this.FreeModType, this.HealthType, this.Lives, Number(abortedEarly)]);
 
-            await this.InsertScoresIntoDatabase(results.insertId);
+            await this.InsertScoresIntoDatabase(results.insertId, abortedEarly);
         } catch (err) {
             Logger.Error(err);
             throw err;
@@ -1074,7 +1074,7 @@ export default class MultiplayerGame {
     /**
      * Inserts all scores from the match into the database
      */
-    private async InsertScoresIntoDatabase(matchId: number): Promise<void> {
+    private async InsertScoresIntoDatabase(matchId: number, abortedEarly: boolean): Promise<void> {
         for (let i = 0; i < this.PlayersGameStartedWith.length; i++) {
             const player: User = this.PlayersGameStartedWith[i];
             const scoreProcessor: ScoreProcessorKeys = this.PlayerScoreProcessors[player.Id];
@@ -1108,7 +1108,9 @@ export default class MultiplayerGame {
                 Number(scoreProcessor.Multiplayer.HasFailed),
                 Number(winResult)]);
 
-            await this.IncrementPlayerWinResultCount(this.PlayersGameStartedWith[i], winResult);
+            // Only add to stats if the game was fully completed
+            if (!abortedEarly)
+                await this.IncrementPlayerWinResultCount(this.PlayersGameStartedWith[i], winResult);
         }
     }
 
