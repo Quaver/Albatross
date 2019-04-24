@@ -1291,6 +1291,7 @@ export default class MultiplayerGame {
         await RedisHelper.hset(key, "fc", Number(processor.IsFullCombo()).toString());
         await RedisHelper.hset(key, "lv", processor.Multiplayer.Lives.toString());
         await RedisHelper.hset(key, "hf", Number(processor.Multiplayer.HasFailed).toString()); 
+        await RedisHelper.hset(key, "rh", Number(processor.Multiplayer.IsRegeneratingHealth).toString());
     }
 
     /**
@@ -1359,6 +1360,6 @@ export default class MultiplayerGame {
      * @param player 
      */
     public async RemoveCachedPlayer(player: User): Promise<void> {
-        await RedisHelper.del(`quaver:Server:multiplayer:${this.DatabaseId}:player:${player.Id}`);
+        await RedisHelper.del(`quaver:server:multiplayer:${this.DatabaseId}:player:${player.Id}`);
     }
 }
