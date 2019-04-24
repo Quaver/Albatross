@@ -1106,7 +1106,7 @@ export default class MultiplayerGame {
                 Number(scoreProcessor.IsFullCombo()),
                 scoreProcessor.Multiplayer.Lives,
                 Number(scoreProcessor.Multiplayer.HasFailed),
-                Number()]);
+                Number(winResult)]);
 
             await this.IncrementPlayerWinResultCount(this.PlayersGameStartedWith[i], winResult);
         }
