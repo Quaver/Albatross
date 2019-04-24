@@ -1291,6 +1291,7 @@ export default class MultiplayerGame {
         await RedisHelper.hset(key, "fc", Number(processor.IsFullCombo()).toString());
         await RedisHelper.hset(key, "lv", processor.Multiplayer.Lives.toString());
         await RedisHelper.hset(key, "hf", Number(processor.Multiplayer.HasFailed).toString()); 
+        await RedisHelper.hset(key, "rh", Number(processor.Multiplayer.IsRegeneratingHealth).toString());
     }
 
     /**
