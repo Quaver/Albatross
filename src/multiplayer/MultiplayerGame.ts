@@ -161,6 +161,13 @@ export default class MultiplayerGame {
     public DifficultyRating: number = 0;
 
     /**
+     * All of the difficulty ratings for the map (all rates).
+     * Host provides these for scoring on non-submitted multiplayer maps.
+     */
+    @JsonProperty("adr")
+    public AllDifficultyRatings: number[] = [];
+
+    /**
      * Players in the match that don't have the current map
      */
     @JsonProperty("pwm")
@@ -347,7 +354,7 @@ export default class MultiplayerGame {
      */
     public static Create(type: MultiplayerGameType, name: string, password: string | null, maxPlayers: number, mapMd5: string, 
         mapId: number, mapsetId: number, map: string, ruleset: MultiplayerGameRuleset, hostRotation: boolean, mode: GameMode, difficultyRating: number,
-        host: User | null = null): MultiplayerGame {
+        allDifficultyRatings: number[], host: User | null = null): MultiplayerGame {
 
         const game: MultiplayerGame = new MultiplayerGame();
 
@@ -364,6 +371,7 @@ export default class MultiplayerGame {
         game.AutoHostRotation = hostRotation;
         game.GameMode = mode;
         game.DifficultyRating = difficultyRating;
+        game.AllDifficultyRatings = allDifficultyRatings;
         game.InProgress = false;
         game.CountdownTimer = -1;
         game.MinimumDifficultyRating = 0;
@@ -449,7 +457,8 @@ export default class MultiplayerGame {
     /**
      * Changes the selected map of the game
      */
-    public async ChangeMap(md5: string, mapId: number, mapsetId: number, map: string, mode: GameMode, difficulty: number): Promise<void> {
+    public async ChangeMap(md5: string, mapId: number, mapsetId: number, map: string, mode: GameMode, difficulty: number,
+        allDifficultyRatings: number[]): Promise<void> {
         // Prevent diffs not in range
         if (difficulty < this.MinimumDifficultyRating || difficulty > this.MaximumDifficultyRating)
             return Logger.Warning(`[${this.Id}] Multiplayer map change failed. Difficulty rating not in min-max range.`);
@@ -458,19 +467,23 @@ export default class MultiplayerGame {
         if (!this.AllowedGameModes.includes(mode))
             return Logger.Warning(`[${this.Id}] Multiplayer map change failed. Game mode not allowed`);
 
+        if (allDifficultyRatings.length != 21)
+            return Logger.Warning(`[${this.Id}] Multiplayer - Map change failed. Incorrect number of difficulty ratings!`);
+            
         this.MapMd5 = md5;
         this.MapId = mapId;
         this.MapsetId = mapsetId;
         this.Map = map;
         this.GameMode = mode;
         this.DifficultyRating = difficulty;
+        this.AllDifficultyRatings = allDifficultyRatings;
 
         this.PlayersWithoutMap = [];
         this.PlayersReady = [];
         this.CalculatedDifficultyRatings = {};
 
         await this.StopMatchCountdown(false); 
-        Albatross.SendToUsers(this.Players, new ServerPacketGameMapChanged(md5, mapId, mapsetId, map, mode, difficulty));    
+        Albatross.SendToUsers(this.Players, new ServerPacketGameMapChanged(md5, mapId, mapsetId, map, mode, difficulty, allDifficultyRatings));    
         await this.InformLobbyUsers();
 
         await this.CacheSelectedMap();

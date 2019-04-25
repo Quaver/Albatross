@@ -45,6 +45,12 @@ export default class ServerPacketGameMapChanged extends Packet {
     public DifficultyRating: number = 0;
 
     /**
+     * All difficulty ratings that were provided to us for each mod
+     */
+    @JsonProperty("adr")
+    public AllDifficultyRatings: number[] = [];
+
+    /**
      * @param md5 
      * @param mapId 
      * @param mapsetId 
@@ -52,7 +58,7 @@ export default class ServerPacketGameMapChanged extends Packet {
      * @param mode 
      * @param difficultyRating 
      */
-    constructor(md5: string, mapId: number, mapsetId: number, map: string, mode: GameMode, difficultyRating: number) {
+    constructor(md5: string, mapId: number, mapsetId: number, map: string, mode: GameMode, difficultyRating: number, allDifficultyRatings: number[]) {
         super();
 
         this.MapMd5 = md5;
@@ -61,5 +67,6 @@ export default class ServerPacketGameMapChanged extends Packet {
         this.Map = map;
         this.GameMode = mode;
         this.DifficultyRating = difficultyRating;
+        this.AllDifficultyRatings = allDifficultyRatings;
     }
 }

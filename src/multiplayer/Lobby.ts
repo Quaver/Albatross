@@ -32,12 +32,12 @@ export default class Lobby {
      * Used strictly as a test game that can be joined.
      */
     public static InitializeTest(): void {
-        var game = MultiplayerGame.Create(MultiplayerGameType.Friendly, "Test Game", "testing123", 16, "None", 2, 2, "Artist - Title [Diff]", 
+        /*var game = MultiplayerGame.Create(MultiplayerGameType.Friendly, "Test Game", "testing123", 16, "None", 2, 2, "Artist - Title [Diff]", 
         MultiplayerGameRuleset.Free_For_All, false, GameMode.Keys4, 50.24);
         
         Bot.User.JoinMultiplayerGame(game, "testing123");
         game.ChangeHost(Bot.User);
-        Lobby.CreateGame(game);
+        Lobby.CreateGame(game);*/
     }
 
     /**

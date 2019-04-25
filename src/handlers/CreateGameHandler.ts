@@ -32,7 +32,7 @@ export default class CreateGameHandler {
 
             const game: MultiplayerGame = MultiplayerGame.Create(packet.Game.Type, packet.Game.Name, packet.Game.Password, packet.Game.MaxPlayers, 
                 packet.Game.MapMd5, packet.Game.MapId, packet.Game.MapsetId, packet.Game.Map, packet.Game.Ruleset, packet.Game.AutoHostRotation,
-                packet.Game.GameMode, packet.Game.DifficultyRating);
+                packet.Game.GameMode, packet.Game.DifficultyRating, packet.Game.AllDifficultyRatings);
 
             // Just set the game to null to prevent accidental usage of it since we now have two games.
             packet.Game = null;
