@@ -469,7 +469,7 @@ export default class MultiplayerGame {
 
         if (allDifficultyRatings.length != 21)
             return Logger.Warning(`[${this.Id}] Multiplayer - Map change failed. Incorrect number of difficulty ratings!`);
-            
+
         this.MapMd5 = md5;
         this.MapId = mapId;
         this.MapsetId = mapsetId;
@@ -1065,12 +1065,6 @@ export default class MultiplayerGame {
      */
     public async InsertMatchIntoDatabase(abortedEarly: boolean): Promise<void> {
         try {
-            // Check if the map actually exists inside of the database first
-            const mapResults = await SqlDatabase.Execute("SELECT id FROM maps WHERE md5 = ?", [this.MapMd5]);
-
-            if (mapResults.length == 0)
-                return Logger.Warning(`[${this.Id}] Multiplayer - Skipping match database entry (map doesn't exist)!`);
-
             // Insert the match into the database.
             const results = await SqlDatabase.Execute("INSERT INTO multiplayer_game_matches (game_id, time_played, map_md5, map, host_id, ruleset, game_mode, global_modifiers, free_mod_type, health_type, lives, aborted) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
@@ -1132,7 +1126,13 @@ export default class MultiplayerGame {
      * @param player 
      * @param winResult 
      */
-    private async IncrementPlayerWinResultCount(player: User, winResult: MultiplayerWinResult): Promise<void> {            
+    private async IncrementPlayerWinResultCount(player: User, winResult: MultiplayerWinResult): Promise<void> { 
+        // Check if the map actually exists inside of the database first
+        const mapResults = await SqlDatabase.Execute("SELECT id FROM maps WHERE md5 = ?", [this.MapMd5]);
+
+        if (mapResults.length == 0)
+            return Logger.Warning(`[${this.Id}] Multiplayer - Skipping match database entry (map not submitted!`);
+
         let columnName: string = "";
 
         switch (winResult) {
@@ -1286,9 +1286,10 @@ export default class MultiplayerGame {
     private async GetDifficultyRatingForPlayer(mods: ModIdentifiers): Promise<number> {
         let difficultyRating: number = this.DifficultyRating;
 
+        const rate = ModHelper.GetRateFromMods(mods);
+
         // Calculate difficulties for the map
         if (this.IsMapCached) {
-            const rate = ModHelper.GetRateFromMods(mods);
 
             // Run the difficulty calculator to get the most up to date one.
             if (!this.CalculatedDifficultyRatings[rate]) {
@@ -1306,7 +1307,7 @@ export default class MultiplayerGame {
             }
         }
 
-        return difficultyRating;
+        return this.GetUncachedDifficultyRatingFromRate(rate);
     }
 
     /**
@@ -1422,5 +1423,61 @@ export default class MultiplayerGame {
      */
     public async RemoveCachedPlayer(player: User): Promise<void> {
         await RedisHelper.del(`quaver:server:multiplayer:${this.DatabaseId}:player:${player.Id}`);
+    }
+
+    /**
+     * Retrieves the difficulty rating from this.AllDifficultyRatings
+     * 
+     */
+    private GetUncachedDifficultyRatingFromRate(rate: number): number {
+        if (this.AllDifficultyRatings.length != 21)
+            return this.DifficultyRating;
+
+        switch (rate) {
+            case 0.5:
+                return this.AllDifficultyRatings[0];
+            case 0.55:
+                return this.AllDifficultyRatings[1];
+            case 0.6:
+                return this.AllDifficultyRatings[2];
+            case 0.65:
+                return this.AllDifficultyRatings[3];
+            case 0.70:
+                return this.AllDifficultyRatings[4];
+            case 0.75:
+                return this.AllDifficultyRatings[5];
+            case 0.80:
+                return this.AllDifficultyRatings[6];
+            case 0.85:
+                return this.AllDifficultyRatings[7];
+            case 0.90:
+                return this.AllDifficultyRatings[8];
+            case 0.95:
+                return this.AllDifficultyRatings[9];
+            case 1.0:
+                return this.AllDifficultyRatings[10];
+            case 1.1:
+                return this.AllDifficultyRatings[11];
+            case 1.2:
+                return this.AllDifficultyRatings[12];
+            case 1.3:
+                return this.AllDifficultyRatings[13];
+            case 1.4:
+                return this.AllDifficultyRatings[14];
+            case 1.5:
+                return this.AllDifficultyRatings[15]
+            case 1.6:
+                return this.AllDifficultyRatings[16];
+            case 1.7:
+                return this.AllDifficultyRatings[17];
+            case 1.8:
+                return this.AllDifficultyRatings[18];
+            case 1.9:
+                return this.AllDifficultyRatings[19];
+            case 2.0:
+                return this.AllDifficultyRatings[20];
+            default:
+                return this.DifficultyRating;
+        }
     }
 }
