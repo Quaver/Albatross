@@ -43,4 +43,10 @@ export default class ClientPacketChangeGameMap extends Packet {
      */
     @JsonProperty("d")
     public DifficultyRating: number = 0;
+
+    /**
+     * All the difficulty ratings of the changed map
+     */
+    @JsonProperty("adr")
+    public AllDifficultyRatings: number[] = [];
 }
