@@ -821,6 +821,7 @@ export default class Bot {
                             game.UpdatePlayerWinCount(game.Players[i], 0, false);
 
                         // Inform lobby users at the end to make sure that packet only gets sent once
+                        await Bot.SendMessage(game.GetChatChannelName(), "All players' win counts have been reset.");
                         game.InformLobbyUsers();
                         break;
                 }
