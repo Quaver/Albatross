@@ -39,6 +39,7 @@ import ServerPacketGameJudgements from "../packets/server/ServerPacketGameJudgem
 import ServerPacketAllPlayersLoaded from "../packets/server/ServerPacketAllPlayersLoaded";
 import MultiplayerPlayerMods from "../multiplayer/MultiplayerPlayerMods";
 import MultiplayerGameRuleset from "../multiplayer/MultiplayerGameRuleset";
+import MultiplayerPlayerWins from "../multiplayer/MultiplayerPlayerWins";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -392,7 +393,9 @@ export default class User implements IPacketWritable, IStringifyable {
         game.Players.push(this);
         game.PlayerIds.push(this.Id);
         game.PlayerMods.push(new MultiplayerPlayerMods(this, "0"));
-
+        
+        if (!game.PlayerWins.find(x => x.Id == this.Id))
+            game.PlayerWins.push(new MultiplayerPlayerWins(this));
 
         this.JoinChatChannel(ChatManager.Channels[`#multiplayer_${game.Id}`]);
 

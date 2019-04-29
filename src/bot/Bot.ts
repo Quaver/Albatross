@@ -811,11 +811,19 @@ export default class Bot {
                 if (!sender.CurrentGame.Host)
                     return; 
                     
-                if (game.Ruleset != MultiplayerGameRuleset.Team)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "Teams are not enabled, so you cannot clear the wins.");
+                switch (game.Ruleset) {
+                    case MultiplayerGameRuleset.Team:
+                        game.UpdateTeamWinCount(0, 0);
+                        await Bot.SendMessage(game.GetChatChannelName(), "Team win count has been reset.");
+                        break;
+                    case MultiplayerGameRuleset.Free_For_All:
+                        for (let i = 0; i < game.Players.length; i++)
+                            game.UpdatePlayerWinCount(game.Players[i], 0, false);
 
-                game.UpdateTeamWinCount(0, 0);
-                await Bot.SendMessage(game.GetChatChannelName(), "Team win count has been reset.");
+                        // Inform lobby users at the end to make sure that packet only gets sent once
+                        game.InformLobbyUsers();
+                        break;
+                }
                 break;
             case "teamwins":
                 if (!sender.CurrentGame.Host)
