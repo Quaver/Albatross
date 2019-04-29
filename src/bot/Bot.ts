@@ -854,6 +854,33 @@ export default class Bot {
 
                 await Bot.SendMessage(game.GetChatChannelName(), `Team win count changed - Red: ${game.RedTeamWins} | Blue: ${game.BlueTeamWins}`);
                 break;
+            case "playerwins":
+                if (!sender.CurrentGame.Host)
+                    return;
+
+                if (game.Ruleset != MultiplayerGameRuleset.Free_For_All)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "You cannot change player win counts in team mode.");
+
+                if (args.length < 3)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "Incorrect command usage: !playerwins <user_name> <wins>");
+
+                const playerWins = parseInt(args[2]);
+
+                if (isNaN(playerWins) || playerWins < 0 || playerWins > 9999)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "Invalid win count."); 
+                    
+                const playerWinsTargetUsername: string = args[1].replace(/_/g, " ");
+                const playerWinsTarget: User = Albatross.Instance.OnlineUsers.GetUserByUsername(playerWinsTargetUsername);
+
+                if (!playerWinsTarget)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "That user is not online!");
+
+                if (!game.Players.includes(playerWinsTarget))
+                    return await Bot.SendMessage(game.GetChatChannelName(), "That player is not in the game!");
+
+                game.UpdatePlayerWinCount(playerWinsTarget, playerWins);
+                await Bot.SendMessage(game.GetChatChannelName(), `${playerWinsTarget.Username}'s win count has been changed to: ${playerWins}.`);
+                break;
         }
     }
 }
