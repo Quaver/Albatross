@@ -807,6 +807,44 @@ export default class Bot {
                 game.ChangeMaxPlayers(maxPlayers);
                 await Bot.SendMessage(game.GetChatChannelName(), `Max player count has changed to: ${maxPlayers}.`);
                 break;
+            case "clearwins":
+                if (!sender.CurrentGame.Host)
+                    return; 
+                    
+                if (game.Ruleset != MultiplayerGameRuleset.Team)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "Teams are not enabled, so you cannot clear the wins.");
+
+                game.UpdateTeamWinCount(0, 0);
+                await Bot.SendMessage(game.GetChatChannelName(), "Team win count has been reset.");
+                break;
+            case "teamwins":
+                if (!sender.CurrentGame.Host)
+                    return;
+                    
+                if (game.Ruleset != MultiplayerGameRuleset.Team)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "Teams are not enabled, so you cannot change the win count");
+
+                if (args.length < 3)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "Incorrect command usage: !teamwins <red|blue> <wins>");
+
+                const wins = parseInt(args[2]);
+
+                if (isNaN(wins) || wins < 0 || wins > 9999)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "Invalid win count.");
+                    
+                switch (args[1]) {
+                    case "red":
+                        game.UpdateTeamWinCount(wins, game.BlueTeamWins);
+                        break;
+                    case "blue":
+                        game.UpdateTeamWinCount(game.RedTeamWins, wins);
+                        break;
+                    default:
+                        return await Bot.SendMessage(game.GetChatChannelName(), "Invalid team. Specify either 'red' or 'blue'.");
+                }
+
+                await Bot.SendMessage(game.GetChatChannelName(), `Team win count changed - Red: ${game.RedTeamWins} | Blue: ${game.BlueTeamWins}`);
+                break;
         }
     }
 }

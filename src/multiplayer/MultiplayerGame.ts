@@ -52,6 +52,7 @@ import MapsHelper from "../utils/MapsHelper";
 import QuaHelper from "../utils/QuaHelper";
 import MultiplayerWinResult from "./MultiplayerWinResult";
 import RedisHelper from "../database/RedisHelper";
+import ServerPacketGameTeamWinCount from "../packets/server/ServerPacketGameTeamWinCount";
 const md5 = require("md5");
 
 /**
@@ -258,6 +259,18 @@ export default class MultiplayerGame {
     public BlueTeamPlayers: number[] = [];
 
     /**
+     * The amount of wins the red team has.
+     */
+    @JsonProperty("rtw")
+    public RedTeamWins: number = 0;
+
+    /**
+     * The amount of wins the blue team has
+     */
+    @JsonProperty("btw")
+    public BlueTeamWins: number = 0;
+
+    /**
      * The minimum percentage of long notes the map has to contain
      */
     @JsonProperty("lnmin")
@@ -389,6 +402,8 @@ export default class MultiplayerGame {
         game.MinimumLongNotePercentage = 0;
         game.MaximumLongNotePercentage = 100;
         game.MinimumRate = 0.5;
+        game.RedTeamWins = 0;
+        game.BlueTeamWins = 0;
         if (password) game.HasPassword = true;
 
         game.CacheSelectedMap();
@@ -539,6 +554,7 @@ export default class MultiplayerGame {
             this.PlayerScoreProcessors[p].CalculateTotalScore();
 
         await this.InsertMatchIntoDatabase(abortedEarly);
+        await this.DetermineWinningTeamIfNecessary();
         await this.DeleteCachedMatchScores();
 
         this.InProgress = false;
@@ -998,8 +1014,12 @@ export default class MultiplayerGame {
         this.RedTeamPlayers = [];
         this.BlueTeamPlayers = [];
 
+        // Reset the win count for the ruleset
+        this.UpdateTeamWinCount(0, 0, false);
+
         // Send packet first to all players in the current game that the ruleset has changed, so they're
         // aware of if the game is team based or not
+        
         Albatross.SendToUsers(this.Players, new ServerPacketGameRulesetChanged(this));
 
         switch (this.Ruleset) {
@@ -1043,6 +1063,21 @@ export default class MultiplayerGame {
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameMinimumRateChanged(this));
         this.InformLobbyUsers();
+    }
+
+    /**
+     * Updates the win count for each team
+     * @param redTeam 
+     * @param blueTeam 
+     */
+    public UpdateTeamWinCount(redTeam: number, blueTeam: number, informLobbyUsers = true): void {
+        this.RedTeamWins = redTeam;
+        this.BlueTeamWins = blueTeam;
+
+        Albatross.SendToUsers(this.Players, new ServerPacketGameTeamWinCount(this));
+
+        if (informLobbyUsers)
+            this.InformLobbyUsers();
     }
 
     /**
@@ -1229,6 +1264,24 @@ export default class MultiplayerGame {
     }
 
     /**
+     * Updates the win count for each team
+     */
+    private async DetermineWinningTeamIfNecessary(): Promise<void> {
+        if (this.Ruleset != MultiplayerGameRuleset.Team)
+            return;
+
+        const redTeamAverage: number = this.GetTeamAveragePerformanceRating(MultiplayerTeam.Red);
+        const blueTeamAverage: number = this.GetTeamAveragePerformanceRating(MultiplayerTeam.Blue);
+        
+        if (redTeamAverage == blueTeamAverage)
+            return this.UpdateTeamWinCount(this.RedTeamWins + 1, this.BlueTeamWins + 1);
+        if (redTeamAverage > blueTeamAverage)
+            return this.UpdateTeamWinCount(this.RedTeamWins + 1, this.BlueTeamWins);
+        if (blueTeamAverage > redTeamAverage)
+            return this.UpdateTeamWinCount(this.RedTeamWins, this.BlueTeamWins + 1);
+    }
+
+    /**
      * Gets the average performance rating of a multiplayer team
      * @param team 
      */
@@ -1380,6 +1433,8 @@ export default class MultiplayerGame {
         await RedisHelper.hset(key, "fm", Number(this.FreeModType).toString());
         await RedisHelper.hset(key, "h", Number(this.HealthType).toString());
         await RedisHelper.hset(key, "lv", this.Lives.toString());
+        await RedisHelper.hset(key, "rtw", this.RedTeamWins.toString());
+        await RedisHelper.hset(key, "btw", this.BlueTeamWins.toString());
 
         await this.CacheAllPlayers();
     }
