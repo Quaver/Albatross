@@ -53,6 +53,8 @@ import QuaHelper from "../utils/QuaHelper";
 import MultiplayerWinResult from "./MultiplayerWinResult";
 import RedisHelper from "../database/RedisHelper";
 import ServerPacketGameTeamWinCount from "../packets/server/ServerPacketGameTeamWinCount";
+import MultiplayerPlayerWins from "./MultiplayerPlayerWins";
+import ServerPacketGamePlayerWinCount from "../packets/server/ServerPacketGamePlayerWinCount";
 const md5 = require("md5");
 
 /**
@@ -269,6 +271,12 @@ export default class MultiplayerGame {
      */
     @JsonProperty("btw")
     public BlueTeamWins: number = 0;
+
+    /**
+     * The amount of wins each player has in the game
+     */
+    @JsonProperty("plw")
+    public PlayerWins: MultiplayerPlayerWins[] = [];
 
     /**
      * The minimum percentage of long notes the map has to contain
@@ -1017,9 +1025,16 @@ export default class MultiplayerGame {
         // Reset the win count for the ruleset
         this.UpdateTeamWinCount(0, 0, false);
 
+        // Reset the wins for every player
+        this.PlayerWins = [];
+        for (let i = 0; i < this.Players.length; i++) {
+            const playerWins = new MultiplayerPlayerWins(this.Players[i], 0);
+            this.PlayerWins.push(playerWins);
+            Albatross.SendToUsers(this.Players, new ServerPacketGamePlayerWinCount(playerWins));
+        }
+
         // Send packet first to all players in the current game that the ruleset has changed, so they're
         // aware of if the game is team based or not
-        
         Albatross.SendToUsers(this.Players, new ServerPacketGameRulesetChanged(this));
 
         switch (this.Ruleset) {
@@ -1151,8 +1166,18 @@ export default class MultiplayerGame {
                 Number(winResult)]);
 
             // Only add to stats if the game was fully completed
-            if (!abortedEarly)
+            if (!abortedEarly) {
+                // Update win stats for this individual player
+                if (this.Ruleset == MultiplayerGameRuleset.Free_For_All && 
+                    (winResult == MultiplayerWinResult.Won || winResult == MultiplayerWinResult.Tie)) {
+                        const playerWins = this.PlayerWins.find(x => x.Id == player.Id);
+
+                        if (playerWins)
+                            this.UpdatePlayerWinCount(player, playerWins.Wins + 1);
+                    }
+
                 await this.IncrementPlayerWinResultCount(this.PlayersGameStartedWith[i], winResult);
+            }
         }
     }
 
@@ -1282,6 +1307,23 @@ export default class MultiplayerGame {
     }
 
     /**
+     * Updates the win count for a single player
+     */
+    public UpdatePlayerWinCount(user: User, wins: number = 0, informLobbyUsers = true): void {
+        const playerWins = this.PlayerWins.find(x => x.Id == user.Id);
+
+        if (!playerWins)
+            return Logger.Warning(`[${this.Id}] Multiplayer - Cannot update win count for: ${user.ToNameIdString()}. No longer in-game.`);
+
+        playerWins.Wins = wins;
+
+        Albatross.SendToUsers(this.Players, new ServerPacketGamePlayerWinCount(playerWins));
+
+        if (informLobbyUsers)
+            this.InformLobbyUsers();
+    }
+
+    /**
      * Gets the average performance rating of a multiplayer team
      * @param team 
      */
@@ -1407,6 +1449,7 @@ export default class MultiplayerGame {
         await RedisHelper.hset(key, "lv", processor.Multiplayer.Lives.toString());
         await RedisHelper.hset(key, "hf", Number(processor.Multiplayer.HasFailed).toString()); 
         await RedisHelper.hset(key, "rh", Number(processor.Multiplayer.IsRegeneratingHealth).toString());
+
     }
 
     /**
@@ -1469,6 +1512,11 @@ export default class MultiplayerGame {
             await RedisHelper.hset(key, "a", this.Players[i].AvatarUrl);
             await RedisHelper.hset(key, "t", Number(this.GetUserTeam(this.Players[i])).toString());
             await RedisHelper.hset(key, "c", this.Players[i].Country);
+
+            const playerWins = this.PlayerWins.find(x => x.Id == this.Players[i].Id);
+
+            if (playerWins)
+                await RedisHelper.hset(key, "w", Number(playerWins.Wins).toString());
         }
     }
 

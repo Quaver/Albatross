@@ -79,7 +79,8 @@ enum PacketId {
     ServerGameLongNotePercentageChanged,
     ServerGameMaxPlayersChanged,
     ServerGameMinimumRateChanged,
-    ServerGameTeamWinCount
+    ServerGameTeamWinCount,
+    ServerGamePlayerWinCount
 }
 
 export default PacketId;
