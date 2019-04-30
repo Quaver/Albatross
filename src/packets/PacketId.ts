@@ -80,7 +80,9 @@ enum PacketId {
     ServerGameMaxPlayersChanged,
     ServerGameMinimumRateChanged,
     ServerGameTeamWinCount,
-    ServerGamePlayerWinCount
+    ServerGamePlayerWinCount,
+    ClientRequestUserStats,
+    ServerUserStats
 }
 
 export default PacketId;

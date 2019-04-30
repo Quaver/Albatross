@@ -59,6 +59,8 @@ import GameAcceptInviteHandler from "./GameAcceptInviteHandler";
 import ClientPacketGameAcceptInvite from "../packets/client/ClientPacketGameAcceptInvite";
 import GamePlayerTeamChangedHandler from "./GamePlayerTeamChangedHandler";
 import ClientPacketGamePlayerTeamChanged from "../packets/client/ClientPacketGamePlayerTeamChanged";
+import RequestUserStatsHandler from "./RequestUserStatsHandler";
+import ClientPacketRequestUserStats from "../packets/client/ClientPacketRequestUserStats";
 const config = require("../config/config.json");
 
 export default class PacketHandler {
@@ -171,7 +173,10 @@ export default class PacketHandler {
                     break;
                 case PacketId.ClientGamePlayerTeamChanged:
                     await GamePlayerTeamChangedHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGamePlayerTeamChanged));
-                    break;               
+                    break;   
+                case PacketId.ClientRequestUserStats:
+                    await RequestUserStatsHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketRequestUserStats));
+                    break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS
                     throw new Error(`${user.Username} (#${user.Id}) -> sent a packet that can't be handled -> "${message}"`);
