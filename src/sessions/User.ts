@@ -514,7 +514,7 @@ export default class User implements IPacketWritable, IStringifyable {
         game.CalculateUserScore(this, judgements);
         await game.CachePlayerCurrentScore(this);
 
-        Albatross.SendToUsers(game.Players, new ServerPacketGameJudgements(this, judgements));
+        Albatross.SendToUsers(game.PlayersGameStartedWith, new ServerPacketGameJudgements(this, judgements));
     }
 
     /**

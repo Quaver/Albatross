@@ -116,7 +116,7 @@ export default class PacketHandler {
                 case PacketId.ClientCreateGame:
                     const createGamePacket: ClientPacketCreateGame = jsonConvert.deserializeObject(msg, ClientPacketCreateGame);
                     createGamePacket.Game = jsonConvert.deserializeObject(msg.g, MultiplayerGame);
-                    createGamePacket.Game.Password = msg.g.p;
+                    createGamePacket.Game.Password = msg.g.pw;
 
                     if (msg.g.p)
                         createGamePacket.Game.HasPassword = true;

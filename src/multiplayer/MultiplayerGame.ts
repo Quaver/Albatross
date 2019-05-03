@@ -179,7 +179,7 @@ export default class MultiplayerGame {
     /**
      * If the match is currently in progress.
      */
-    @JsonProperty("p")
+    @JsonProperty("inp")
     public InProgress: boolean = false;
 
     /**
