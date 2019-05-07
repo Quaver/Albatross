@@ -7,10 +7,4 @@ export default class ServerPacketPing extends Packet {
     /**
      */
     public Id: PacketId = PacketId.ServerPing;
-
-    /**
-     * The time the packet was created/sent
-     */
-    @JsonProperty("ts", Number)
-    public Timestamp: number = Date.now();
 }
