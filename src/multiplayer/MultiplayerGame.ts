@@ -75,6 +75,21 @@ export default class MultiplayerGame {
     public DatabaseId: number = -1;
 
     /**
+     * If the game is autohosted by the server
+     */
+    public IsAutohost: boolean = false;
+
+    /**
+     * If the game is autohosted, this is the rotation of maps that'll be played
+     */
+    public Playlist: any[] = [];
+
+    /**
+     * The index of the map that will be played in the playlist
+     */
+    public PlaylistMapIndex: number = 0;
+
+    /**
      * The type of multiplayer game this is.
      */
     @JsonProperty("t")
@@ -513,6 +528,25 @@ export default class MultiplayerGame {
     }
 
     /**
+     * Changes to the next map in the playlist
+     * @param selectNext 
+     */
+    public async ChangePlaylistMap(selectNext: boolean = true): Promise<void> {
+        // Select the next map/index in the playlist
+        if (selectNext) {
+            if (this.PlaylistMapIndex + 1 < this.Playlist.length)
+                this.PlaylistMapIndex++;
+            else
+                this.PlaylistMapIndex = 0;
+        }
+
+        const map = this.Playlist[this.PlaylistMapIndex];
+
+        await this.ChangeMap(map.md5, map.id, map.mapset_id, `${map.artist} - ${map.title} [${map.difficulty_name}]`, 
+                map.game_mode, map.difficulty_rating, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, parseFloat(map.difficulty_rating), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    }
+
+    /**
      * Changes the password of the game
      * @param password 
      */
@@ -587,7 +621,13 @@ export default class MultiplayerGame {
                 await this.ChangeHost(this.Players[0], false);
         }
 
-        await this.InformLobbyUsers();
+        // Changing the playlist map will automatically inform lobby users.
+        // We don't want to do it more than once.
+        if (this.IsAutohost)
+            await this.ChangePlaylistMap(true);
+        else {
+            await this.InformLobbyUsers();
+        }
     }
 
     /**
@@ -1582,5 +1622,16 @@ export default class MultiplayerGame {
             default:
                 return this.DifficultyRating;
         }
+    }
+
+    /**
+     * Handles when a player has ready'd up in an autohost lobby
+     */
+    public async HandleAutohostPlayerActionReady(): Promise<void> {
+        if (!this.IsAutohost || this.InProgress)
+            return;
+
+        if (this.PlayersReady.length == this.Players.length && this.Players.length >= 1)
+            this.Start();
     }
 }

@@ -437,8 +437,15 @@ export default class User implements IPacketWritable, IStringifyable {
         this.CurrentGame = null;
 
         // No more players, so the game should be disbanded.
-        if (game.Players.length == 0)
+        if (game.Players.length == 0) {
+            // Autohost games should end automatically if there aren't any players in the match
+            if (game.IsAutohost)
+                return await game.End();
+
+            // No players left in a non-autohost game, so delete it
             return await Lobby.DeleteGame(game);
+        }
+
         
         // The current host of the game was us, so we'll need to find a new host.   
         if (game.Type == MultiplayerGameType.Friendly && game.Host == this)
@@ -587,6 +594,7 @@ export default class User implements IPacketWritable, IStringifyable {
 
         game.PlayersReady.push(this.Id);
         await game.InformPlayerIsReady(this);
+        await game.HandleAutohostPlayerActionReady();
     }
 
     /**

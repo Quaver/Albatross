@@ -79,6 +79,7 @@ export default class Albatross {
         await this.CleanPreviousMultiplayerMatches();
 
         await Bot.Initialize();
+        // await Lobby.CreateAutohostGames();
         
         this.StartBackgroundWorker();
         this.Server = new WebSocketServer({ port: this.Port });

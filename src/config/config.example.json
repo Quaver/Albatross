@@ -86,5 +86,12 @@
         "token": ""
       }
     }
+  ],
+  "autohostGames": [
+    {
+      "name": "[Autohost] 4K Beginner/Easy Map Medley",
+      "playlistId": -1,
+      "maxPlayers": 16
+    }
   ]
 }

@@ -16,6 +16,8 @@ import ChatManager from "../chat/ChatManager";
 import ChatChannel from "../chat/ChatChannel";
 import UserGroups from "../enums/UserGroups";
 import RedisHelper from "../database/RedisHelper";
+import SqlDatabase from "../database/SqlDatabase";
+const config = require("../config/config.json");
 
 export default class Lobby {
     /**
@@ -107,5 +109,40 @@ export default class Lobby {
         await RedisHelper.decr("quaver:server:multiplayer_matches");
         await game.DeleteCachedMatchScores();
         await game.DeleteCachedMatchSettings();
+    }
+
+    /**
+     * Creates games that are autohosted by the server
+     */
+    public static async CreateAutohostGames(): Promise<void> {
+        try {
+            for (let i  = 0 ; i < config.autohostGames.length; i++)
+                await Lobby.CreateAutohostGame(config.autohostGames[i]);
+        } catch (err) {
+            Logger.Error(err);
+        }
+    }
+
+    /**
+     * Creates an individual autohost game
+     */
+    private static async CreateAutohostGame(game: any): Promise<void> {
+        const playlist = await SqlDatabase.Execute("SELECT m.id, m.mapset_id, m.md5, m.game_mode, m.artist, m.title, m.difficulty_name, " + 
+            "m.difficulty_rating FROM maps m " + 
+            "INNER JOIN playlists_maps p ON p.map_id = m.id " + 
+            "WHERE p.playlist_id = ?", [game.playlistId]);
+
+        if (playlist.length == 0)
+            throw new Error("Playlist not found or no maps exist in playlist!");
+
+        const mpGame: MultiplayerGame = MultiplayerGame.Create(MultiplayerGameType.Friendly, game.name, null, game.maxPlayers, "md5", -1, -1, "map name", 
+            MultiplayerGameRuleset.Free_For_All, false, GameMode.Keys4, 0, [], Bot.User);
+
+        mpGame.IsAutohost = true;
+        mpGame.Playlist = playlist;
+        mpGame.PlaylistMapIndex = Math.floor(Math.random() * Math.floor(playlist.length - 1));
+
+        await mpGame.ChangePlaylistMap();
+        await Lobby.CreateGame(mpGame);
     }
 }
