@@ -1085,7 +1085,8 @@ export default class MultiplayerGame {
                     this.ChangeUserTeam(this.Players[i], team, false);
                 }
                 break;
-            case MultiplayerGameRuleset.Free_For_All:
+            
+            default:
                 for (let i = 0; i < this.Players.length; i++)
                     this.Players[i].LeaveChatChannel(ChatManager.Channels[this.GetTeamChatChannelName()]);
                 break;
@@ -1208,7 +1209,7 @@ export default class MultiplayerGame {
             // Only add to stats if the game was fully completed
             if (!abortedEarly) {
                 // Update win stats for this individual player
-                if (this.Ruleset == MultiplayerGameRuleset.Free_For_All && 
+                if (this.Ruleset != MultiplayerGameRuleset.Team && 
                     (winResult == MultiplayerWinResult.Won || winResult == MultiplayerWinResult.Tie)) {
                         const playerWins = this.PlayerWins.find(x => x.Id == player.Id);
 
@@ -1280,6 +1281,8 @@ export default class MultiplayerGame {
             // Teams - Highest rating from a team wins.
             case MultiplayerGameRuleset.Team:
                 return this.CheckIfPlayerTeamWinner(player);
+            case MultiplayerGameRuleset.Battle_Royale:
+                return this.CheckIfBattleRoyaleWinner(player);
         }
 
         return MultiplayerWinResult.Loss;
@@ -1326,6 +1329,15 @@ export default class MultiplayerGame {
             return MultiplayerWinResult.Won;
         
         return MultiplayerWinResult.Loss;
+    }
+
+    /**
+     * Checks if the user is the winner of a battle royale game
+     * @param player 
+     */
+    private CheckIfBattleRoyaleWinner(player: User): MultiplayerWinResult {
+        console.log(this.PlayerScoreProcessors[player.Id].HitStats);
+        return MultiplayerWinResult.Won;
     }
 
     /**

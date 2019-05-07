@@ -3,6 +3,7 @@ import ModIdentifiers from "../enums/ModIdentifiers";
 import JudgementToNumberMap from "./JudgementToNumberMap";
 import Judgement from "../enums/Judgement";
 import ScoreProcessorMultiplayer from "./ScoreProcessorMultiplayer";
+import ScoreProcessorHitStat from "./ScoreProcessorHitStat";
 
 export default class ScoreProcessorKeys extends ScoreProcessor {
     /**
@@ -120,6 +121,10 @@ export default class ScoreProcessorKeys extends ScoreProcessor {
             this.Multiplayer.CalculateHealth();
 
         this.CalculatePerformanceRating();
+
+        // Add hit stats to the processor
+        this.HitStats.push(new ScoreProcessorHitStat(judgement, this.PerformanceRating, this.Score, this.Accuracy, this.Health, 
+            this.Combo, this.MaxCombo));
     }
 
     /**

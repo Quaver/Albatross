@@ -1,6 +1,7 @@
 enum MultiplayerGameRuleset {
     Free_For_All,
-    Team
+    Team,
+    Battle_Royale
 }
 
 export default MultiplayerGameRuleset;

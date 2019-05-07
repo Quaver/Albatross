@@ -3,6 +3,7 @@ import ModIdentifiers from "../enums/ModIdentifiers";
 import ModHelper from "../utils/ModHelper";
 import Judgement from "../enums/Judgement";
 import ScoreProcessorMultiplayer from "./ScoreProcessorMultiplayer";
+import ScoreProcessorHitStat from "./ScoreProcessorHitStat";
 
 export default abstract class ScoreProcessor {
     /**
@@ -69,6 +70,11 @@ export default abstract class ScoreProcessor {
      * If a multiplayer score processor, this'll handle scoring for it
      */
     public Multiplayer: ScoreProcessorMultiplayer | undefined;
+
+    /**
+     * Hit statistics for each judgement received
+     */
+    public HitStats: ScoreProcessorHitStat[] = [];
 
     /**
      */
