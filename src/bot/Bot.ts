@@ -885,6 +885,12 @@ export default class Bot {
                 game.UpdatePlayerWinCount(playerWinsTarget, playerWins);
                 await Bot.SendMessage(game.GetChatChannelName(), `${playerWinsTarget.Username}'s win count has been changed to: ${playerWins}.`);
                 break;
+            case "bots":
+                if (!sender.IsSwan())
+                    return;
+
+                await game.AddBots(15);
+                break;
         }
     }
 }

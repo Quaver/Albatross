@@ -23,13 +23,19 @@ export default class RequestUserStatsHandler {
     
                 if (!user)
                     continue;       
-         
+    
+                if (user.IsMultiplayerBot)
+                    continue;
+                    
                 stats[user.Id] = {
                     1: jsonConvert.serializeObject(user.Stats[GameMode.Keys4]),
                     2: jsonConvert.serializeObject(user.Stats[GameMode.Keys7])
                 };
             }
     
+            if (Object.keys(stats).length == 0)
+                return;
+
             Albatross.SendToUser(user, new ServerPacketUserStats(stats));
 
         } catch (err) {

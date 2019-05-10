@@ -55,6 +55,9 @@ import RedisHelper from "../database/RedisHelper";
 import ServerPacketGameTeamWinCount from "../packets/server/ServerPacketGameTeamWinCount";
 import MultiplayerPlayerWins from "./MultiplayerPlayerWins";
 import ServerPacketGamePlayerWinCount from "../packets/server/ServerPacketGamePlayerWinCount";
+import Privileges from "../enums/Privileges";
+import UserGroups from "../enums/UserGroups";
+import ServerPacketUserConnected from "../packets/server/ServerPacketUserConnected";
 const md5 = require("md5");
 
 /**
@@ -552,7 +555,7 @@ export default class MultiplayerGame {
         const map = this.Playlist[this.PlaylistMapIndex];
 
         await this.ChangeMap(map.md5, map.id, map.mapset_id, `${map.artist} - ${map.title} [${map.difficulty_name}]`, 
-                map.game_mode, map.difficulty_rating, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, parseFloat(map.difficulty_rating), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+                map.game_mode, map.difficulty_rating, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, parseFloat(map.difficulty_rating), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 0);
     }
 
     /**
@@ -587,6 +590,17 @@ export default class MultiplayerGame {
         await this.ClearAndPopulateScoreProcessors();
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameStart());
+
+        for (let i = 0; i < this.Players.length; i++) {
+            if (!this.Players[i].IsMultiplayerBot)
+                continue;
+
+            this.GenerateBotJudgements(this.Players[i]);
+            this.Players[i].ReadyToPlayMultiplayerGame();
+            this.Players[i].HandleMultiplayerGameSkipRequest();
+            this.Players[i].FinishPlayingMultiplayerGame();
+        }
+        
         await this.InformLobbyUsers();
     }
 
@@ -1653,5 +1667,30 @@ export default class MultiplayerGame {
 
         if (this.PlayersReady.length == this.Players.length && this.Players.length >= 1)
             this.Start();
+    }
+
+    /**
+     * Adds multiplayer bots to the game
+     * @param num 
+     */
+    public async AddBots(num: number): Promise<void> {
+        for (let i = 0; i < num; i++) {
+            const user: User = new User(null, -i - 1, "-1", `#BOT_${i}`, true, 0, "US", Privileges.Normal, UserGroups.Bot, "", true);
+            Albatross.Instance.OnlineUsers.AddUser(user);
+
+            Albatross.SendToUsers(this.Players, new ServerPacketUserConnected(user));
+            user.JoinMultiplayerGame(this, this.Password);
+        }
+    }
+
+    /**
+     * Generates judgements for a bot
+     * @param user 
+     */
+    private async GenerateBotJudgements(user: User): Promise<void> {
+        for (let i = 0; i < this.JudgementCount; i++) {
+            const processor = this.PlayerScoreProcessors[user.Id];
+            processor.CalculateScore(Math.floor(Math.random() * 3) + 0);
+        }
     }
 }

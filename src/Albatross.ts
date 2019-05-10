@@ -150,12 +150,12 @@ export default class Albatross {
      * Sends a packet to a specific user
      */
     public static SendToUser(user: User, packet: Packet): void {
-        if (config.logPacketTransfer)
-            Logger.Info(`Sending Packet: To ${user.Username} (#${user.Id}) -> ${PacketId[packet.Id]} -> "${packet.ToString()}"}`);
-           
         if (!user.Socket)
             return;
-            
+
+        if (config.logPacketTransfer)
+            Logger.Info(`Sending Packet: To ${user.Username} (#${user.Id}) -> ${PacketId[packet.Id]} -> "${packet.ToString()}"}`);
+                       
         user.Socket.send(packet.ToString());
     }
 
@@ -211,7 +211,7 @@ export default class Albatross {
                 const user: User = this.OnlineUsers.Users[i];
 
                 // Ignore everything by QuaverBot, as he doesn't matter.
-                if (user == Bot.User)
+                if (user.IsBot())
                     continue;
 
                 // Clear user spam rates
@@ -236,7 +236,7 @@ export default class Albatross {
             // Update the time the spam rate was cleared.
             if (currentTime - this.TimeSpamRateLastCleared >= this.SPAM_RATE_CLEAR_INTERVAL)
                 this.TimeSpamRateLastCleared = currentTime;
-        }, 100);
+        }, 500);
     }
 
     /**

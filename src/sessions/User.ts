@@ -40,6 +40,7 @@ import ServerPacketAllPlayersLoaded from "../packets/server/ServerPacketAllPlaye
 import MultiplayerPlayerMods from "../multiplayer/MultiplayerPlayerMods";
 import MultiplayerGameRuleset from "../multiplayer/MultiplayerGameRuleset";
 import MultiplayerPlayerWins from "../multiplayer/MultiplayerPlayerWins";
+import Judgement from "../enums/Judgement";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -133,13 +134,18 @@ export default class User implements IPacketWritable, IStringifyable {
     public CurrentGame: MultiplayerGame | null = null;
 
     /**
+     * If the user is a multiplayer bot or not
+     */
+    public IsMultiplayerBot: boolean = false;
+
+    /**
      * @param token 
      * @param steamId 
      * @param username 
      * @param socket 
      */
     constructor(socket: any, userId: number, steamId: string, username: string, allowed: boolean, muteEndTime: number, country: string,
-        privileges: Privileges, usergroups: UserGroups, avatarUrl: string) {
+        privileges: Privileges, usergroups: UserGroups, avatarUrl: string, isMultiplayerBot: boolean = false) {
         // For artifical users such as bots.
         if (socket)
             this.Token = socket.token;
@@ -156,6 +162,7 @@ export default class User implements IPacketWritable, IStringifyable {
         this.Privileges = privileges;
         this.UserGroups = usergroups;
         this.AvatarUrl = avatarUrl;
+        this.IsMultiplayerBot = isMultiplayerBot;
     }
 
     /**
@@ -518,8 +525,22 @@ export default class User implements IPacketWritable, IStringifyable {
         if (!game.InProgress)
             return Logger.Warning(`${this.ToNameIdString()} gave us multiplayer judgements, but the game is not in progress!`);
 
+        const judgementsBefore = game.PlayerScoreProcessors[this.Id].JudgementList.length;
+        
         game.CalculateUserScore(this, judgements);
         await game.CachePlayerCurrentScore(this);
+
+        for (let i = 0; i < game.Players.length; i++ ) {
+            if (game.Players[i].IsMultiplayerBot) {
+                let judgements: Judgement[] = [];
+
+                for (let j = judgementsBefore; j < game.PlayerScoreProcessors[this.Id].JudgementList.length; j++)
+                    judgements.push(game.PlayerScoreProcessors[game.Players[i].Id].JudgementList[j]);
+
+                setTimeout(() => Albatross.SendToUser(this, new ServerPacketGameJudgements(game.Players[i], judgements)), 400);
+                
+            }
+        }
 
         Albatross.SendToUsers(game.PlayersGameStartedWith, new ServerPacketGameJudgements(this, judgements));
     }
