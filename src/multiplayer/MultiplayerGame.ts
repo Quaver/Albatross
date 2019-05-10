@@ -143,6 +143,12 @@ export default class MultiplayerGame {
     public Map: string = "";
 
     /**
+     * The amount of judgements possible in the map
+     */
+    @JsonProperty("jc")
+    public JudgementCount: number = 0;
+
+    /**
      * The ids of the players in the game
      */
     @JsonProperty("ps")
@@ -311,6 +317,7 @@ export default class MultiplayerGame {
     @JsonProperty("mr")
     public MinimumRate: number = 0.5;
 
+
     /**
      * The players that are currently in the game
      */
@@ -390,7 +397,7 @@ export default class MultiplayerGame {
      */
     public static Create(type: MultiplayerGameType, name: string, password: string | null, maxPlayers: number, mapMd5: string, 
         mapId: number, mapsetId: number, map: string, ruleset: MultiplayerGameRuleset, hostRotation: boolean, mode: GameMode, difficultyRating: number,
-        allDifficultyRatings: number[], host: User | null = null): MultiplayerGame {
+        allDifficultyRatings: number[], objectCount: number, host: User | null = null): MultiplayerGame {
 
         const game: MultiplayerGame = new MultiplayerGame();
 
@@ -427,6 +434,7 @@ export default class MultiplayerGame {
         game.MinimumRate = 0.5;
         game.RedTeamWins = 0;
         game.BlueTeamWins = 0;
+        game.JudgementCount = objectCount;
         if (password) game.HasPassword = true;
 
         game.CacheSelectedMap();
@@ -496,7 +504,7 @@ export default class MultiplayerGame {
      * Changes the selected map of the game
      */
     public async ChangeMap(md5: string, mapId: number, mapsetId: number, map: string, mode: GameMode, difficulty: number,
-        allDifficultyRatings: number[]): Promise<void> {
+        allDifficultyRatings: number[], judgementCount: number): Promise<void> {
         // Prevent diffs not in range
         if (difficulty < this.MinimumDifficultyRating || difficulty > this.MaximumDifficultyRating)
             return Logger.Warning(`[${this.Id}] Multiplayer map change failed. Difficulty rating not in min-max range.`);
@@ -515,13 +523,14 @@ export default class MultiplayerGame {
         this.GameMode = mode;
         this.DifficultyRating = difficulty;
         this.AllDifficultyRatings = allDifficultyRatings;
+        this.JudgementCount = judgementCount;
 
         this.PlayersWithoutMap = [];
         this.PlayersReady = [];
         this.CalculatedDifficultyRatings = {};
 
         await this.StopMatchCountdown(false); 
-        Albatross.SendToUsers(this.Players, new ServerPacketGameMapChanged(md5, mapId, mapsetId, map, mode, difficulty, allDifficultyRatings));    
+        Albatross.SendToUsers(this.Players, new ServerPacketGameMapChanged(md5, mapId, mapsetId, map, mode, difficulty, allDifficultyRatings, judgementCount));    
         await this.InformLobbyUsers();
 
         await this.CacheSelectedMap();
@@ -1336,7 +1345,6 @@ export default class MultiplayerGame {
      * @param player 
      */
     private CheckIfBattleRoyaleWinner(player: User): MultiplayerWinResult {
-        console.log(this.PlayerScoreProcessors[player.Id].HitStats);
         return MultiplayerWinResult.Won;
     }
 

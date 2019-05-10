@@ -49,4 +49,7 @@ export default class ClientPacketChangeGameMap extends Packet {
      */
     @JsonProperty("adr")
     public AllDifficultyRatings: number[] = [];
+
+    @JsonProperty("jc")
+    public JudgementCount: number = 0;
 }

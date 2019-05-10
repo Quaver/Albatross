@@ -17,7 +17,7 @@ export default class ChangeGameMapHandler {
                 return Logger.Warning(`${user.ToNameIdString} has tried to change the map of a game, but they aren't host!`);
 
             return user.CurrentGame.ChangeMap(packet.MapMd5, packet.MapId, packet.MapsetId, packet.Map, packet.GameMode, packet.DifficultyRating,
-                    packet.AllDifficultyRatings);
+                    packet.AllDifficultyRatings, packet.JudgementCount);
         } catch (err) {
             return Logger.Error(err);
         }
