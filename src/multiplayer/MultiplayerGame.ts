@@ -397,7 +397,7 @@ export default class MultiplayerGame {
      */
     public static Create(type: MultiplayerGameType, name: string, password: string | null, maxPlayers: number, mapMd5: string, 
         mapId: number, mapsetId: number, map: string, ruleset: MultiplayerGameRuleset, hostRotation: boolean, mode: GameMode, difficultyRating: number,
-        allDifficultyRatings: number[], objectCount: number, host: User | null = null): MultiplayerGame {
+        allDifficultyRatings: number[], judgementCount: number, host: User | null = null): MultiplayerGame {
 
         const game: MultiplayerGame = new MultiplayerGame();
 
@@ -434,7 +434,7 @@ export default class MultiplayerGame {
         game.MinimumRate = 0.5;
         game.RedTeamWins = 0;
         game.BlueTeamWins = 0;
-        game.JudgementCount = objectCount;
+        game.JudgementCount = judgementCount;
         if (password) game.HasPassword = true;
 
         game.CacheSelectedMap();
