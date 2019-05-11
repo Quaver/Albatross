@@ -889,7 +889,7 @@ export default class Bot {
                 if (!sender.IsSwan())
                     return;
 
-                await game.AddBots(15);
+                await game.AddBots(7);
                 break;
         }
     }

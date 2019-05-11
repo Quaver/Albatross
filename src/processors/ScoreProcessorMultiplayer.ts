@@ -28,6 +28,11 @@ export default class ScoreProcessorMultiplayer {
     public IsRegeneratingHealth: boolean = false;
 
     /**
+     * If the user is eliminated from battle royale
+     */
+    public IsBattleRoyaleEliminated: boolean = false;
+
+    /**
      * @param healthType 
      * @param lives 
      */

@@ -58,6 +58,7 @@ import ServerPacketGamePlayerWinCount from "../packets/server/ServerPacketGamePl
 import Privileges from "../enums/Privileges";
 import UserGroups from "../enums/UserGroups";
 import ServerPacketUserConnected from "../packets/server/ServerPacketUserConnected";
+import ServerPacketGamePlayerBattleRoyaleEliminated from "../packets/server/ServerPacketGamePlayerBattleRoyaleElimintated";
 const md5 = require("md5");
 
 /**
@@ -391,6 +392,18 @@ export default class MultiplayerGame {
     private CalculatedDifficultyRatings: any = {};
 
     /**
+     * The previous player minimum judgement account for ALL players
+     * for the battle royale ruleset
+     */
+    private PreviousMinimumJudgementCount: number = 0;
+
+    /**
+     * The index (multiple) of the judgement knockout interval 
+     * in which players get knocked out of the game
+     */
+    private CurrentBattleRoyaleJudgementIndex: number = 0;
+
+    /**
      * Creates and returns a multiplayer game
      * @param type 
      * @param name 
@@ -580,6 +593,7 @@ export default class MultiplayerGame {
             return;
 
         Logger.Success(`[${this.Id}] Multiplayer Game Started!`);
+
         this.InProgress = true;
         this.PlayersGameStartedWith = this.Players.filter(x => !this.PlayersWithoutMap.includes(x.Id));
         this.FinishedPlayers = [];
@@ -587,7 +601,11 @@ export default class MultiplayerGame {
         this.PlayersSkipped = [];
         this.PlayersReady = [];
         this.CountdownStartTime = -1;
+        this.PreviousMinimumJudgementCount = 0;
         await this.ClearAndPopulateScoreProcessors();
+
+        if (this.Ruleset == MultiplayerGameRuleset.Battle_Royale)
+            Logger.Info(`[${this.Id}] Battle Royale Game Initiated. Eliminating players every: ${this.GetBattleRoyaleKnockoutInterval()}`);
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameStart());
 
@@ -1692,5 +1710,101 @@ export default class MultiplayerGame {
             const processor = this.PlayerScoreProcessors[user.Id];
             processor.CalculateScore(Math.floor(Math.random() * 3) + 0);
         }
+    }
+
+    /**
+     * Handle scoring for battle royale
+     */
+    public async HandleBattleRoyaleScoring(): Promise<void> {
+        let lowestPlayer: User | undefined;
+        let minJudgementCount: number = Number.MAX_SAFE_INTEGER;
+
+        // Find the minimum amount of judgements the lowest player has in the game
+        for (let id in this.PlayerScoreProcessors) {
+
+            // Players is no longer in the game
+            if (!this.PlayerIds.includes(parseInt(id)))
+                continue;
+
+            const processor = this.PlayerScoreProcessors[id];
+
+            // Processor doesn't exist for some reason?
+            if (!processor)
+                continue;
+
+            // Ignore if the player is elimintated from BR already
+            if (processor.Multiplayer && processor.Multiplayer.IsBattleRoyaleEliminated)
+                continue;
+
+            const playerJudgementCount: number = this.PlayerScoreProcessors[id].HitStats.length;
+
+            if (playerJudgementCount < minJudgementCount)
+                minJudgementCount = playerJudgementCount;
+
+            const player = this.PlayersGameStartedWith.find(x => x.Id == parseInt(id));
+
+            // Set lowest player if there is none
+            if (!lowestPlayer && player)
+                lowestPlayer = player;
+
+            // The current user is lower than the lowest player
+            if (lowestPlayer && this.PlayerScoreProcessors[id].HitStats[minJudgementCount - 1].PerformanceRating 
+                < this.PlayerScoreProcessors[lowestPlayer.Id].HitStats[minJudgementCount - 1].PerformanceRating) {
+                    lowestPlayer = player
+                }
+        }
+
+        // Check to see if the last player should be eliminated now
+        let nextMultiple = this.PreviousMinimumJudgementCount + 
+            (this.GetBattleRoyaleKnockoutInterval() - this.PreviousMinimumJudgementCount % this.GetBattleRoyaleKnockoutInterval());
+
+        // Find the players that are currently alive in the game
+        const alivePlayers: User[] = [];
+        for (let i = 0; i < this.PlayersGameStartedWith.length; i++) {
+            const user = this.PlayersGameStartedWith[i];
+
+            const processor = this.PlayerScoreProcessors[user.Id];
+
+            if (!processor)
+                continue;
+
+            if (!processor.Multiplayer)
+                continue;
+
+            if (!processor.Multiplayer.IsBattleRoyaleEliminated)
+                alivePlayers.push(user);
+        }
+
+        // If there are only two players left, let them play until the end of the match.
+        if (alivePlayers.length == 2)
+            nextMultiple = this.JudgementCount;
+
+        if (minJudgementCount >= nextMultiple && this.PreviousMinimumJudgementCount < nextMultiple && lowestPlayer)
+            this.EliminateBattleRoyalePlayer(lowestPlayer);
+
+        this.PreviousMinimumJudgementCount = minJudgementCount;
+    }
+
+    /**
+     * Gets the judgement interval that the last player will be knocked out at
+     */
+    private GetBattleRoyaleKnockoutInterval(): number {
+        return Math.floor(this.JudgementCount / this.PlayersGameStartedWith.length);
+    }
+
+    /**
+     * Eliminiates a player from battle royale
+     * @param user 
+     */
+    private EliminateBattleRoyalePlayer(user: User): void {
+        const processor = this.PlayerScoreProcessors[user.Id];
+
+        if (!processor || !processor.Multiplayer)
+            return Logger.Warning(`[${this.Id}] Multiplayer - Tried to eliminate ${user.ToNameIdString} from Battle Royale, but their score processor doesn't exist`);
+
+        Logger.Info(`[${this.Id}] Multiplayer - ${user.ToNameIdString()} has been eliminated from Battle Royale!`);
+
+        processor.Multiplayer.IsBattleRoyaleEliminated = true;
+        Albatross.SendToUsers(this.PlayersGameStartedWith, new ServerPacketGamePlayerBattleRoyaleEliminated(user));
     }
 }

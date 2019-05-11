@@ -530,6 +530,7 @@ export default class User implements IPacketWritable, IStringifyable {
         game.CalculateUserScore(this, judgements);
         await game.CachePlayerCurrentScore(this);
 
+        // BOTS
         for (let i = 0; i < game.Players.length; i++ ) {
             if (game.Players[i].IsMultiplayerBot) {
                 let judgements: Judgement[] = [];
@@ -541,6 +542,9 @@ export default class User implements IPacketWritable, IStringifyable {
                 
             }
         }
+
+        if (game.Ruleset == MultiplayerGameRuleset.Battle_Royale)
+            await game.HandleBattleRoyaleScoring();
 
         Albatross.SendToUsers(game.PlayersGameStartedWith, new ServerPacketGameJudgements(this, judgements));
     }
