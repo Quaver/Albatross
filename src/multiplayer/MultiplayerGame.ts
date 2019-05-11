@@ -398,12 +398,6 @@ export default class MultiplayerGame {
     private PreviousMinimumJudgementCount: number = 0;
 
     /**
-     * The index (multiple) of the judgement knockout interval 
-     * in which players get knocked out of the game
-     */
-    private CurrentBattleRoyaleJudgementIndex: number = 0;
-
-    /**
      * Creates and returns a multiplayer game
      * @param type 
      * @param name 
