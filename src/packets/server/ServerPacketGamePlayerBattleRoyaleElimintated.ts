@@ -8,10 +8,14 @@ export default class ServerPacketGamePlayerBattleRoyaleEliminated extends Packet
     public Id: PacketId = PacketId.ServerGamePlayerBattleRoyaleEliminated;
 
     @JsonProperty("u")
-    public UserId: number
+    public UserId: number;
 
-    constructor(user: User) {
+    @JsonProperty("r")
+    public Rank: number;
+
+    constructor(user: User, rank: number) {
         super();
         this.UserId = user.Id;
+        this.Rank = rank;
     }
 }

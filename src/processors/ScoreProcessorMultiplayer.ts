@@ -33,6 +33,11 @@ export default class ScoreProcessorMultiplayer {
     public IsBattleRoyaleEliminated: boolean = false;
 
     /**
+     * The player's rank for battle royale
+     */
+    public BattleRoyaleRank: number = 1;
+
+    /**
      * @param healthType 
      * @param lives 
      */

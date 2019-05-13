@@ -428,6 +428,9 @@ export default class User implements IPacketWritable, IStringifyable {
 
         const game: MultiplayerGame = this.CurrentGame;
         
+        if (game.InProgress && game.Ruleset == MultiplayerGameRuleset.Battle_Royale)
+            game.EliminateBattleRoyalePlayer(this);
+
         _.remove(game.Players, this);
         _.remove(game.PlayersWithoutMap, this.Id);
         _.remove(game.PlayersGameStartedWith, this);
@@ -525,9 +528,20 @@ export default class User implements IPacketWritable, IStringifyable {
         if (!game.InProgress)
             return Logger.Warning(`${this.ToNameIdString()} gave us multiplayer judgements, but the game is not in progress!`);
 
-        const judgementsBefore = game.PlayerScoreProcessors[this.Id].JudgementList.length;
-        
+        const processor = game.PlayerScoreProcessors[this.Id];
+        const judgementsBefore = processor.JudgementList.length;
+       
+        if (!processor.Multiplayer)
+            return;
+
+        const livesBefore = processor.Multiplayer.Lives;
+
         game.CalculateUserScore(this, judgements);
+
+        // Eliminate player if they've lost all their lives
+        if (game.Ruleset == MultiplayerGameRuleset.Battle_Royale && livesBefore > 0 && processor.Multiplayer.Lives == 0) 
+            game.EliminateBattleRoyalePlayer(this);
+
         await game.CachePlayerCurrentScore(this);
 
         // BOTS

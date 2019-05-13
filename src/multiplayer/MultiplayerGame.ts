@@ -334,8 +334,14 @@ export default class MultiplayerGame {
 
     /**
      * The players that the game has started with.
+     * (Current users, but removes leaving players)
      */
     public PlayersGameStartedWith: User[] = [];
+
+    /**
+     * The REAL number of players the game started with
+     */
+    private NumberOfPlayersGameStartedWith: number = 0;
 
     /**
      * The amount of players that have finished the map.
@@ -396,6 +402,11 @@ export default class MultiplayerGame {
      * for the battle royale ruleset
      */
     private PreviousMinimumJudgementCount: number = 0;
+
+    /**
+     * Players that are eliminated in the current battle royale game
+     */
+    private EliminatedBattleRoyalePlayers: User[] = [];
 
     /**
      * Creates and returns a multiplayer game
@@ -590,12 +601,14 @@ export default class MultiplayerGame {
 
         this.InProgress = true;
         this.PlayersGameStartedWith = this.Players.filter(x => !this.PlayersWithoutMap.includes(x.Id));
+        this.NumberOfPlayersGameStartedWith = this.PlayersGameStartedWith.length;
         this.FinishedPlayers = [];
         this.PlayersWithGameScreenLoaded = [];
         this.PlayersSkipped = [];
         this.PlayersReady = [];
         this.CountdownStartTime = -1;
         this.PreviousMinimumJudgementCount = 0;
+        this.EliminatedBattleRoyalePlayers = [];
         await this.ClearAndPopulateScoreProcessors();
 
         if (this.Ruleset == MultiplayerGameRuleset.Battle_Royale)
@@ -663,6 +676,23 @@ export default class MultiplayerGame {
         else {
             await this.InformLobbyUsers();
         }
+
+        /*for (let id in this.PlayerScoreProcessors) {
+            let player = this.Players.find(x => x.Id == parseInt(id));
+
+            if (!player)
+                continue;
+
+            const processor = this.PlayerScoreProcessors[id];
+            
+            if (!processor)
+                continue;
+
+            if (!processor.Multiplayer)
+                continue;
+
+            console.log(`#${processor.Multiplayer.BattleRoyaleRank}: ${player.ToNameIdString()}`);
+        }*/
     }
 
     /**
@@ -1210,6 +1240,11 @@ export default class MultiplayerGame {
     private async InsertScoresIntoDatabase(matchId: number, abortedEarly: boolean): Promise<void> {
         for (let i = 0; i < this.PlayersGameStartedWith.length; i++) {
             const player: User = this.PlayersGameStartedWith[i];
+
+            // Skip bots. They aren't actual users, so they can be skipped
+            if (player.IsMultiplayerBot)
+                continue;
+
             const scoreProcessor: ScoreProcessorKeys = this.PlayerScoreProcessors[player.Id];
             let mods: MultiplayerPlayerMods | any = this.PlayerMods.find(x => x.Id == player.Id);
 
@@ -1223,11 +1258,12 @@ export default class MultiplayerGame {
             if (!scoreProcessor.Multiplayer)
                 throw new Error("Multiplayer Score Processor not defined???");
 
-            const winResult: MultiplayerWinResult = this.GetPlayerWinResult(player);  
+            const winResult: MultiplayerWinResult = this.GetPlayerWinResult(player);
+            let battleRoyaleRank = this.Ruleset == MultiplayerGameRuleset.Battle_Royale ? scoreProcessor.Multiplayer.BattleRoyaleRank : null;
 
             await SqlDatabase.Execute("INSERT INTO multiplayer_match_scores (user_id, match_id, team, mods, performance_rating, score, accuracy, max_combo, " + 
-                "count_marv, count_perf, count_great, count_good, count_okay, count_miss, full_combo, lives_left, has_failed, won) " + 
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+                "count_marv, count_perf, count_great, count_good, count_okay, count_miss, full_combo, lives_left, has_failed, won, battle_royale_place) " + 
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
                 [player.Id, matchId, team, mods, scoreProcessor.PerformanceRating, scoreProcessor.Score, scoreProcessor.Accuracy,
                 scoreProcessor.MaxCombo, 
                 scoreProcessor.CurrentJudgements[Judgement.Marvelous],
@@ -1239,7 +1275,7 @@ export default class MultiplayerGame {
                 Number(scoreProcessor.IsFullCombo()),
                 scoreProcessor.Multiplayer.Lives,
                 Number(scoreProcessor.Multiplayer.HasFailed),
-                Number(winResult)]);
+                Number(winResult), battleRoyaleRank]);
 
             // Only add to stats if the game was fully completed
             if (!abortedEarly) {
@@ -1371,7 +1407,12 @@ export default class MultiplayerGame {
      * @param player 
      */
     private CheckIfBattleRoyaleWinner(player: User): MultiplayerWinResult {
-        return MultiplayerWinResult.Won;
+        const processor = this.PlayerScoreProcessors[player.Id];
+
+        if (!processor.Multiplayer)
+            return MultiplayerWinResult.Loss;
+
+        return processor.Multiplayer.BattleRoyaleRank == 1 ? MultiplayerWinResult.Won : MultiplayerWinResult.Loss;
     }
 
     /**
@@ -1535,6 +1576,7 @@ export default class MultiplayerGame {
         await RedisHelper.hset(key, "lv", processor.Multiplayer.Lives.toString());
         await RedisHelper.hset(key, "hf", Number(processor.Multiplayer.HasFailed).toString()); 
         await RedisHelper.hset(key, "rh", Number(processor.Multiplayer.IsRegeneratingHealth).toString());
+        await RedisHelper.hset(key, "br", Number(processor.Multiplayer.BattleRoyaleRank).toString());
 
     }
 
@@ -1710,6 +1752,9 @@ export default class MultiplayerGame {
      * Handle scoring for battle royale
      */
     public async HandleBattleRoyaleScoring(): Promise<void> {
+        if (!this.InProgress)
+            return;
+
         let lowestPlayer: User | undefined;
         let minJudgementCount: number = Number.MAX_SAFE_INTEGER;
 
@@ -1735,17 +1780,25 @@ export default class MultiplayerGame {
             if (playerJudgementCount < minJudgementCount)
                 minJudgementCount = playerJudgementCount;
 
+            if (minJudgementCount == 0)
+                return;
+
             const player = this.PlayersGameStartedWith.find(x => x.Id == parseInt(id));
 
             // Set lowest player if there is none
             if (!lowestPlayer && player)
                 lowestPlayer = player;
 
+            try {
             // The current user is lower than the lowest player
             if (lowestPlayer && this.PlayerScoreProcessors[id].HitStats[minJudgementCount - 1].PerformanceRating 
                 < this.PlayerScoreProcessors[lowestPlayer.Id].HitStats[minJudgementCount - 1].PerformanceRating) {
                     lowestPlayer = player
                 }
+            } catch (err) {
+                Logger.Error(err)
+                console.log("???? " + minJudgementCount)
+            }
         }
 
         // Check to see if the last player should be eliminated now
@@ -1753,11 +1806,14 @@ export default class MultiplayerGame {
             (this.GetBattleRoyaleKnockoutInterval() - this.PreviousMinimumJudgementCount % this.GetBattleRoyaleKnockoutInterval());
 
         // Find the players that are currently alive in the game
-        const alivePlayers: User[] = [];
+        const remainingPlayers: User[] = [];
+        const processorArray: any = [];
+
         for (let i = 0; i < this.PlayersGameStartedWith.length; i++) {
             const user = this.PlayersGameStartedWith[i];
 
             const processor = this.PlayerScoreProcessors[user.Id];
+            processorArray.push({ id: user.Id, processor });
 
             if (!processor)
                 continue;
@@ -1766,11 +1822,11 @@ export default class MultiplayerGame {
                 continue;
 
             if (!processor.Multiplayer.IsBattleRoyaleEliminated)
-                alivePlayers.push(user);
+                remainingPlayers.push(user);
         }
 
         // If there are only two players left, let them play until the end of the match.
-        if (alivePlayers.length == 2)
+        if (remainingPlayers.length == 2)
             nextMultiple = this.JudgementCount;
 
         if (minJudgementCount >= nextMultiple && this.PreviousMinimumJudgementCount < nextMultiple && lowestPlayer)
@@ -1790,7 +1846,10 @@ export default class MultiplayerGame {
      * Eliminiates a player from battle royale
      * @param user 
      */
-    private EliminateBattleRoyalePlayer(user: User): void {
+    public EliminateBattleRoyalePlayer(user: User): void {
+        if (!this.InProgress)
+            return;
+
         const processor = this.PlayerScoreProcessors[user.Id];
 
         if (!processor || !processor.Multiplayer)
@@ -1799,6 +1858,11 @@ export default class MultiplayerGame {
         Logger.Info(`[${this.Id}] Multiplayer - ${user.ToNameIdString()} has been eliminated from Battle Royale!`);
 
         processor.Multiplayer.IsBattleRoyaleEliminated = true;
-        Albatross.SendToUsers(this.PlayersGameStartedWith, new ServerPacketGamePlayerBattleRoyaleEliminated(user));
+
+        if (!this.EliminatedBattleRoyalePlayers.includes(user))
+            this.EliminatedBattleRoyalePlayers.push(user);
+
+        processor.Multiplayer.BattleRoyaleRank = this.NumberOfPlayersGameStartedWith - this.EliminatedBattleRoyalePlayers.length + 1;
+        Albatross.SendToUsers(this.PlayersGameStartedWith, new ServerPacketGamePlayerBattleRoyaleEliminated(user, processor.Multiplayer.BattleRoyaleRank));
     }
 }
