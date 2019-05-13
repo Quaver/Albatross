@@ -890,7 +890,17 @@ export default class Bot {
                 if (!sender.IsSwan())
                     return;
 
-                await game.AddBots(7);
+                if (args.length < 2)
+                    return await Bot.SendMessage(game.GetChatChannelName(), "You must provide a number of bots");   
+
+                await game.AddBots(parseInt(args[1]));
+                break;
+            case "nukebots":
+                if (!sender.IsSwan())
+                    return;
+
+                await game.NukeBots();
+                await Bot.SendMessage(game.GetChatChannelName(), "All test bots have been nuked.");
                 break;
         }
     }

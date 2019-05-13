@@ -59,6 +59,7 @@ import Privileges from "../enums/Privileges";
 import UserGroups from "../enums/UserGroups";
 import ServerPacketUserConnected from "../packets/server/ServerPacketUserConnected";
 import ServerPacketGamePlayerBattleRoyaleEliminated from "../packets/server/ServerPacketGamePlayerBattleRoyaleElimintated";
+import ServerPacketUserDisconected from "../packets/server/ServerPacketUserDisconnected";
 const md5 = require("md5");
 
 /**
@@ -1734,6 +1735,22 @@ export default class MultiplayerGame {
 
             Albatross.SendToUsers(this.Players, new ServerPacketUserConnected(user));
             user.JoinMultiplayerGame(this, this.Password);
+        }
+    }
+
+    /**
+     * Nukes all of the test bots in the game
+     */
+    public async NukeBots(): Promise<void> {
+        for (let i = 0; i < this.Players.length; i++) {
+            const player: User = this.Players[i];
+
+            if (!player.IsMultiplayerBot)
+                continue;
+
+            await player.LeaveMultiplayerGame();
+            Albatross.Broadcast(new ServerPacketUserDisconected(player.Id));
+            Albatross.Instance.OnlineUsers.RemoveUser(player);
         }
     }
 
