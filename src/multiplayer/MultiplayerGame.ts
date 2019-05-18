@@ -1276,7 +1276,8 @@ export default class MultiplayerGame {
                 Number(scoreProcessor.IsFullCombo()),
                 scoreProcessor.Multiplayer.Lives,
                 Number(scoreProcessor.Multiplayer.HasFailed),
-                Number(winResult), battleRoyaleRank]);
+                Number(winResult), 
+                battleRoyaleRank]);
 
             // Only add to stats if the game was fully completed
             if (!abortedEarly) {
@@ -1730,7 +1731,9 @@ export default class MultiplayerGame {
      */
     public async AddBots(num: number): Promise<void> {
         for (let i = 0; i < num; i++) {
-            const user: User = new User(null, -i - 1, "-1", `#BOT_${i}`, true, 0, "US", Privileges.Normal, UserGroups.Bot, "", true);
+            const result = await SqlDatabase.Execute("SELECT * FROM users WHERE id = ? LIMIT 1", [i + 10]);
+
+            const user: User = new User(null, -i - 1, result[0].steam_id, `Bot ${result[0].username}`, true, 0, "US", Privileges.Normal, UserGroups.Bot, "", true);
             Albatross.Instance.OnlineUsers.AddUser(user);
 
             Albatross.SendToUsers(this.Players, new ServerPacketUserConnected(user));

@@ -552,8 +552,11 @@ export default class User implements IPacketWritable, IStringifyable {
                 for (let j = judgementsBefore; j < game.PlayerScoreProcessors[this.Id].JudgementList.length; j++)
                     judgements.push(game.PlayerScoreProcessors[game.Players[i].Id].JudgementList[j]);
 
-                setTimeout(() => Albatross.SendToUser(this, new ServerPacketGameJudgements(game.Players[i], judgements)), 400);
-                
+                setTimeout(() =>  {
+                    try {
+                        Albatross.SendToUser(this, new ServerPacketGameJudgements(game.Players[i], judgements))
+                    } catch (err) {}
+                }, 400); 
             }
         }
 
