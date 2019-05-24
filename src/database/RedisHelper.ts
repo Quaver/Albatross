@@ -1,6 +1,8 @@
 import * as redis from "redis";
 import {RedisClient} from "redis";
 import Logger from "../logging/Logger";
+import ChatManager from "../chat/ChatManager";
+import Bot from "../bot/Bot";
 
 export default class RedisHelper {
     /**
@@ -9,10 +11,12 @@ export default class RedisHelper {
     public static Client: RedisClient;
 
     /**
-     * Redis client to publish events.
+     * Redis client to  subscribe to events
      */
-    public static Pub: RedisClient;
+    public static Sub: RedisClient;
     
+    private static FirstPlaceScoresChannel: string = "quaver:first_place_scores";
+
     /**
      * Initializes the redis client.
      * @constructor
@@ -23,7 +27,24 @@ export default class RedisHelper {
             throw Error("The main redis client already exists! There's no need to create another one.");
         
         RedisHelper.Client = redis.createClient(config);
-        RedisHelper.Pub = redis.createClient(config);
+        RedisHelper.Sub = redis.createClient(config);
+
+        this.Sub.on("subscribe", (chan, count) => Logger.Success(`Successfully subscribed to Redis Channel: ${chan} - Count: ${count}`));
+
+        this.Sub.on("message", async (chan, message) => {
+            switch (chan) {
+                // First Place Ranks
+                case RedisHelper.FirstPlaceScoresChannel:
+                    const firstPlaceScore = JSON.parse(message);
+
+                    await ChatManager.SendMessage(Bot.User, "#announcements", `${firstPlaceScore.user.username} has just achieved first place ` 
+                        + `on: "${firstPlaceScore.map.artist} - ${firstPlaceScore.map.title} [${firstPlaceScore.map.difficulty_name}]."`);
+                    break;
+            }
+        });
+
+
+        this.Sub.subscribe(RedisHelper.FirstPlaceScoresChannel);
         
         try {
             // Grab all existing login tokens on the server.
