@@ -61,6 +61,12 @@ import GamePlayerTeamChangedHandler from "./GamePlayerTeamChangedHandler";
 import ClientPacketGamePlayerTeamChanged from "../packets/client/ClientPacketGamePlayerTeamChanged";
 import RequestUserStatsHandler from "./RequestUserStatsHandler";
 import ClientPacketRequestUserStats from "../packets/client/ClientPacketRequestUserStats";
+import GameKickPlayerHandler from "./GameKickPlayerHandler";
+import ClientPacketGameKickPlayer from "../packets/client/ClientPacketGameKickPlayer";
+import GameTransferHostHandler from "./GameTransferHostHandler";
+import ClientPacketGameTransferHost from "../packets/client/ClientPacketGameTransferHost";
+import GameChangeOtherPlayerTeamHandler from "./GameChangeOtherPlayerTeamHandler";
+import ClientPacketGameChangeOtherPlayerTeam from "../packets/client/ClientPacketGameChangeOtherPlayerTeam";
 const config = require("../config/config.json");
 
 export default class PacketHandler {
@@ -176,6 +182,15 @@ export default class PacketHandler {
                     break;   
                 case PacketId.ClientRequestUserStats:
                     await RequestUserStatsHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketRequestUserStats));
+                    break;
+                case PacketId.ClientGameKickPlayer:
+                    await GameKickPlayerHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGameKickPlayer));
+                    break;
+                case PacketId.ClientGameTransferHost:
+                    await GameTransferHostHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGameTransferHost));
+                    break;
+                case PacketId.ClientGameChangeOtherPlayerTeam:
+                    await GameChangeOtherPlayerTeamHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGameChangeOtherPlayerTeam));
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS

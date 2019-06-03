@@ -83,7 +83,10 @@ enum PacketId {
     ServerGamePlayerWinCount,
     ClientRequestUserStats,
     ServerUserStats,
-    ServerGamePlayerBattleRoyaleEliminated
+    ServerGamePlayerBattleRoyaleEliminated,
+    ClientGameKickPlayer,
+    ClientGameTransferHost,
+    ClientGameChangeOtherPlayerTeam
 }
 
 export default PacketId;
