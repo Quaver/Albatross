@@ -67,6 +67,18 @@ import GameTransferHostHandler from "./GameTransferHostHandler";
 import ClientPacketGameTransferHost from "../packets/client/ClientPacketGameTransferHost";
 import GameChangeOtherPlayerTeamHandler from "./GameChangeOtherPlayerTeamHandler";
 import ClientPacketGameChangeOtherPlayerTeam from "../packets/client/ClientPacketGameChangeOtherPlayerTeam";
+import GameChangeRulesetHandler from "./GameChangeRulesetHandler";
+import ClientPacketGameChangeRuleset from "../packets/client/ClientPacketGameChangeRuleset";
+import GameChangeMaxPlayersHandler from "./GameChangeMaxPlayersHandler";
+import ClientPacketGameChangeMaxPlayers from "../packets/client/ClientPacketGameChangeMaxPlayers";
+import GameChangeAutoHostRotationHandler from "./GameChangeAutoHostRotationHandler";
+import ClientPacketGameChangeAutoHostRotation from "../packets/client/ClientPacketGameChangeAutoHostRotation";
+import GameHealthTypeChangedHandler from "./GameHealthTypeChangedHandler";
+import ClientPacketGameChangeHealthType from "../packets/client/ClientPacketGameChangeHealthType";
+import GameChangeLivesCountHandler from "./GameChangeLivesCountHandler";
+import ClientPacketGameChangeLivesCount from "../packets/client/ClientPacketGameChangeLivesCount";
+import GameChangeFreeModTypeHandler from "./GameChangeFreeModTypeHandler";
+import ClientPacketGameChangeFreeModType from "../packets/client/ClientPacketGameChangeFreeModType";
 const config = require("../config/config.json");
 
 export default class PacketHandler {
@@ -191,6 +203,24 @@ export default class PacketHandler {
                     break;
                 case PacketId.ClientGameChangeOtherPlayerTeam:
                     await GameChangeOtherPlayerTeamHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGameChangeOtherPlayerTeam));
+                    break;
+                case PacketId.ClientGameChangeRuleset:
+                    await GameChangeRulesetHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGameChangeRuleset));
+                    break;
+                case PacketId.ClientGameChangeMaxPlayers:
+                    await GameChangeMaxPlayersHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGameChangeMaxPlayers));
+                    break;
+                case PacketId.ClientGameChangeAutoHostRotation:
+                    await GameChangeAutoHostRotationHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGameChangeAutoHostRotation));
+                    break;
+                case PacketId.ClientGameChangeHealthType:
+                    await GameHealthTypeChangedHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGameChangeHealthType));
+                    break;
+                case PacketId.ClientGameChangeLivesCount:
+                    await GameChangeLivesCountHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGameChangeLivesCount));
+                    break;
+                case PacketId.ClientGameChangeFreeModType:
+                    await GameChangeFreeModTypeHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGameChangeFreeModType));
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS

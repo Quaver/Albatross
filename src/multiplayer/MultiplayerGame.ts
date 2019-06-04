@@ -948,6 +948,22 @@ export default class MultiplayerGame {
     }
 
     /**
+     * Sets thefree mod type for a game
+     * @param type 
+     */
+    public SetFreeModType(type: MultiplayerFreeModType): void {
+        this.FreeModType = type;
+        
+        Albatross.SendToUsers(this.Players, new ServerPacketFreeModTypeChanged(this));
+        this.ChangeModifiers("0", this.DifficultyRating);
+
+        for (let i = 0; i < this.Players.length; i++)
+            this.ChangePlayerModifiers(this.Players[i], "0", true);
+
+        this.InformLobbyUsers();
+    }
+
+    /**
      * Kicks a player from the multiplayer game
      * @param user 
      */
@@ -1122,6 +1138,9 @@ export default class MultiplayerGame {
         if (ruleset == this.Ruleset)
             return;
 
+        if (this.InProgress)
+            return;
+            
         this.Ruleset = ruleset;
 
         // Clear all teams to start off with

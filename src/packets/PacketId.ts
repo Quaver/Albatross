@@ -86,7 +86,13 @@ enum PacketId {
     ServerGamePlayerBattleRoyaleEliminated,
     ClientGameKickPlayer,
     ClientGameTransferHost,
-    ClientGameChangeOtherPlayerTeam
+    ClientGameChangeOtherPlayerTeam,
+    ClientGameChangeRuleset,
+    ClientGameChangeMaxPlayers,
+    ClientGameChangeAutoHostRotation,
+    ClientGameChangeHealthType,
+    ClientGameChangeLivesCount,
+    ClientGameChangeFreeModType
 }
 
 export default PacketId;
