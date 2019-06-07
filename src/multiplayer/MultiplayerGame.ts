@@ -727,6 +727,9 @@ export default class MultiplayerGame {
      * Starts the countdown before the game starts
      */
     public async StartMatchCountdown(): Promise<void> {
+        if (this.InProgress)
+            return;
+
         if (this.CountdownStartTime != -1)
             return Logger.Warning(`[${this.Id}] Multiplayer Match Countdown Already Running (Cannot Start Again)`);
             
@@ -743,6 +746,9 @@ export default class MultiplayerGame {
      * Cancels the match countdown
      */
     public async StopMatchCountdown(informLobbyUsers: boolean = true): Promise<void> {
+        if (this.InProgress)
+            return;
+
         if (this.CountdownStartTime == -1)
             return;
 
@@ -762,6 +768,9 @@ export default class MultiplayerGame {
      * @param user 
      */
     public async InformPlayerIsReady(user: User): Promise<void> {
+        if (this.InProgress)
+            return;
+
         Albatross.SendToUsers(this.Players, new ServerPacketGamePlayerReady(user));
         await this.InformLobbyUsers();
     }
@@ -794,6 +803,9 @@ export default class MultiplayerGame {
      * @param num 
      */
     public ChangeMinimumDifficulty(num: number): void {
+        if (this.InProgress)
+            return;
+
         this.MinimumDifficultyRating = num;
         Logger.Info(`[${this.Id}] Multiplayer game minimum difficulty rating changed: ${this.MinimumDifficultyRating}`);
 
@@ -805,6 +817,9 @@ export default class MultiplayerGame {
      * Changes the maximum difficulty rating allowed for the match
      */
     public ChangeMaximumDifficulty(num: number): void {
+        if (this.InProgress)
+            return;
+
         this.MaximumDifficultyRating = num;
         Logger.Info(`[${this.Id}] Multiplayer game maximum difficulty rating changed: ${this.MaximumDifficultyRating}`);
 
@@ -817,6 +832,9 @@ export default class MultiplayerGame {
      * @param num 
      */
     public ChangeMaximumSongLength(num: number): void {
+        if (this.InProgress)
+            return;
+
         this.MaximumSongLength = num;
         Logger.Info(`[${this.Id}] Multiplayer game maximum song length changed: ${num}`);
 
@@ -829,6 +847,9 @@ export default class MultiplayerGame {
      * @param percent 
      */
     public ChangeMinimumLongNotePercentage(percent: number): void {
+        if (this.InProgress)
+            return;
+
         if (percent < 0 || percent > 100)
             return Logger.Warning(`[${this.Id}] Multiplayer - Could not change minimum LN%. Out of range: ${percent}`);
 
@@ -844,6 +865,9 @@ export default class MultiplayerGame {
      * @param percent 
      */
     public ChangeMaximumLongNotePercentage(percent: number): void {
+        if (this.InProgress)
+            return;
+
         if (percent < 0 || percent > 100)
             return Logger.Warning(`[${this.Id}] Multiplayer - Could not change maximum LN%. Out of range: ${percent}`);
 
@@ -859,6 +883,9 @@ export default class MultiplayerGame {
      * @param mode 
      */
     public AllowGameMode(mode: GameMode): void {
+        if (this.InProgress)
+            return;
+
         if (this.AllowedGameModes.includes(mode))
             return;
 
@@ -874,6 +901,9 @@ export default class MultiplayerGame {
      * @param mode 
      */
     public DisallowGameMode(mode: GameMode): void {
+        if (this.InProgress)
+            return;
+
         if (!this.AllowedGameModes.includes(mode))
             return;
 
@@ -888,6 +918,9 @@ export default class MultiplayerGame {
      * Changes the modifiers for the game & advertised difficulty rating
      */
     public ChangeModifiers(mods: string | any, difficultyRating: number): void {
+        if (this.InProgress)
+            return;
+
         if (isNaN(mods))
             return Logger.Warning(`[${this.Id}] Multiplayer Mods Can't Be Changed (Mods given was NaN).`);
 
@@ -926,6 +959,9 @@ export default class MultiplayerGame {
      * Enables a specific free mod type for the match
      */
     public EnableFreeModType(type: MultiplayerFreeModType): void {
+        if (this.InProgress)
+            return;   
+
         if ((this.FreeModType & type) != 0)
             return;
 
@@ -945,6 +981,9 @@ export default class MultiplayerGame {
      * @param type 
      */
     public DisableFreeModType(type: MultiplayerFreeModType): void {
+        if (this.InProgress)
+            return;
+
         if ((this.FreeModType & type) != 0) {
             this.FreeModType -= type;
         }
@@ -963,6 +1002,9 @@ export default class MultiplayerGame {
      * @param type 
      */
     public SetFreeModType(type: MultiplayerFreeModType): void {
+        if (this.InProgress)
+            return;
+            
         this.FreeModType = type;
         
         Albatross.SendToUsers(this.Players, new ServerPacketFreeModTypeChanged(this));
@@ -1061,6 +1103,9 @@ export default class MultiplayerGame {
      * @param team 
      */
     public ChangeUserTeam(user: User, team: MultiplayerTeam, informLobbyUsers: boolean = true): void {
+        if (this.InProgress)
+            return;
+
         this.RedTeamPlayers = this.RedTeamPlayers.filter(x => x != user.Id);
         this.BlueTeamPlayers = this.BlueTeamPlayers.filter(x => x != user.Id);
 
