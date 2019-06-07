@@ -534,6 +534,9 @@ export default class MultiplayerGame {
      */
     public async ChangeMap(md5: string, mapId: number, mapsetId: number, map: string, mode: GameMode, difficulty: number,
         allDifficultyRatings: number[], judgementCount: number): Promise<void> {
+        if (this.InProgress)
+            return;
+            
         // Prevent diffs not in range
         if (difficulty < this.MinimumDifficultyRating || difficulty > this.MaximumDifficultyRating)
             return Logger.Warning(`[${this.Id}] Multiplayer map change failed. Difficulty rating not in min-max range.`);
