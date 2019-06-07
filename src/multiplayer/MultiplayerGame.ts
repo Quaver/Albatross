@@ -60,6 +60,7 @@ import UserGroups from "../enums/UserGroups";
 import ServerPacketUserConnected from "../packets/server/ServerPacketUserConnected";
 import ServerPacketGamePlayerBattleRoyaleEliminated from "../packets/server/ServerPacketGamePlayerBattleRoyaleElimintated";
 import ServerPacketUserDisconected from "../packets/server/ServerPacketUserDisconnected";
+import ServerPacketGameHostSelectingMap from "../packets/server/ServerPacketGameHostSelectingMap";
 const md5 = require("md5");
 
 /**
@@ -322,6 +323,11 @@ export default class MultiplayerGame {
     @JsonProperty("mr")
     public MinimumRate: number = 0.5;
 
+    /**
+     * If the host is currently selecting a map
+     */
+    @JsonProperty("hsm")
+    public HostSelectingMap: boolean = false;
 
     /**
      * The players that are currently in the game
@@ -457,6 +463,7 @@ export default class MultiplayerGame {
         game.RedTeamWins = 0;
         game.BlueTeamWins = 0;
         game.JudgementCount = judgementCount;
+        game.HostSelectingMap = false;
         if (password) game.HasPassword = true;
 
         game.CacheSelectedMap();
@@ -627,6 +634,7 @@ export default class MultiplayerGame {
             this.Players[i].FinishPlayingMultiplayerGame();
         }
         
+        this.HandleHostSelectingMap(false, false);
         await this.InformLobbyUsers();
     }
 
@@ -1903,5 +1911,18 @@ export default class MultiplayerGame {
 
         processor.Multiplayer.BattleRoyaleRank = this.NumberOfPlayersGameStartedWith - this.EliminatedBattleRoyalePlayers.length + 1;
         Albatross.SendToUsers(this.PlayersGameStartedWith, new ServerPacketGamePlayerBattleRoyaleEliminated(user, processor.Multiplayer.BattleRoyaleRank));
+    }
+
+    /**
+     * Handles toggling if the host is selecting a map
+     * @param isSelecting 
+     */
+    public HandleHostSelectingMap(isSelecting: boolean, informLobbyUsers: boolean = true): void {
+        this.HostSelectingMap = isSelecting;
+
+        Albatross.SendToUsers(this.Players, new ServerPacketGameHostSelectingMap(this));
+
+        if (informLobbyUsers)
+            this.InformLobbyUsers();
     }
 }

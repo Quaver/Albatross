@@ -79,6 +79,8 @@ import GameChangeLivesCountHandler from "./GameChangeLivesCountHandler";
 import ClientPacketGameChangeLivesCount from "../packets/client/ClientPacketGameChangeLivesCount";
 import GameChangeFreeModTypeHandler from "./GameChangeFreeModTypeHandler";
 import ClientPacketGameChangeFreeModType from "../packets/client/ClientPacketGameChangeFreeModType";
+import GameHostSelectingMapHandler from "./GameHostSelectingMapHandler";
+import ClientPacketGameHostSelectingMap from "../packets/client/ClientPacketGameHostSelectingMap";
 const config = require("../config/config.json");
 
 export default class PacketHandler {
@@ -221,6 +223,9 @@ export default class PacketHandler {
                     break;
                 case PacketId.ClientGameChangeFreeModType:
                     await GameChangeFreeModTypeHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGameChangeFreeModType));
+                    break;
+                case PacketId.ClientGameHostSelectingMap:
+                    await GameHostSelectingMapHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGameHostSelectingMap));
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS

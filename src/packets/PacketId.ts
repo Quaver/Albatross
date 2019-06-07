@@ -92,7 +92,9 @@ enum PacketId {
     ClientGameChangeAutoHostRotation,
     ClientGameChangeHealthType,
     ClientGameChangeLivesCount,
-    ClientGameChangeFreeModType
+    ClientGameChangeFreeModType,
+    ClientGameHostSelectingMap,
+    ServerGameHostSelectingMap
 }
 
 export default PacketId;
