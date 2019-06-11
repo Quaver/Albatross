@@ -34,7 +34,7 @@ export default class MultiplayerCommandHost extends BotCommand {
 
         const game = user.CurrentGame;
 
-        if (target == user)
+        if (target == game.Host)
             return await Bot.SendMessage(game.GetChatChannelName(), "You're already host!");
 
         if (!target)
