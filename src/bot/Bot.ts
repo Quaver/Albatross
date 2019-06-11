@@ -47,6 +47,7 @@ import MultiplayerCommandPlayerWins from "./Multiplayer/MultiplayerCommandPlayer
 import MultiplayerCommandBots from "./Multiplayer/MultiplayerCommandBots";
 import MultiplayerCommandNukeBots from "./Multiplayer/MultiplayerCommandNukeBots";
 import MultiplayerCommandReferee from "./Multiplayer/MultiplayerCommandReferee";
+import MultiplayerCommandClearReferee from "./Multiplayer/MultiplayerCommandClearReferee";
 const config = require("../config/config.json");
 
 export default class Bot {
@@ -566,6 +567,9 @@ export default class Bot {
                 break;
             case "referee":
                 await new MultiplayerCommandReferee().Execute(sender, args);
+                break;
+            case "clearreferee":
+                await new MultiplayerCommandClearReferee().Execute(sender, args);
                 break;
         }
     }
