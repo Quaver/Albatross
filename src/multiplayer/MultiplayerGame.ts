@@ -61,6 +61,8 @@ import ServerPacketUserConnected from "../packets/server/ServerPacketUserConnect
 import ServerPacketGamePlayerBattleRoyaleEliminated from "../packets/server/ServerPacketGamePlayerBattleRoyaleElimintated";
 import ServerPacketUserDisconected from "../packets/server/ServerPacketUserDisconnected";
 import ServerPacketGameHostSelectingMap from "../packets/server/ServerPacketGameHostSelectingMap";
+import ServerPacketNotification from "../packets/server/ServerPacketNotification";
+import ServerNotificationType from "../enums/ServerNotificationType";
 const md5 = require("md5");
 
 /**
@@ -608,10 +610,33 @@ export default class MultiplayerGame {
         if (this.InProgress)
             return;
 
+        // The players that the game initially started with
+        const playingPlayers = this.Players.filter(x => !this.PlayersWithoutMap.includes(x.Id));
+
+        // Less than 2 players, prevent match start entirely
+        if (playingPlayers.length < 2) {
+            this.StopMatchCountdown();
+
+            if (this.Host)
+                Albatross.SendToUser(this.Host, new ServerPacketNotification(ServerNotificationType.Error, "You must have at least 2 players to start!"));
+
+            return;
+        }
+
+        // Less than 3 players for battle royale
+        if (this.Ruleset == MultiplayerGameRuleset.Battle_Royale && playingPlayers.length < 3) {
+            this.StopMatchCountdown();
+
+            if (this.Host)
+                Albatross.SendToUser(this.Host, new ServerPacketNotification(ServerNotificationType.Error, "You need at least 3 players to start a Battle Royale!"));
+
+            return;
+        }
+
         Logger.Success(`[${this.Id}] Multiplayer Game Started!`);
 
         this.InProgress = true;
-        this.PlayersGameStartedWith = this.Players.filter(x => !this.PlayersWithoutMap.includes(x.Id));
+        this.PlayersGameStartedWith = playingPlayers;
         this.NumberOfPlayersGameStartedWith = this.PlayersGameStartedWith.length;
         this.FinishedPlayers = [];
         this.PlayersWithGameScreenLoaded = [];
