@@ -355,6 +355,14 @@ export default class User implements IPacketWritable, IStringifyable {
     }
 
     /**
+     * Returns if the user has a certain user group
+     * @param group 
+     */
+    public HasUserGroup(group: UserGroups): boolean {
+        return (this.UserGroups & group) != 0;
+    }
+
+    /**
      * Returns if the user is currently in a multiplayer game.
      */
     public IsInMultiplayerGame(): boolean {

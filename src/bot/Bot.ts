@@ -18,6 +18,34 @@ import MultiplayerFreeModType from "../multiplayer/MultiplayerFreeModType";
 import Logger from "../logging/Logger";
 import ModHelper from "../utils/ModHelper";
 import MultiplayerHealthType from "../multiplayer/MultiplayerHealthType";
+import MultiplayerCommandStart from "./Multiplayer/MultiplayerCommandStart";
+import MultiplayerCommandStartCountdown from "./Multiplayer/MultiplayerCommandStartCountdown";
+import MultiplayerCommandEnd from "./Multiplayer/MultiplayerCommandEnd";
+import MultiplayerCommandStopCountdown from "./Multiplayer/MultiplayerCommandStopCountdown";
+import MultiplayerCommandHost from "./Multiplayer/MultiplayerCommandHost";
+import MultiplayerCommandMinDiff from "./Multiplayer/MultiplayerCommandMinDiff";
+import MultiplayerCommandMaxDiff from "./Multiplayer/MultiplayerCommandMaxDiff";
+import MultiplayerCommandMaxLength from "./Multiplayer/MultiplayerCommandMaxLength";
+import MultiplayerCommandAllowMode from "./Multiplayer/MultiplayerCommandAllowMode";
+import MultiplayerCommandDisallowMode from "./Multiplayer/MultiplayerCommandDisallowMode";
+import MultiplayerCommandFreeMod from "./Multiplayer/MultiplayerCommandFreeMod";
+import MultiplayerCommandFreeRate from "./Multiplayer/MultiplayerCommandFreeRate";
+import MultiplayerCommandKick from "./Multiplayer/MultiplayerCommandKick";
+import MultiplayerCommandName from "./Multiplayer/MultiplayerCommandName";
+import MultiplayerCommandInvite from "./Multiplayer/MultiplayerCommandInvite";
+import MultiplayerCommandHealth from "./Multiplayer/MultiplayerCommandHealth";
+import MultiplayerCommandLives from "./Multiplayer/MultiplayerCommandLives";
+import MultiplayerCommandHostRotation from "./Multiplayer/MultiplayerCommandHostRotation";
+import MultiplayerCommandRuleset from "./Multiplayer/MultiplayerCommandRuleset";
+import MultiplayerCommandLongNotesMin from "./Multiplayer/MultiplayerCommandLongNotesMin";
+import MultiplayerCommandLongNotesMax from "./Multiplayer/MultiplayerCommandLongNotesMax";
+import MultiplayerCommandMaxPlayers from "./Multiplayer/MultiplayerCommandMaxPlayers";
+import MultiplayerCommandClearWins from "./Multiplayer/MultiplayerCommandClearWins";
+import MultiplayerCommandTeamWins from "./Multiplayer/MultiplayerCommandTeamWins";
+import MultiplayerPlayerWins from "../multiplayer/MultiplayerPlayerWins";
+import MultiplayerCommandPlayerWins from "./Multiplayer/MultiplayerCommandPlayerWins";
+import MultiplayerCommandBots from "./Multiplayer/MultiplayerCommandBots";
+import MultiplayerCommandNukeBots from "./Multiplayer/MultiplayerCommandNukeBots";
 const config = require("../config/config.json");
 
 export default class Bot {
@@ -447,460 +475,93 @@ export default class Bot {
         switch (args[0]) {
             // Starts the match immediately.
             case "start":
-                if (!sender.CurrentGame.Host)
-                    return;              
-
-                await sender.CurrentGame.Start();
+                await new MultiplayerCommandStart().Execute(sender, args);
                 break;
             // Starts the match countdown
             case "startcountdown":
-                if (!sender.CurrentGame.Host)
-                    return;              
-
-                await sender.CurrentGame.StartMatchCountdown();
+                await new MultiplayerCommandStartCountdown().Execute(sender, args);
                 break;
             // Ends the match
             case "end":
-                if (!sender.CurrentGame.Host)
-                    return;  
-                 
-                await sender.CurrentGame.End(true);         
+                await new MultiplayerCommandEnd().Execute(sender, args);         
                 break;       
             case "stopcountdown":
-                if (!sender.CurrentGame.Host)
-                    return;
-
-                await sender.CurrentGame.StopMatchCountdown();
+                await new MultiplayerCommandStopCountdown().Execute(sender, args);
                 break;         
             // Changes the map's host 
             case "host":
-                if (!sender.CurrentGame.Host || args.length < 2)
-                    return;
- 
-                const targetUsername: string = args[1].replace(/_/g, " ");
-                const target: User = Albatross.Instance.OnlineUsers.GetUserByUsername(targetUsername);
-
-                if (target == sender)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "You're already host!");
-
-                if (!target)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "That user is not online!");
-
-                if (target.CurrentGame == sender.CurrentGame)
-                    await sender.CurrentGame.ChangeHost(target);
-                else
-                    return await Bot.SendMessage(game.GetChatChannelName(), "That user isn't in the game!");
+                await new MultiplayerCommandHost().Execute(sender, args);
                 break;
             // Changes the minimum difficulty requirements of the match
             case "mindiff":
-                if (!sender.CurrentGame.Host || args.length < 2)
-                    return;
-
-                const minDiff = parseFloat(args[1]);
-
-                if (isNaN(minDiff) || minDiff < 0)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "The minimum difficulty number must be a number and 0 or greater.");
-
-                if (minDiff > game.MaximumDifficultyRating)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "The minimum difficulty rating must be lower than the maximmum.");
-
-                game.ChangeMinimumDifficulty(minDiff);
-                await Bot.SendMessage(game.GetChatChannelName(), `The minimum difficulty has been changed to: ${minDiff}.`);   
+                await new MultiplayerCommandMinDiff().Execute(sender, args);
                 break;
             // Changes the maximum difficulty requirements of the match
-            case "maxdiff":
-                if (!sender.CurrentGame.Host || args.length < 2)
-                    return;
-
-                const maxDiff = parseInt(args[1]);
-
-                if (isNaN(maxDiff) || maxDiff < 0)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "The maximum difficulty number must be a number and 0 or greater.");
-
-                if (maxDiff < game.MinimumDifficultyRating)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "The maximum difficulty rating must be greater than the minimum.");
-
-                game.ChangeMaximumDifficulty(maxDiff);
-                await Bot.SendMessage(game.GetChatChannelName(), `The maximum difficulty has been changed to: ${maxDiff}.`);             
+            case "maxdiff":       
+                await new MultiplayerCommandMaxDiff().Execute(sender, args);   
                 break;
             // Changes the maximum length requirement of the song
             case "maxlength":
-                if (!sender.CurrentGame.Host || args.length < 2)
-                    return;
-
-                const length = parseInt(args[1]);
-
-                if (isNaN(length) || length <= 0)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "The maximum length must be greater than 0 seconds.");
-
-                game.ChangeMaximumSongLength(length);
-                await Bot.SendMessage(game.GetChatChannelName(), `The maximum length allowed for this game has been changed to: ${length} seconds.`);
+                await new MultiplayerCommandMaxLength().Execute(sender, args);
                 break;
             // Allows maps for a specific game mode to be selected
             case "allowmode":
-                if (!sender.CurrentGame.Host || args.length < 2)
-                    return;
-                    
-                const allowedMode: GameMode | undefined = GameModeHelper.GetGameModeFromShortString(args[1]);
-
-                if (!allowedMode)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "Invalid game mode specified! (Example: '4k' or '7k')");
-                    
-                if (game.AllowedGameModes.includes(allowedMode))
-                    return await Bot.SendMessage(game.GetChatChannelName(), "This mode is already allowed for this match!");
-
-                game.AllowGameMode(allowedMode);
-                await Bot.SendMessage(game.GetChatChannelName(), "Game mode has been successfully allowed for this multiplayer match.");
+                await new MultiplayerCommandAllowMode().Execute(sender, args);
                 break;
             // Disallows maps for a specific game mode to be selected
             case "disallowmode":
-                if (!sender.CurrentGame.Host || args.length < 2)
-                    return;
-
-                const disallowedMode: GameMode | undefined = GameModeHelper.GetGameModeFromShortString(args[1]);
-
-                if (!disallowedMode)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "Invalid game mode specified! (Example: '4k' or '7k')");
-                    
-                if (!game.AllowedGameModes.includes(disallowedMode))
-                    return await Bot.SendMessage(game.GetChatChannelName(), "This mode isn't currently allowed!");
-
-                if (game.AllowedGameModes.length == 1)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "You cannot disallow this game mode because there will be none allowed!");
-
-                game.DisallowGameMode(disallowedMode);
-                await Bot.SendMessage(game.GetChatChannelName(), "Game mode has been successfully disallowed for this multiplayer match.");               
+                await new MultiplayerCommandDisallowMode().Execute(sender, args);            
                 break;
             case "freemod":
-                if (!sender.CurrentGame.Host)
-                    return;
-
-                if ((game.FreeModType & MultiplayerFreeModType.Regular) != 0) {
-                    game.DisableFreeModType(MultiplayerFreeModType.Regular);
-                    await Bot.SendMessage(game.GetChatChannelName(), "Free Mod has been disabled for this match. All mods have been reset!");
-                } else {
-                    game.EnableFreeModType(MultiplayerFreeModType.Regular);
-                    await Bot.SendMessage(game.GetChatChannelName(), "Free Mod has been enabled for this match. All mods have been reset!");
-                }
+                await new MultiplayerCommandFreeMod().Execute(sender, args);
                 break;
             case "freerate":
-                if (!sender.CurrentGame.Host)
-                    return;
-
-                if ((game.FreeModType & MultiplayerFreeModType.Rate) != 0) {
-                    game.DisableFreeModType(MultiplayerFreeModType.Rate);
-                    await Bot.SendMessage(game.GetChatChannelName(), "Free Rate has been disabled for this match. All mods have been reset!");
-                } else {
-                    game.EnableFreeModType(MultiplayerFreeModType.Rate);
-                    await Bot.SendMessage(game.GetChatChannelName(), "Free Rate has been enabled for this match. All mods have been reset!");
-                }
-                break;
-            case "playermods":
-                let playerModsString: string = "Here are all the mods each player is using:\n---------------------------\n";
-
-                for (let i = 0; i < game.Players.length; i++) {
-                    const pms = game.PlayerMods.find(x => x.Id == game.Players[i].Id);
-
-                    if (!pms)
-                        return;
-
-                    playerModsString += `${game.Players[i].Username} - ${ModHelper.GetModsString(parseInt(pms.Mods))}\n`;
-                }
-
-                await Bot.SendMessage(game.GetChatChannelName(), playerModsString);
-                break;
-            case "globalmods":
-                await Bot.SendMessage(game.GetChatChannelName(), `The currently active global mods are: ${ModHelper.GetModsString(parseInt(game.Modifiers))}`);
+                await new MultiplayerCommandFreeRate().Execute(sender, args);
                 break;
             case "kick":
-                if (!sender.CurrentGame.Host)
-                    return;
-                    
-                if (args.length < 2)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "You need to specify a player to kick.");
-
-                const kickTargetUsername: string = args[1].replace(/_/g, " ");
-                const kickTarget: User = Albatross.Instance.OnlineUsers.GetUserByUsername(kickTargetUsername);
-
-                if (!kickTarget)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "That user is not online!");
-
-                if (kickTarget.CurrentGame == sender.CurrentGame) {
-                    await sender.CurrentGame.KickPlayer(kickTarget);
-                    await Bot.SendMessage(game.GetChatChannelName(), `${kickTarget.Username} has been kicked from the game!`);
-                }
-                else
-                    return await Bot.SendMessage(game.GetChatChannelName(), "That user isn't in the game!");
+                await new MultiplayerCommandKick().Execute(sender, args);
                 break;
             case "name":
-                if (!sender.CurrentGame.Host)
-                    return;
-
-                if (args.length < 2)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "You need to specify a new name for the game");
-
-                args.splice(0, 1);
-
-                const name: string = args.join(" ");
-
-                if (name.length >= 100)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "The name you have specified is too long. It must be under 100 characters");
-
-                await game.ChangeName(name);
-                await Bot.SendMessage(game.GetChatChannelName(), `The game name has been changed to: "${name}"`);
+                await new MultiplayerCommandName().Execute(sender, args);
                 break;
              case "invite":
-                if (args.length < 2)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "You need to specify a player to invite.");
-
-                const inviteTargetUsername: string = args[1].replace(/_/g, " ");
-                const inviteTarget: User = Albatross.Instance.OnlineUsers.GetUserByUsername(inviteTargetUsername);
-
-                if (!inviteTarget)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "That user is not online!");
-
-                if (inviteTarget.CurrentGame == sender.CurrentGame) 
-                    return await Bot.SendMessage(game.GetChatChannelName(), `That user is already in the game!`);
-
-                game.InvitePlayer(inviteTarget, sender);
-                return await Bot.SendMessage(game.GetChatChannelName(), `Successfully invited ${inviteTarget.Username} to the game.`);
+                await new MultiplayerCommandInvite().Execute(sender, args);
                 break;
             case "health":
-                if (!sender.CurrentGame.Host)
-                    return;
-
-                if (args.length < 2)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "You must specify either `regen` or `lives`.");
-
-                switch (args[1].toLowerCase()) {
-                    case "regen":
-                        game.ChangeHealthType(MultiplayerHealthType.ManualRegeneration);
-                        await Bot.SendMessage(game.GetChatChannelName(), "Health type has been changed to: 'Manual Regeneration.'");
-                        break;
-                    case "lives":
-                        game.ChangeHealthType(MultiplayerHealthType.Lives);
-                        await Bot.SendMessage(game.GetChatChannelName(), `Health type has been changed to: 'Lives (${game.Lives}).'`);
-                        break;
-                }
+                await new MultiplayerCommandHealth().Execute(sender, args);
                 break;
             case "lives":
-                if (!sender.CurrentGame.Host)
-                    return;
-
-                if (game.HealthType != MultiplayerHealthType.Lives)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "You cannot change the number of lives if the health type is Manual Regeneration.");
-
-                if (args.length < 2)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "You must specify a number of lives.");
-
-                const lives: any = parseInt(args[1]);
-
-                if (isNaN(lives))
-                    return await Bot.SendMessage(game.GetChatChannelName(), "You must specify a valid number of lives.");
-
-                if (lives <= 0 || lives > Number.MAX_VALUE)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "Number of lives must be greater than 0 and less than 2 billion.");
-
-                game.ChangeLivesCount(lives);
-                await Bot.SendMessage(game.GetChatChannelName(), `Life count has now been changed to: ${lives}.`);
-                break;
-            case "rules":
-                let rules: string = "Multiplayer Game Rules:\n" + 
-                                        "----------------\n";
-                
-                rules += `Ruleset - ${MultiplayerGameRuleset[game.Ruleset]}\n`;
-                rules += `Mods - ${ModHelper.GetModsString(parseInt(game.Modifiers))}\n`;
-                rules += `Auto Host Rotation - ${game.AutoHostRotation}\n`;
-                rules += `Minimum Difficulty Rating - ${game.MinimumDifficultyRating}\n`;
-                rules += `Maximum Difficulty Rating - ${game.MaximumDifficultyRating}\n`;
-                rules += `Maximum Song Length - ${game.MaximumSongLength}\n`;
-                rules += `Minimum LN% - ${game.MinimumLongNotePercentage}%\n`;
-                rules += `Maximum LN% - ${game.MaximumLongNotePercentage}%\n`;
-                rules += `Allowed Game Modes - ${game.AllowedGameModes.join(", ")}\n`;
-                rules += `Free Mod Type - ${game.FreeModType}\n`;
-                rules += `Health Type - ${game.HealthType}\n`;
-                rules += `Lives - ${game.Lives}`;
-
-                await Bot.SendMessage(game.GetChatChannelName(), rules);
+                await new MultiplayerCommandLives().Execute(sender, args);
                 break;
             case "hostrotation":
-                if (!sender.CurrentGame.Host)
-                    return;
-                    
-                game.ChangeAutoHostRotation(!game.AutoHostRotation);
-                await Bot.SendMessage(game.GetChatChannelName(), `Auto Host Rotation is now turned ${(game.AutoHostRotation ? "on" : "off")}.`);
+                await new MultiplayerCommandHostRotation().Execute(sender, args);
                 break;
             case "ruleset":
-                if (!sender.CurrentGame.Host)
-                    return;
-
-                if (args.length < 2)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "Not enough arguments. Specify either `team` or `freeforall` to change the ruleset.");
-
-                switch (args[1].toLowerCase()) {
-                    case "team":
-                        game.ChangeRuleset(MultiplayerGameRuleset.Team);
-                        await Bot.SendMessage(game.GetChatChannelName(), `Ruleset has been changed to: Team.`);
-                        break;
-                    case "freeforall":
-                        game.ChangeRuleset(MultiplayerGameRuleset.Free_For_All);
-                        await Bot.SendMessage(game.GetChatChannelName(), `Ruleset has been changed to: Free-For-All.`);
-                        break;
-                    case "battleroyale":
-                        game.ChangeRuleset(MultiplayerGameRuleset.Battle_Royale);
-                        await Bot.SendMessage(game.GetChatChannelName(), `Ruleset has been changed to: Battle Royale.`);
-                        break;
-                    default:
-                        await Bot.SendMessage(game.GetChatChannelName(), "You must specify either `team` or `freeforall`.");
-                        break;
-                }
+                await new MultiplayerCommandRuleset().Execute(sender, args);
                 break;
             case "lnmin":
-                if (!sender.CurrentGame.Host)
-                    return;        
-                    
-                if (args.length < 2)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "You must specify the minimum long note percentage.");
-
-                const percent = parseInt(args[1]);
-
-                if (isNaN(percent) || percent < 0 || percent > 100)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "Minimum long note percentage must be a number betwen 0-100%.");
-
-                if (percent > game.MaximumLongNotePercentage)
-                    return await Bot.SendMessage(game.GetChatChannelName(), `Minimum long note percentage must not be greater than the maximum: ${game.MaximumLongNotePercentage}%.`);
-
-                game.ChangeMinimumLongNotePercentage(percent);
-                await Bot.SendMessage(game.GetChatChannelName(), `Minimum long note percentage has been changed to: ${game.MinimumLongNotePercentage}%.`);     
+                await new MultiplayerCommandLongNotesMin().Execute(sender, args);  
                 break;
             case "lnmax":
-                if (!sender.CurrentGame.Host)
-                    return;    
-                    
-                if (args.length < 2)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "You must specify the maximum long note percentage.");
-
-                const maxPercent = parseInt(args[1]);
-
-                if (isNaN(maxPercent) || maxPercent < 0 || maxPercent > 100)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "Maximum long note percentage must be a number betwen 0-100%.");
-
-                if (maxPercent < game.MinimumLongNotePercentage)
-                    return await Bot.SendMessage(game.GetChatChannelName(), `Maximum long note percentage must not be lower than the minimum: ${game.MinimumLongNotePercentage}%.`);
-
-                game.ChangeMaximumLongNotePercentage(maxPercent);
-                await Bot.SendMessage(game.GetChatChannelName(), `Maximum long note percentage has been changed to: ${game.MaximumLongNotePercentage}%.`);    
+                await new MultiplayerCommandLongNotesMax().Execute(sender, args);
                 break;
             case "maxplayers":
-                if (!sender.CurrentGame.Host)
-                    return;    
-                    
-                if (args.length < 2)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "You must specify the number of players.");
-                    
-                let maxPlayers = parseInt(args[1]);
-                
-                if (isNaN(maxPlayers))
-                    return await Bot.SendMessage(game.GetChatChannelName(), "You must specify a valid number of players.");
-
-                maxPlayers = game.ClampMaxPlayers(maxPlayers);
-
-                if (maxPlayers < game.Players.length)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "You cannot set the max players greater than the amount of people in the game. Try kicking some players first.");
-
-                game.ChangeMaxPlayers(maxPlayers);
-                await Bot.SendMessage(game.GetChatChannelName(), `Max player count has changed to: ${maxPlayers}.`);
+                await new MultiplayerCommandMaxPlayers().Execute(sender, args);
                 break;
             case "clearwins":
-                if (!sender.CurrentGame.Host)
-                    return; 
-                    
-                switch (game.Ruleset) {
-                    case MultiplayerGameRuleset.Team:
-                        game.UpdateTeamWinCount(0, 0);
-                        await Bot.SendMessage(game.GetChatChannelName(), "Team win count has been reset.");
-                        break;
-                    case MultiplayerGameRuleset.Free_For_All:
-                        for (let i = 0; i < game.Players.length; i++)
-                            game.UpdatePlayerWinCount(game.Players[i], 0, false);
-
-                        // Inform lobby users at the end to make sure that packet only gets sent once
-                        await Bot.SendMessage(game.GetChatChannelName(), "All players' win counts have been reset.");
-                        game.InformLobbyUsers();
-                        break;
-                }
+                await new MultiplayerCommandClearWins().Execute(sender, args);
                 break;
             case "teamwins":
-                if (!sender.CurrentGame.Host)
-                    return;
-                    
-                if (game.Ruleset != MultiplayerGameRuleset.Team)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "Teams are not enabled, so you cannot change the win count");
-
-                if (args.length < 3)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "Incorrect command usage: !teamwins <red|blue> <wins>");
-
-                const wins = parseInt(args[2]);
-
-                if (isNaN(wins) || wins < 0 || wins > 9999)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "Invalid win count.");
-                    
-                switch (args[1]) {
-                    case "red":
-                        game.UpdateTeamWinCount(wins, game.BlueTeamWins);
-                        break;
-                    case "blue":
-                        game.UpdateTeamWinCount(game.RedTeamWins, wins);
-                        break;
-                    default:
-                        return await Bot.SendMessage(game.GetChatChannelName(), "Invalid team. Specify either 'red' or 'blue'.");
-                }
-
-                await Bot.SendMessage(game.GetChatChannelName(), `Team win count changed - Red: ${game.RedTeamWins} | Blue: ${game.BlueTeamWins}`);
+                await new MultiplayerCommandTeamWins().Execute(sender, args);
                 break;
             case "playerwins":
-                if (!sender.CurrentGame.Host)
-                    return;
-
-                if (game.Ruleset != MultiplayerGameRuleset.Free_For_All)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "You cannot change player win counts in team mode.");
-
-                if (args.length < 3)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "Incorrect command usage: !playerwins <user_name> <wins>");
-
-                const playerWins = parseInt(args[2]);
-
-                if (isNaN(playerWins) || playerWins < 0 || playerWins > 9999)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "Invalid win count."); 
-                    
-                const playerWinsTargetUsername: string = args[1].replace(/_/g, " ");
-                const playerWinsTarget: User = Albatross.Instance.OnlineUsers.GetUserByUsername(playerWinsTargetUsername);
-
-                if (!playerWinsTarget)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "That user is not online!");
-
-                if (!game.Players.includes(playerWinsTarget))
-                    return await Bot.SendMessage(game.GetChatChannelName(), "That player is not in the game!");
-
-                game.UpdatePlayerWinCount(playerWinsTarget, playerWins);
-                await Bot.SendMessage(game.GetChatChannelName(), `${playerWinsTarget.Username}'s win count has been changed to: ${playerWins}.`);
-
+                await new MultiplayerCommandPlayerWins().Execute(sender, args);
                 break;
             case "bots":
-                if (!sender.IsSwan())
-                    return;
-
-                if (args.length < 2)
-                    return await Bot.SendMessage(game.GetChatChannelName(), "You must provide a number of bots");   
-
-                await game.AddBots(parseInt(args[1]));
+                await new MultiplayerCommandBots().Execute(sender, args);
                 break;
             case "nukebots":
-                if (!sender.IsSwan())
-                    return;
-
-                await game.NukeBots();
-                await Bot.SendMessage(game.GetChatChannelName(), "All test bots have been nuked.");
+                await new MultiplayerCommandNukeBots().Execute(sender, args);
                 break;
         }
     }
