@@ -4,8 +4,10 @@ import Privileges from "../../enums/Privileges";
 import User from "../../sessions/User";
 import Albatross from "../../Albatross";
 import Bot from "../Bot";
+import MultiplayerHealthType from "../../multiplayer/MultiplayerHealthType";
+import MultiplayerGameRuleset from "../../multiplayer/MultiplayerGameRuleset";
 
-export default class MultiplayerCommandHost extends BotCommand {
+export default class MultiplayerCommandReferee extends BotCommand {
     /**
      * The usergroups allowed to execute this command
      */
@@ -28,23 +30,22 @@ export default class MultiplayerCommandHost extends BotCommand {
     public async ExecuteCommand(user: User, args: string[]): Promise<void> {
         if (user == null || user.CurrentGame == null)
             return;
-            
-        const game = user.CurrentGame;
 
-        if (args.length < 2)
-            return await Bot.SendMessage(game.GetChatChannelName(), "You must specify a player to give host to.");
+        const game = user.CurrentGame;
 
         const targetUsername: string = args[1].replace(/_/g, " ");
         const target: User = Albatross.Instance.OnlineUsers.GetUserByUsername(targetUsername);
 
-        if (target == game.Host)
-            return await Bot.SendMessage(game.GetChatChannelName(), "You're already host!");
-
         if (!target)
             return await Bot.SendMessage(game.GetChatChannelName(), "That user is not online!");
 
-        if (target.CurrentGame == user.CurrentGame)
-            await user.CurrentGame.ChangeHost(target);
+        if (target.Id == game.RefereeUserId)
+            return await Bot.SendMessage(game.GetChatChannelName(), "You're already the referee of the game!");
+
+        if (target.CurrentGame == user.CurrentGame) {
+            await user.CurrentGame.SetReferee(target);
+            return await Bot.SendMessage(game.GetChatChannelName(), `${target.Username} is now a referee of the game!`);
+        }
         else
             return await Bot.SendMessage(game.GetChatChannelName(), "That user isn't in the game!");
     }

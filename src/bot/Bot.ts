@@ -46,6 +46,7 @@ import MultiplayerPlayerWins from "../multiplayer/MultiplayerPlayerWins";
 import MultiplayerCommandPlayerWins from "./Multiplayer/MultiplayerCommandPlayerWins";
 import MultiplayerCommandBots from "./Multiplayer/MultiplayerCommandBots";
 import MultiplayerCommandNukeBots from "./Multiplayer/MultiplayerCommandNukeBots";
+import MultiplayerCommandReferee from "./Multiplayer/MultiplayerCommandReferee";
 const config = require("../config/config.json");
 
 export default class Bot {
@@ -562,6 +563,9 @@ export default class Bot {
                 break;
             case "nukebots":
                 await new MultiplayerCommandNukeBots().Execute(sender, args);
+                break;
+            case "referee":
+                await new MultiplayerCommandReferee().Execute(sender, args);
                 break;
         }
     }

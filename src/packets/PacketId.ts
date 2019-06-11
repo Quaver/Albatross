@@ -94,7 +94,8 @@ enum PacketId {
     ClientGameChangeLivesCount,
     ClientGameChangeFreeModType,
     ClientGameHostSelectingMap,
-    ServerGameHostSelectingMap
+    ServerGameHostSelectingMap,
+    ServerGameSetReferee
 }
 
 export default PacketId;

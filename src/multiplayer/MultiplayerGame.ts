@@ -63,6 +63,7 @@ import ServerPacketUserDisconected from "../packets/server/ServerPacketUserDisco
 import ServerPacketGameHostSelectingMap from "../packets/server/ServerPacketGameHostSelectingMap";
 import ServerPacketNotification from "../packets/server/ServerPacketNotification";
 import ServerNotificationType from "../enums/ServerNotificationType";
+import ServerPacketGameSetReferee from "../packets/server/ServerPacketGameSetReferee";
 const md5 = require("md5");
 
 /**
@@ -330,6 +331,12 @@ export default class MultiplayerGame {
      */
     @JsonProperty("hsm")
     public HostSelectingMap: boolean = false;
+
+    /**
+     * The user id of the referee of the game
+     */
+    @JsonProperty("ref")
+    public RefereeUserId: number = 0;
 
     /**
      * The players that are currently in the game
@@ -617,7 +624,7 @@ export default class MultiplayerGame {
             return;
 
         // The players that the game initially started with
-        const playingPlayers = this.Players.filter(x => !this.PlayersWithoutMap.includes(x.Id));
+        const playingPlayers = this.Players.filter(x => !this.PlayersWithoutMap.includes(x.Id) && this.RefereeUserId != x.Id);
 
         // Less than 2 players, prevent match start entirely
         if (playingPlayers.length < 2) {
@@ -658,14 +665,14 @@ export default class MultiplayerGame {
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameStart());
 
-        for (let i = 0; i < this.Players.length; i++) {
-            if (!this.Players[i].IsMultiplayerBot)
+        for (let i = 0; i < this.PlayersGameStartedWith.length; i++) {
+            if (!this.PlayersGameStartedWith[i].IsMultiplayerBot)
                 continue;
 
-            this.GenerateBotJudgements(this.Players[i]);
-            this.Players[i].ReadyToPlayMultiplayerGame();
-            this.Players[i].HandleMultiplayerGameSkipRequest();
-            this.Players[i].FinishPlayingMultiplayerGame();
+            this.GenerateBotJudgements(this.PlayersGameStartedWith[i]);
+            this.PlayersGameStartedWith[i].ReadyToPlayMultiplayerGame();
+            this.PlayersGameStartedWith[i].HandleMultiplayerGameSkipRequest();
+            this.PlayersGameStartedWith[i].FinishPlayingMultiplayerGame();
         }
         
         this.HandleHostSelectingMap(false, false);
@@ -1135,6 +1142,10 @@ export default class MultiplayerGame {
      */
     public ChangeUserTeam(user: User, team: MultiplayerTeam, informLobbyUsers: boolean = true): void {
         if (this.InProgress)
+            return;
+
+        // Cant set referee team
+        if (user.Id == this.RefereeUserId)
             return;
 
         this.RedTeamPlayers = this.RedTeamPlayers.filter(x => x != user.Id);
@@ -2003,5 +2014,33 @@ export default class MultiplayerGame {
 
         if (informLobbyUsers)
             this.InformLobbyUsers();
+    }
+
+    /**
+     * Sets the referee of the game
+     */
+    public async SetReferee(user: User, informLobbyUsers: boolean = true): Promise<void> {
+        if (this.InProgress)
+            return;
+
+        if (this.RefereeUserId == user.Id)
+            return;
+
+        const oldReferee = this.Players.find(x => x.Id == this.RefereeUserId);
+
+        this.BlueTeamPlayers = this.BlueTeamPlayers.filter(x => x != user.Id);
+        this.RedTeamPlayers = this.RedTeamPlayers.filter(x => x != user.Id);
+
+        this.RefereeUserId = user.Id;
+
+        if (oldReferee) {
+            if (this.Ruleset == MultiplayerGameRuleset.Team)
+                this.ChangeUserTeam(oldReferee, this.GetUnbalancedOrAvailableTeam());
+        }
+  
+        Albatross.SendToUsers(this.Players, new ServerPacketGameSetReferee(this));
+
+        if (informLobbyUsers)
+            this.InformLobbyUsers();     
     }
 }

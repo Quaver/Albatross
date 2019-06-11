@@ -517,6 +517,9 @@ export default class User implements IPacketWritable, IStringifyable {
 
         const game: MultiplayerGame = this.CurrentGame;
 
+        if (!game.PlayersGameStartedWith.includes(this))
+            return;
+
         if (!game.FinishedPlayers.includes(this))
             game.FinishedPlayers.push(this);
 
@@ -538,7 +541,7 @@ export default class User implements IPacketWritable, IStringifyable {
 
         const processor = game.PlayerScoreProcessors[this.Id];
         const judgementsBefore = processor.JudgementList.length;
-       
+
         if (!processor.Multiplayer)
             return;
 
@@ -553,16 +556,16 @@ export default class User implements IPacketWritable, IStringifyable {
         await game.CachePlayerCurrentScore(this);
 
         // BOTS
-        for (let i = 0; i < game.Players.length; i++ ) {
-            if (game.Players[i].IsMultiplayerBot) {
+        for (let i = 0; i < game.PlayersGameStartedWith.length; i++ ) {
+            if (game.PlayersGameStartedWith[i].IsMultiplayerBot) {
                 let judgements: Judgement[] = [];
 
                 for (let j = judgementsBefore; j < game.PlayerScoreProcessors[this.Id].JudgementList.length; j++)
-                    judgements.push(game.PlayerScoreProcessors[game.Players[i].Id].JudgementList[j]);
+                    judgements.push(game.PlayerScoreProcessors[game.PlayersGameStartedWith[i].Id].JudgementList[j]);
 
                 setTimeout(() =>  {
                     try {
-                        Albatross.SendToUser(this, new ServerPacketGameJudgements(game.Players[i], judgements))
+                        Albatross.SendToUser(this, new ServerPacketGameJudgements(game.PlayersGameStartedWith[i], judgements))
                     } catch (err) {}
                 }, 400); 
             }
