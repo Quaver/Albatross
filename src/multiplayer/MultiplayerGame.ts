@@ -1012,6 +1012,10 @@ export default class MultiplayerGame {
         if (this.InProgress)
             return;   
 
+        // Disallow free rate in battle royale
+        if (this.Ruleset == MultiplayerGameRuleset.Battle_Royale && type == MultiplayerFreeModType.Rate && this.Host)
+            return Albatross.SendToUser(this.Host, new ServerPacketNotification(ServerNotificationType.Error, "You cannot use free rate in battle royale!"));
+
         if ((this.FreeModType & type) != 0)
             return;
 
@@ -1030,7 +1034,7 @@ export default class MultiplayerGame {
      * Disables a specific free mod type for the match
      * @param type 
      */
-    public DisableFreeModType(type: MultiplayerFreeModType): void {
+    public DisableFreeModType(type: MultiplayerFreeModType, informLobbyUsers = true): void {
         if (this.InProgress)
             return;
 
@@ -1044,7 +1048,8 @@ export default class MultiplayerGame {
         for (let i = 0; i < this.Players.length; i++)
             this.ChangePlayerModifiers(this.Players[i], "0", true);
 
-        this.InformLobbyUsers();
+        if (informLobbyUsers)
+            this.InformLobbyUsers();
     }
 
     /**
@@ -1280,14 +1285,17 @@ export default class MultiplayerGame {
                     this.ChangeUserTeam(this.Players[i], team, false);
                 }
                 break;
-            
             default:
                 for (let i = 0; i < this.Players.length; i++)
                     this.Players[i].LeaveChatChannel(ChatManager.Channels[this.GetTeamChatChannelName()]);
                 break;
         }
 
-       this.InformLobbyUsers();
+        // Disallow free rate for battle royale
+        if (this.Ruleset == MultiplayerGameRuleset.Battle_Royale)
+            this.DisableFreeModType(MultiplayerFreeModType.Rate);
+
+        this.InformLobbyUsers();
     }
 
     /**
