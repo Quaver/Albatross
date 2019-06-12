@@ -1293,7 +1293,7 @@ export default class MultiplayerGame {
 
         // Disallow free rate for battle royale
         if (this.Ruleset == MultiplayerGameRuleset.Battle_Royale)
-            this.DisableFreeModType(MultiplayerFreeModType.Rate);
+            this.DisableFreeModType(MultiplayerFreeModType.Rate, false);
 
         this.InformLobbyUsers();
     }
