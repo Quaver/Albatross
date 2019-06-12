@@ -134,6 +134,14 @@ export default class MultiplayerGame {
     public MapMd5: string = "";
 
     /**
+     * An alternative md5 hash for the file
+     * (Namely used for osu! -> qua converts)
+     * so people can play with an osu! file and a Quaver converted version.
+     */
+    @JsonProperty("amd5")
+    public AlternativeMapMd5: string = "";
+
+    /**
      * The ID of the map
      */
     @JsonProperty("mid")
@@ -439,7 +447,7 @@ export default class MultiplayerGame {
      */
     public static Create(type: MultiplayerGameType, name: string, password: string | null, maxPlayers: number, mapMd5: string, 
         mapId: number, mapsetId: number, map: string, ruleset: MultiplayerGameRuleset, hostRotation: boolean, mode: GameMode, difficultyRating: number,
-        allDifficultyRatings: number[], judgementCount: number, host: User | null = null): MultiplayerGame {
+        allDifficultyRatings: number[], judgementCount: number, alternativeMd5: string, host: User | null = null): MultiplayerGame {
 
         const game: MultiplayerGame = new MultiplayerGame();
 
@@ -452,6 +460,7 @@ export default class MultiplayerGame {
         game.MapMd5 = mapMd5;
         game.MapId = mapId;
         game.MapsetId = mapsetId;
+        game.AlternativeMapMd5 = alternativeMd5;
         game.Map = map;
         game.Ruleset = ruleset;
         game.AutoHostRotation = hostRotation;
@@ -548,7 +557,7 @@ export default class MultiplayerGame {
      * Changes the selected map of the game
      */
     public async ChangeMap(md5: string, mapId: number, mapsetId: number, map: string, mode: GameMode, difficulty: number,
-        allDifficultyRatings: number[], judgementCount: number): Promise<void> {
+        allDifficultyRatings: number[], judgementCount: number, alternativeMd5: string): Promise<void> {
         if (this.InProgress)
             return;
             
@@ -564,6 +573,7 @@ export default class MultiplayerGame {
             return Logger.Warning(`[${this.Id}] Multiplayer - Map change failed. Incorrect number of difficulty ratings!`);
 
         this.MapMd5 = md5;
+        this.AlternativeMapMd5 = md5;
         this.MapId = mapId;
         this.MapsetId = mapsetId;
         this.Map = map;
@@ -577,7 +587,9 @@ export default class MultiplayerGame {
         this.CalculatedDifficultyRatings = {};
 
         await this.StopMatchCountdown(false); 
-        Albatross.SendToUsers(this.Players, new ServerPacketGameMapChanged(md5, mapId, mapsetId, map, mode, difficulty, allDifficultyRatings, judgementCount));    
+        Albatross.SendToUsers(this.Players, new ServerPacketGameMapChanged(md5, mapId, mapsetId, map, mode, difficulty, allDifficultyRatings, 
+            judgementCount, alternativeMd5)); 
+               
         await this.InformLobbyUsers();
 
         await this.CacheSelectedMap();
@@ -598,8 +610,8 @@ export default class MultiplayerGame {
 
         const map = this.Playlist[this.PlaylistMapIndex];
 
-        await this.ChangeMap(map.md5, map.id, map.mapset_id, `${map.artist} - ${map.title} [${map.difficulty_name}]`, 
-                map.game_mode, map.difficulty_rating, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, parseFloat(map.difficulty_rating), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 0);
+        /*await this.ChangeMap(map.md5, map.id, map.mapset_id, `${map.artist} - ${map.title} [${map.difficulty_name}]`, 
+                map.game_mode, map.difficulty_rating, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, parseFloat(map.difficulty_rating), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 0);*/
     }
 
     /**

@@ -14,6 +14,9 @@ export default class ClientPacketChangeGameMap extends Packet {
     @JsonProperty("md5")
     public MapMd5: string = "";
 
+    @JsonProperty("amd5")
+    public AlternativeMd5: string = "";
+    
     /**
      * The ID of the map
      */

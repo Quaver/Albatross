@@ -136,7 +136,7 @@ export default class Lobby {
             throw new Error("Playlist not found or no maps exist in playlist!");
 
         const mpGame: MultiplayerGame = MultiplayerGame.Create(MultiplayerGameType.Friendly, game.name, null, game.maxPlayers, "md5", -1, -1, "map name", 
-            MultiplayerGameRuleset.Free_For_All, false, GameMode.Keys4, 0, [], Bot.User);
+            MultiplayerGameRuleset.Free_For_All, false, GameMode.Keys4, 0, [], 0, "md5", Bot.User);
 
         mpGame.IsAutohost = true;
         mpGame.Playlist = playlist;

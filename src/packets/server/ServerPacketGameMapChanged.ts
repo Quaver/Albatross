@@ -14,6 +14,9 @@ export default class ServerPacketGameMapChanged extends Packet {
     @JsonProperty("md5")
     public MapMd5: string = "";
 
+    @JsonProperty("amd5")
+    public AlternativeMd5: string = "";
+
     /**
      * The ID of the map
      */
@@ -62,7 +65,7 @@ export default class ServerPacketGameMapChanged extends Packet {
      * @param difficultyRating 
      */
     constructor(md5: string, mapId: number, mapsetId: number, map: string, mode: GameMode, difficultyRating: number, allDifficultyRatings: number[], 
-        judgementCount: number) {
+        judgementCount: number, alternativeMd5: string) {
         super();
 
         this.MapMd5 = md5;
@@ -73,5 +76,6 @@ export default class ServerPacketGameMapChanged extends Packet {
         this.DifficultyRating = difficultyRating;
         this.AllDifficultyRatings = allDifficultyRatings;
         this.JudgementCount = judgementCount;
+        this.AlternativeMd5 = alternativeMd5;
     }
 }
