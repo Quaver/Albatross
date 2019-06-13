@@ -81,7 +81,8 @@ export default class MultiplayerGame {
     /**
      * The id of the game in the database
      */
-    public DatabaseId: number = -1;
+    @JsonProperty("gid")
+    public GameId: number = -1;
 
     /**
      * If the game is autohosted by the server
@@ -536,6 +537,7 @@ export default class MultiplayerGame {
 
         await this.StopMatchCountdown(false);
         Albatross.SendToUsers(this.Players, new ServerPacketChangeGameHost(user));
+        this.HandleHostSelectingMap(false, false);
 
         if (informLobbyUsers)
             await this.InformLobbyUsers();
@@ -547,7 +549,7 @@ export default class MultiplayerGame {
     public async ChangeName(name: string): Promise<void> {
         this.Name = name;
 
-        SqlDatabase.Execute("UPDATE multiplayer_games SET name = ? WHERE id = ?", [this.Name, this.DatabaseId]);
+        SqlDatabase.Execute("UPDATE multiplayer_games SET name = ? WHERE id = ?", [this.Name, this.GameId]);
 
         Albatross.SendToUsers(this.Players, new ServerPacketGameNameChanged(this));
         await this.InformLobbyUsers();
@@ -1347,7 +1349,7 @@ export default class MultiplayerGame {
             const results = await SqlDatabase.Execute("INSERT INTO multiplayer_games (unique_id, name, type, time_created) " + 
                                 "VALUES (?, ?, ?, ?)", [this.Id, this.Name, this.Type, Math.round((new Date()).getTime())])
 
-            this.DatabaseId = results.insertId;                    
+            this.GameId = results.insertId;                    
         } catch (err) {
             Logger.Error(err);
             throw err;
@@ -1362,7 +1364,7 @@ export default class MultiplayerGame {
             // Insert the match into the database.
             const results = await SqlDatabase.Execute("INSERT INTO multiplayer_game_matches (game_id, time_played, map_md5, map, host_id, ruleset, game_mode, global_modifiers, free_mod_type, health_type, lives, aborted) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
-                    [this.DatabaseId, Math.round((new Date()).getTime()), this.MapMd5, this.Map, this.HostId, this.Ruleset, 
+                    [this.GameId, Math.round((new Date()).getTime()), this.MapMd5, this.Map, this.HostId, this.Ruleset, 
                         this.GameMode, this.Modifiers, this.FreeModType, this.HealthType, this.Lives, Number(abortedEarly)]);
 
             await this.InsertScoresIntoDatabase(results.insertId, abortedEarly);
@@ -1695,7 +1697,7 @@ export default class MultiplayerGame {
         let mods: any = this.PlayerMods.find(x => x.Id == player.Id);
         if (mods) mods = mods.Mods;
 
-        const key =`quaver:server:multiplayer:${this.DatabaseId}:${player.Id}`;
+        const key =`quaver:server:multiplayer:${this.GameId}:${player.Id}`;
 
         await RedisHelper.hset(key, "t", team.toString());
         await RedisHelper.hset(key, "m", mods);
@@ -1723,7 +1725,7 @@ export default class MultiplayerGame {
      * Caches the match settings in redis
      */
     public async CacheMatchSettings(): Promise<void> {
-        const key = `quaver:server:multiplayer:${this.DatabaseId}`;
+        const key = `quaver:server:multiplayer:${this.GameId}`;
 
         await RedisHelper.hset(key, "t", Number(this.Type).toString());
         await RedisHelper.hset(key, "n", this.Name);
@@ -1753,14 +1755,14 @@ export default class MultiplayerGame {
      * Deletes the current match cache from Redis
      */
     public async DeleteCachedMatchSettings(): Promise<void> {
-        await RedisHelper.del(`quaver:server:multiplayer:${this.DatabaseId}`);
+        await RedisHelper.del(`quaver:server:multiplayer:${this.GameId}`);
     }
 
     /**
      * Deletes the current match scores from redis
      */
     public async DeleteCachedMatchScores(): Promise<void> {
-        const scores = await RedisHelper.keys(`quaver:server:multiplayer:${this.DatabaseId}:*`);
+        const scores = await RedisHelper.keys(`quaver:server:multiplayer:${this.GameId}:*`);
 
         for (let i = 0; i < scores.length; i++)
             await RedisHelper.del(scores[i]);
@@ -1771,7 +1773,7 @@ export default class MultiplayerGame {
      */
     public async CacheAllPlayers(): Promise<void> {
         for (let i = 0; i < this.Players.length; i++) {
-            const key = `quaver:server:multiplayer:${this.DatabaseId}:player:${this.Players[i].Id}`;
+            const key = `quaver:server:multiplayer:${this.GameId}:player:${this.Players[i].Id}`;
 
             await RedisHelper.hset(key, "id", this.Players[i].Id.toString());
             await RedisHelper.hset(key, "u", this.Players[i].Username);
@@ -1792,7 +1794,7 @@ export default class MultiplayerGame {
      * @param player 
      */
     public async RemoveCachedPlayer(player: User): Promise<void> {
-        await RedisHelper.del(`quaver:server:multiplayer:${this.DatabaseId}:player:${player.Id}`);
+        await RedisHelper.del(`quaver:server:multiplayer:${this.GameId}:player:${player.Id}`);
     }
 
     /**
