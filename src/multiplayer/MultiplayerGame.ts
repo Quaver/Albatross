@@ -575,7 +575,7 @@ export default class MultiplayerGame {
             return Logger.Warning(`[${this.Id}] Multiplayer - Map change failed. Incorrect number of difficulty ratings!`);
 
         this.MapMd5 = md5;
-        this.AlternativeMapMd5 = md5;
+        this.AlternativeMapMd5 = alternativeMd5;
         this.MapId = mapId;
         this.MapsetId = mapsetId;
         this.Map = map;
