@@ -1160,9 +1160,6 @@ export default class MultiplayerGame {
      * @param team 
      */
     public ChangeUserTeam(user: User, team: MultiplayerTeam, informLobbyUsers: boolean = true): void {
-        if (this.InProgress)
-            return;
-
         // Cant set referee team
         if (user.Id == this.RefereeUserId)
             return;
