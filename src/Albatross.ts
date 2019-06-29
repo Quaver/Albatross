@@ -43,12 +43,12 @@ export default class Albatross {
     /**
      * How frequent users will be pinged by the server
      */
-    private readonly PING_INTERVAL: number = 20000;
+    private readonly PING_INTERVAL: number = 40000;
 
     /**
      * The time it takes for a user to be timed out for now responding to pings.
      */
-    private readonly PING_TIMEOUT_TIME: number = 80000;
+    private readonly PING_TIMEOUT_TIME: number = 120000;
 
     /**
      * How frequent spam rates will be cleared for users
