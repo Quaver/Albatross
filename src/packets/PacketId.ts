@@ -95,7 +95,15 @@ enum PacketId {
     ClientGameChangeFreeModType,
     ClientGameHostSelectingMap,
     ServerGameHostSelectingMap,
-    ServerGameSetReferee
+    ServerGameSetReferee,
+    ClientStartSpectatePlayer,
+    ClientStopSpectatePlayer,
+    ServerStartSpectatePlayer,
+    ServerStopSpectatePlayer,
+    ServerSpectatorJoined,
+    ServerSpectatorLeft,
+    ClientSpectatorReplayFrames,
+    ServerSpectatorReplayFrames
 }
 
 export default PacketId;

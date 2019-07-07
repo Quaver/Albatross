@@ -41,6 +41,15 @@ import MultiplayerPlayerMods from "../multiplayer/MultiplayerPlayerMods";
 import MultiplayerGameRuleset from "../multiplayer/MultiplayerGameRuleset";
 import MultiplayerPlayerWins from "../multiplayer/MultiplayerPlayerWins";
 import Judgement from "../enums/Judgement";
+import ServerPacketStartSpectatePlayer from "../packets/server/ServerPacketStartSpectatePlayer";
+import ServerPacketStopSpectatePlayer from "../packets/server/ServerPacketStopSpectatePlayer";
+import ServerPacketUserStatus from "../packets/server/ServerPacketUserStatus";
+import { JsonConvert } from "json2typescript";
+import ServerPacketSpectatorJoined from "../packets/server/ServerPacketSpectatorJoined";
+import ServerPacketSpectatorLeft from "../packets/server/ServerPacketSpectatorLeft";
+import ClientPacketSpectatorReplayFrames from "../packets/client/ClientPacketSpectatorReplayFrames";
+import SpectatorClientStatus from "../enums/SpectatorClientStatus";
+import ServerPacketSpectatorReplayFrames from "../packets/server/ServerPacketSpectatorReplayFrames";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -139,13 +148,39 @@ export default class User implements IPacketWritable, IStringifyable {
     public IsMultiplayerBot: boolean = false;
 
     /**
+     * Dictates if the user is currently on a tournament client
+     */
+    public IsUsingTournamentClient: boolean = false;
+
+    /**
+     * The users that this player is currenty spectating
+     * 
+     * Note: 
+     *  - Only 1 player is allowed if IsUsingTournamentClient is false
+     *  - Otherwise multiple spectating users are allowed.
+     */
+    public SpectatingUsers: User[] = [];
+
+    /**
+     * Other players that are currently spectating this user.
+     */
+    public Spectators: User[] = [];
+
+    /**
+     * All of the replay frames for the current play the user has
+     * This will be cleared at the start of every new play/song select,
+     * so that we can keep track of the currently existing play session
+     */
+    public CurrentSpectatorReplayFrames: ClientPacketSpectatorReplayFrames[] = [];
+
+    /**
      * @param token 
      * @param steamId 
      * @param username 
      * @param socket 
      */
     constructor(socket: any, userId: number, steamId: string, username: string, allowed: boolean, muteEndTime: number, country: string,
-        privileges: Privileges, usergroups: UserGroups, avatarUrl: string, isMultiplayerBot: boolean = false) {
+        privileges: Privileges, usergroups: UserGroups, avatarUrl: string, isMultiplayerBot: boolean = false, isUsingTournamentClient = false) {
         // For artifical users such as bots.
         if (socket)
             this.Token = socket.token;
@@ -163,6 +198,7 @@ export default class User implements IPacketWritable, IStringifyable {
         this.UserGroups = usergroups;
         this.AvatarUrl = avatarUrl;
         this.IsMultiplayerBot = isMultiplayerBot;
+        this.IsUsingTournamentClient = false;
     }
 
     /**
@@ -712,6 +748,128 @@ export default class User implements IPacketWritable, IStringifyable {
      */
     public SendJoinGameFailurePacket(reason: JoinGameFailureReason): void {
         Albatross.SendToUser(this, new ServerPacketJoinedGameFailed(reason));
+    }
+
+    /**
+     *  Makes the client start spectating a player
+     */
+    public async StartSpectatingPlayer(id: number): Promise<void> {
+        const player: User = Albatross.Instance.OnlineUsers.GetUserById(id);
+
+        if (!player)
+            return await this.SendNotification(ServerNotificationType.Error, "You cannot spectate that player, as they are not online!");
+
+        /*if (this == player)
+            return await this.SendNotification(ServerNotificationType.Error, "You cannot spectate yourself! What are you doing?!");*/
+
+        /*if (player.IsBot())
+            return await this.SendNotification(ServerNotificationType.Error, "You cannot spectate bots!"); - TEMP */
+
+        const found = this.SpectatingUsers.find(x => x == player);
+
+        // Check to see if the player is already spectating them
+        if (found == player)
+            return await this.SendNotification(ServerNotificationType.Error, "You are already spectating this player!");
+
+        // User is not using the tournament client, so they can only spectate one player at a time.
+        if (!this.IsUsingTournamentClient && this.SpectatingUsers.length > 0)
+            await this.StopSpectatingAllUsers();
+
+        // Add the player to our spectating list
+        this.SpectatingUsers.push(player);
+
+        // Add us to the player's spectator list
+        if (!player.Spectators.includes(this))
+            player.Spectators.push(this);
+
+        // Send a packet to the user confirming that they have started spectating this user
+        Albatross.SendToUser(this, new ServerPacketStartSpectatePlayer(player));
+
+        // Send another packet to the user with the host's current status
+        Albatross.SendToUser(this, new ServerPacketUserStatus(player.GetSerializedStatus()));
+
+        // Send packet to the host stating that they have a new spectator
+        Albatross.SendToUser(player, new ServerPacketSpectatorJoined(this));
+
+        // TODO: Other people who are spectating as well
+        // TODO: Chat channel
+
+        Logger.Info(`[Spectator] ${this.ToNameIdString()} is now spectating: ${player.ToNameIdString()}`);
+    }
+
+    /**
+     * Stops spectating a single user
+     * @param user 
+     */
+    public async StopSpectatingPlayer(id: number): Promise<void> {
+        const player = this.SpectatingUsers.find(x => x.Id == id);
+
+        // The user was never spectating them in the first place.
+        if (!player)
+            return;
+
+        // Remove this player from our spectating users list, and their spectator list.
+        _.remove(this.SpectatingUsers, player);
+        _.remove(player.Spectators, this);
+
+        // Send a packet to the user letting them know that they have stopped spectating this user.
+        Albatross.SendToUser(this, new ServerPacketStopSpectatePlayer(player));
+
+        // Send packet to host letting them know someone has stopped spectating
+        Albatross.SendToUser(player, new ServerPacketSpectatorLeft(this));
+
+        // TODO: Other people who are spectating as well
+        // TODO: Chat channel
+
+        Logger.Info(`[Spectator] ${this.ToNameIdString()} has stopped spectating: ${player.ToNameIdString()}`);
+    }
+
+    /**
+     * Stops spectating every single user
+     */
+    public async StopSpectatingAllUsers(): Promise<void> {
+        for(let i = 0; i < this.SpectatingUsers.length; i++)
+            await this.StopSpectatingPlayer(this.SpectatingUsers[i].Id);
+    }
+
+    /**
+     * Handles when the client sends us new replay frames
+     * @param packet 
+     */
+    public async HandleNewSpectatorReplayFrames(packet: ClientPacketSpectatorReplayFrames): Promise<void> {
+        // Handle clearing the array based on the player's current spectator status
+        switch (packet.Status) {
+            case SpectatorClientStatus.SelectingSong:
+            case SpectatorClientStatus.NewSong:
+                this.CurrentSpectatorReplayFrames = [];
+                break;
+            default:
+                this.CurrentSpectatorReplayFrames.push(packet);
+                break;
+        }
+
+        // Send a packet to existing spectators
+        for (let i = 0; i < this.Spectators.length; i++)
+            Albatross.SendToUser(this.Spectators[i], new ServerPacketSpectatorReplayFrames(this, packet.Status, packet.AudioTime, packet.Frames));
+    }
+
+    /**
+     * Sends a notification to the user
+     */
+    public async SendNotification(type: ServerNotificationType, text: string): Promise<void> {
+        await Albatross.SendToUser(this, new ServerPacketNotification(type, text));
+    }
+
+    /**
+     * Returns a serialized object with the user's current status
+     */
+    public GetSerializedStatus(): object {
+        const jsonConvert: JsonConvert = new JsonConvert();
+
+        const status: any = {};
+        status[this.Id] = jsonConvert.serializeObject(this.CurrentStatus);
+
+        return status;
     }
 
     /**

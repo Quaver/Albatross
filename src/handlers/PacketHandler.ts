@@ -81,6 +81,12 @@ import GameChangeFreeModTypeHandler from "./GameChangeFreeModTypeHandler";
 import ClientPacketGameChangeFreeModType from "../packets/client/ClientPacketGameChangeFreeModType";
 import GameHostSelectingMapHandler from "./GameHostSelectingMapHandler";
 import ClientPacketGameHostSelectingMap from "../packets/client/ClientPacketGameHostSelectingMap";
+import StartSpectatePlayerHandler from "./StartSpectatePlayerHandler";
+import ClientPacketStartSpectatePlayer from "../packets/client/ClientPacketStartSpectatePlayer";
+import StopSpectatePlayerHandler from "./StopSpectatePlayerHandler";
+import ClientPacketStopSpectatePlayer from "../packets/client/ClientPacketStopSpectatePlayer";
+import SpectatotReplayFramesHandler from "./SpectatorReplayFramesHandler";
+import ClientPacketSpectatorReplayFrames from "../packets/client/ClientPacketSpectatorReplayFrames";
 const config = require("../config/config.json");
 
 export default class PacketHandler {
@@ -226,6 +232,15 @@ export default class PacketHandler {
                     break;
                 case PacketId.ClientGameHostSelectingMap:
                     await GameHostSelectingMapHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketGameHostSelectingMap));
+                    break;
+                case PacketId.ClientStartSpectatePlayer:
+                    await StartSpectatePlayerHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketStartSpectatePlayer));
+                    break;
+                case PacketId.ClientStopSpectatePlayer:
+                    await StopSpectatePlayerHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketStopSpectatePlayer));
+                    break;
+                case PacketId.ClientSpectatorReplayFrames:
+                    await SpectatotReplayFramesHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketSpectatorReplayFrames));
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS

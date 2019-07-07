@@ -43,6 +43,7 @@
     "md5-file": "^4.0.0",
     "mysql": "^2.16.0",
     "node-cmd": "^3.0.0",
+    "node-gzip": "^1.1.2",
     "randomcolor": "^0.5.4",
     "randomstring": "^1.1.5",
     "redis": "^2.8.0",

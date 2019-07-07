@@ -2,6 +2,8 @@ import ClientPacketStatusUpdate from "../packets/client/ClientPacketStatusUpdate
 import User from "../sessions/User";
 import Logger from "../logging/Logger";
 import RedisHelper from "../database/RedisHelper";
+import Albatross from "../Albatross";
+import ServerPacketUserStatus from "../packets/server/ServerPacketUserStatus";
 
 export default class ClientStatusUpdateHandler {
     /**
@@ -20,5 +22,11 @@ export default class ClientStatusUpdateHandler {
         await RedisHelper.hset(redisKey, "s", Number(user.CurrentStatus.Status).toString());
         await RedisHelper.hset(redisKey, "m", Number(user.CurrentStatus.GameMode).toString());
         await RedisHelper.hset(redisKey, "c", user.CurrentStatus.Content);
+
+        const status = user.GetSerializedStatus();
+
+        // If the user is being spectated, send their updated client status to all spectators
+        for (let i = 0; i < user.Spectators.length; i++)
+            Albatross.SendToUser(user.Spectators[i], new ServerPacketUserStatus(status));
     }
 }
