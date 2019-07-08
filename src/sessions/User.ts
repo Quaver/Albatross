@@ -50,6 +50,7 @@ import ServerPacketSpectatorLeft from "../packets/server/ServerPacketSpectatorLe
 import ClientPacketSpectatorReplayFrames from "../packets/client/ClientPacketSpectatorReplayFrames";
 import SpectatorClientStatus from "../enums/SpectatorClientStatus";
 import ServerPacketSpectatorReplayFrames from "../packets/server/ServerPacketSpectatorReplayFrames";
+import ServerPacketUserInfo from "../packets/server/ServerPacketUserInfo";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -782,11 +783,14 @@ export default class User implements IPacketWritable, IStringifyable {
         if (!player.Spectators.includes(this))
             player.Spectators.push(this);
 
-        // Send a packet to the user confirming that they have started spectating this user
-        Albatross.SendToUser(this, new ServerPacketStartSpectatePlayer(player));
+        // Make this user fully aware of who they are spectating
+        Albatross.SendToUser(this, new ServerPacketUserInfo([player.Serialize()]));
 
         // Send another packet to the user with the host's current status
         Albatross.SendToUser(this, new ServerPacketUserStatus(player.GetSerializedStatus()));
+
+        // Send a packet to the user confirming that they have started spectating this user
+        Albatross.SendToUser(this, new ServerPacketStartSpectatePlayer(player));
 
         // Send packet to the host stating that they have a new spectator
         Albatross.SendToUser(player, new ServerPacketSpectatorJoined(this));
@@ -828,8 +832,16 @@ export default class User implements IPacketWritable, IStringifyable {
      * Stops spectating every single user
      */
     public async StopSpectatingAllUsers(): Promise<void> {
-        for(let i = 0; i < this.SpectatingUsers.length; i++)
+        for (let i = 0; i < this.SpectatingUsers.length; i++)
             await this.StopSpectatingPlayer(this.SpectatingUsers[i].Id);
+    }
+
+    /**
+     * Removes all of our spectators
+     */
+    public async RemoveAllSpectators(): Promise<void> {
+        for (let i = 0; i < this.Spectators.length; i++)
+            await this.StopSpectatingPlayer(this.Id);
     }
 
     /**
@@ -848,9 +860,18 @@ export default class User implements IPacketWritable, IStringifyable {
                 break;
         }
 
+        const status = this.GetSerializedStatus();
+
         // Send a packet to existing spectators
-        for (let i = 0; i < this.Spectators.length; i++)
+        for (let i = 0; i < this.Spectators.length; i++)  {
+            // In the event that they're starting up a new song or selecting one, we should send them their updated
+            // client status, so that the client has the most recent information.
+            if (packet.Status == SpectatorClientStatus.NewSong || packet.Status == SpectatorClientStatus.SelectingSong)
+                Albatross.SendToUser(this.Spectators[i], new ServerPacketUserStatus(status));
+
             Albatross.SendToUser(this.Spectators[i], new ServerPacketSpectatorReplayFrames(this, packet.Status, packet.AudioTime, packet.Frames));
+        }
+
     }
 
     /**

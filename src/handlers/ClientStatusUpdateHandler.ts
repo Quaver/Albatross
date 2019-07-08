@@ -22,11 +22,5 @@ export default class ClientStatusUpdateHandler {
         await RedisHelper.hset(redisKey, "s", Number(user.CurrentStatus.Status).toString());
         await RedisHelper.hset(redisKey, "m", Number(user.CurrentStatus.GameMode).toString());
         await RedisHelper.hset(redisKey, "c", user.CurrentStatus.Content);
-
-        const status = user.GetSerializedStatus();
-
-        // If the user is being spectated, send their updated client status to all spectators
-        for (let i = 0; i < user.Spectators.length; i++)
-            Albatross.SendToUser(user.Spectators[i], new ServerPacketUserStatus(status));
     }
 }
