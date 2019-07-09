@@ -760,8 +760,8 @@ export default class User implements IPacketWritable, IStringifyable {
         if (!player)
             return await this.SendNotification(ServerNotificationType.Error, "You cannot spectate that player, as they are not online!");
 
-        /*if (this == player)
-            return await this.SendNotification(ServerNotificationType.Error, "You cannot spectate yourself! What are you doing?!");*/
+        if (this == player)
+            return await this.SendNotification(ServerNotificationType.Error, "You cannot spectate yourself! What are you doing?!");
 
         /*if (player.IsBot())
             return await this.SendNotification(ServerNotificationType.Error, "You cannot spectate bots!"); - TEMP */
@@ -840,7 +840,7 @@ export default class User implements IPacketWritable, IStringifyable {
         // No one is spectating this player anymore, so the channel can be safely removed
         if (player.Spectators.length == 0) {
             const chan = ChatManager.Channels[player.GetSpectatorChannelName()];
-            
+
             this.LeaveChatChannel(chan);
             player.LeaveChatChannel(chan);
 
