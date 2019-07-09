@@ -841,7 +841,7 @@ export default class User implements IPacketWritable, IStringifyable {
      */
     public async RemoveAllSpectators(): Promise<void> {
         for (let i = 0; i < this.Spectators.length; i++)
-            await this.StopSpectatingPlayer(this.Id);
+            await this.Spectators[i].StopSpectatingPlayer(this.Id);
     }
 
     /**
