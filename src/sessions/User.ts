@@ -786,7 +786,8 @@ export default class User implements IPacketWritable, IStringifyable {
         // Make this user fully aware of who they are spectating
         Albatross.SendToUser(this, new ServerPacketUserInfo([player.Serialize()]));
 
-        // Send another packet to the user with the host's current status
+        // Send another packet to the user with the host's current status 
+        // - IMPORTANT: Used specifically to tell the client what map is being played at the beginning of the spectating session
         Albatross.SendToUser(this, new ServerPacketUserStatus(player.GetSerializedStatus()));
 
         // Send a packet to the user confirming that they have started spectating this user
@@ -795,8 +796,20 @@ export default class User implements IPacketWritable, IStringifyable {
         // Send packet to the host stating that they have a new spectator
         Albatross.SendToUser(player, new ServerPacketSpectatorJoined(this));
 
+        // Create a special spectator chat channel if applicable
+        // If we only have 1 spectator, that means a channel should be created
+        if (player.Spectators.length == 1) { 
+            const chan: ChatChannel = new ChatChannel(player.GetSpectatorChannelName(), 
+                `Spectate ${player.Username}, and discuss about their awesome plays!`, UserGroups.Normal, false, false, null);
+
+            ChatManager.Channels[player.GetSpectatorChannelName()] = chan;
+
+            // Have both the host and spectator join the chat channel.
+            await this.JoinChatChannel(chan);
+            await player.JoinChatChannel(chan);
+        }
+
         // TODO: Other people who are spectating as well
-        // TODO: Chat channel
 
         Logger.Info(`[Spectator] ${this.ToNameIdString()} is now spectating: ${player.ToNameIdString()}`);
     }
@@ -823,7 +836,16 @@ export default class User implements IPacketWritable, IStringifyable {
         Albatross.SendToUser(player, new ServerPacketSpectatorLeft(this));
 
         // TODO: Other people who are spectating as well
-        // TODO: Chat channel
+
+        // No one is spectating this player anymore, so the channel can be safely removed
+        if (player.Spectators.length == 0) {
+            const chan = ChatManager.Channels[player.GetSpectatorChannelName()];
+            
+            this.LeaveChatChannel(chan);
+            player.LeaveChatChannel(chan);
+
+            delete ChatManager.Channels[player.GetSpectatorChannelName()];
+        }
 
         Logger.Info(`[Spectator] ${this.ToNameIdString()} has stopped spectating: ${player.ToNameIdString()}`);
     }
@@ -960,5 +982,9 @@ export default class User implements IPacketWritable, IStringifyable {
 
     public ToNameIdString(): string {
         return `${this.Username} (#${this.Id})`;
+    }
+
+    public GetSpectatorChannelName(): string {
+        return `#spectator_${this.Id}`;
     }
 }
