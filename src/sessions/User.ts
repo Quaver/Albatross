@@ -755,6 +755,10 @@ export default class User implements IPacketWritable, IStringifyable {
      *  Makes the client start spectating a player
      */
     public async StartSpectatingPlayer(id: number): Promise<void> {
+        // Lock spectating for normal people
+        if (this.UserGroups == UserGroups.Normal)
+            return await this.SendNotification(ServerNotificationType.Error, "Spectating is currently only available to developers!");
+
         const player: User = Albatross.Instance.OnlineUsers.GetUserById(id);
 
         if (!player)
