@@ -179,8 +179,8 @@ export default class ScoreProcessorKeys extends ScoreProcessor {
      */
     private InitializeJudgementAccuracyWeightingValues(): void {
         this.JudgementAccuracyWeighting[Judgement.Marvelous] = 100;
-        this.JudgementAccuracyWeighting[Judgement.Perfect] = 96;
-        this.JudgementAccuracyWeighting[Judgement.Great] = 50;
+        this.JudgementAccuracyWeighting[Judgement.Perfect] = 98.25;
+        this.JudgementAccuracyWeighting[Judgement.Great] = 65;
         this.JudgementAccuracyWeighting[Judgement.Good] = 25;
         this.JudgementAccuracyWeighting[Judgement.Okay] = -100;
         this.JudgementAccuracyWeighting[Judgement.Miss] = -50;
