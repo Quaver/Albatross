@@ -103,7 +103,9 @@ enum PacketId {
     ServerSpectatorJoined,
     ServerSpectatorLeft,
     ClientSpectatorReplayFrames,
-    ServerSpectatorReplayFrames
+    ServerSpectatorReplayFrames,
+    ServerListeningPartyJoined,
+    ServerListeningPartyLeft
 }
 
 export default PacketId;

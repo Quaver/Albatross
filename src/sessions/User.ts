@@ -51,6 +51,9 @@ import ClientPacketSpectatorReplayFrames from "../packets/client/ClientPacketSpe
 import SpectatorClientStatus from "../enums/SpectatorClientStatus";
 import ServerPacketSpectatorReplayFrames from "../packets/server/ServerPacketSpectatorReplayFrames";
 import ServerPacketUserInfo from "../packets/server/ServerPacketUserInfo";
+import ListeningParty from "../listening/ListeningParty";
+import ServerPacketListeningPartyJoined from "../packets/server/ServerPacketListeningPartyJoin";
+import ServerPacketListeningPartyLeft from "../packets/server/ServerPacketListeningPartyLeft";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -173,6 +176,11 @@ export default class User implements IPacketWritable, IStringifyable {
      * so that we can keep track of the currently existing play session
      */
     public CurrentSpectatorReplayFrames: ClientPacketSpectatorReplayFrames[] = [];
+
+    /**
+     * The current listening party for the user.
+     */
+    public ListeningParty: ListeningParty | null = null;
 
     /**
      * @param token 
@@ -898,6 +906,30 @@ export default class User implements IPacketWritable, IStringifyable {
             Albatross.SendToUser(this.Spectators[i], new ServerPacketSpectatorReplayFrames(this, packet.Status, packet.AudioTime, packet.Frames));
         }
 
+    }
+
+    /**
+     * Starts a new listening party for this user
+     */
+    public async StartListeningParty(): Promise<void> {
+        this.ListeningParty = new ListeningParty(this, this.CurrentStatus.MapMd5, this.CurrentStatus.MapId);
+        Albatross.SendToUser(this, new ServerPacketListeningPartyJoined(this.ListeningParty));
+
+        Logger.Success(`${this.ToNameIdString()} has started a listening party - ${this.CurrentStatus.MapMd5} | ${this.CurrentStatus.MapId}`);
+    }
+
+    /**
+     * Leaves the user's active listening party
+     */
+    public async LeaveListeningParty(): Promise<void> {
+        const party = this.ListeningParty;
+        Albatross.SendToUser(this, new ServerPacketListeningPartyLeft());
+
+        this.ListeningParty = null;
+        // TODO: Send to all other listeners that the user has left the party
+        // TODO: If the host leaves, then transfer host to another user
+
+        Logger.Success(`${this.ToNameIdString()} has left their current listening party.`)
     }
 
     /**

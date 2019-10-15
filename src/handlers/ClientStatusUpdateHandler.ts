@@ -4,6 +4,7 @@ import Logger from "../logging/Logger";
 import RedisHelper from "../database/RedisHelper";
 import Albatross from "../Albatross";
 import ServerPacketUserStatus from "../packets/server/ServerPacketUserStatus";
+import ClientStatus from "../enums/ClientStatus";
 
 export default class ClientStatusUpdateHandler {
     /**
@@ -25,5 +26,13 @@ export default class ClientStatusUpdateHandler {
 
         for (let i = 0; i < user.Spectators.length; i++)
             Albatross.SendToUser(user.Spectators[i], new ServerPacketUserStatus(user.GetSerializedStatus()));
+
+        // Start a listening party for the user automatically if they're going to this screen
+        if (user.ListeningParty == null && user.CurrentStatus.Status == ClientStatus.Listening)
+            await user.StartListeningParty();
+        // User left the screen, but they're still attached to a listening party, so exit out of it for them.
+        else if (user.ListeningParty != null && user.CurrentStatus.Status != ClientStatus.Listening) {
+            await user.LeaveListeningParty();
+        }
     }
 }
