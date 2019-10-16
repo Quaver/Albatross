@@ -7,6 +7,7 @@ import ServerPacketListeningPartyJoined from "../packets/server/ServerPacketList
 import ServerPacketListeningPartyLeft from "../packets/server/ServerPacketListeningPartyLeft";
 import * as _ from "lodash";
 import ServerPacketListeningPartyFellowJoined from "../packets/server/ServerPacketListeningPartyFellowJoined";
+import ServerPacketListeningPartyFellowLeft from "../packets/server/ServerPacketListeningPartyFellowLeft";
 
 @JsonObject("ListeningParty")
 export default class ListeningParty {
@@ -99,8 +100,8 @@ export default class ListeningParty {
 
         // Send a packet to the user that left.
         Albatross.SendToUser(user, new ServerPacketListeningPartyLeft());
+        Albatross.SendToUsers(this.Listeners, new ServerPacketListeningPartyFellowLeft(user));
 
-        // TODO: Send to all other listeners that the user has left the party
         // TODO: If the host leaves, then transfer host to another user
     }
 
