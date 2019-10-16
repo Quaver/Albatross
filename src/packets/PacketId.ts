@@ -107,7 +107,8 @@ enum PacketId {
     ServerListeningPartyJoined,
     ServerListeningPartyLeft,
     ClientListeningPartyStateUpdate,
-    ServerListeningPartyStateUpdate
+    ServerListeningPartyStateUpdate,
+    ServerListeningPartyFellowJoined
 }
 
 export default PacketId;

@@ -6,6 +6,7 @@ import ServerPacketListeningPartyStateUpdate from "../packets/server/ServerPacke
 import ServerPacketListeningPartyJoined from "../packets/server/ServerPacketListeningPartyJoin";
 import ServerPacketListeningPartyLeft from "../packets/server/ServerPacketListeningPartyLeft";
 import * as _ from "lodash";
+import ServerPacketListeningPartyFellowJoined from "../packets/server/ServerPacketListeningPartyFellowJoined";
 
 @JsonObject("ListeningParty")
 export default class ListeningParty {
@@ -51,6 +52,12 @@ export default class ListeningParty {
     public IsPaused: boolean = false;
 
     /**
+     * The user ids of all the listeners
+     */
+    @JsonProperty("l")
+    public ListenerIds: number[] = [];
+
+    /**
      * The list of people who are currently listening in the party
      */
     public Listeners: User[] = [];
@@ -73,12 +80,12 @@ export default class ListeningParty {
      */
     public async AddListener(user: User): Promise<void> {
         user.ListeningParty = this;
+
         this.Listeners.push(user);
+        this.ListenerIds.push(user.Id);
 
-        // Send a packet to the listener that has joined
         Albatross.SendToUser(user, new ServerPacketListeningPartyJoined(this));
-
-        // TODO: Send a packet to all the other listeners that this user has joined
+        Albatross.SendToUsers(this.Listeners, new ServerPacketListeningPartyFellowJoined(user));
     }
 
     /**
@@ -88,6 +95,7 @@ export default class ListeningParty {
     public async RemoveListener(user: User): Promise<void> {
         // Remove them from the list of listeners
         _.remove(this.Listeners, user);
+        this.ListenerIds = this.ListenerIds.filter((x: number) => x != user.Id);
 
         // Send a packet to the user that left.
         Albatross.SendToUser(user, new ServerPacketListeningPartyLeft());

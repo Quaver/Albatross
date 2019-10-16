@@ -100,6 +100,21 @@ export default class Bot {
         args.shift();
 
         switch (command.toLowerCase()) {
+            case "listenwith":
+            if (args.length == 0)
+                return await Bot.SendMessage(to, `Invalid command usage. Try using it like: "!ban <user_name> <reason>"`);
+
+            const targetUsername: string = args[0].replace(/_/g, " ");
+            const target: User = Albatross.Instance.OnlineUsers.GetUserByUsername(targetUsername);
+
+            if (!target)
+                return await Bot.SendMessage(to, `Could not ban: "${targetUsername}" because they are offline.`);
+
+            if (target.ListeningParty == null)
+                return await Bot.SendMessage(to, `User does not have an active listening party`);
+
+            await target.ListeningParty.AddListener(sender);
+                break;
             case "help":
                 await Bot.ExecuteHelpCommand(sender, to, args);
                 break;
