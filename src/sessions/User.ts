@@ -913,8 +913,6 @@ export default class User implements IPacketWritable, IStringifyable {
      */
     public async StartListeningParty(): Promise<void> {
         this.ListeningParty = new ListeningParty(this, this.CurrentStatus.MapMd5, this.CurrentStatus.MapId);
-        Albatross.SendToUser(this, new ServerPacketListeningPartyJoined(this.ListeningParty));
-
         Logger.Success(`${this.ToNameIdString()} has started a listening party - ${this.CurrentStatus.MapMd5} | ${this.CurrentStatus.MapId}`);
     }
 
@@ -922,14 +920,11 @@ export default class User implements IPacketWritable, IStringifyable {
      * Leaves the user's active listening party
      */
     public async LeaveListeningParty(): Promise<void> {
-        const party = this.ListeningParty;
-        Albatross.SendToUser(this, new ServerPacketListeningPartyLeft());
+        if (this.ListeningParty == null)
+            return;
 
+        this.ListeningParty.RemoveListener(this);
         this.ListeningParty = null;
-        // TODO: Send to all other listeners that the user has left the party
-        // TODO: If the host leaves, then transfer host to another user
-
-        Logger.Success(`${this.ToNameIdString()} has left their current listening party.`)
     }
 
     /**

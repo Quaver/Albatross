@@ -87,6 +87,8 @@ import StopSpectatePlayerHandler from "./StopSpectatePlayerHandler";
 import ClientPacketStopSpectatePlayer from "../packets/client/ClientPacketStopSpectatePlayer";
 import SpectatotReplayFramesHandler from "./SpectatorReplayFramesHandler";
 import ClientPacketSpectatorReplayFrames from "../packets/client/ClientPacketSpectatorReplayFrames";
+import ListeningPartyStateUpdateHandler from "./ListeningPartyStateUpdateHandler";
+import ClientPacketListeningPartyStateUpdate from "../packets/client/ClientPacketListeningPartyStateUpdate";
 const config = require("../config/config.json");
 
 export default class PacketHandler {
@@ -241,6 +243,9 @@ export default class PacketHandler {
                     break;
                 case PacketId.ClientSpectatorReplayFrames:
                     await SpectatotReplayFramesHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketSpectatorReplayFrames));
+                    break;
+                case PacketId.ClientListeningPartyStateUpdate:
+                    await ListeningPartyStateUpdateHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketListeningPartyStateUpdate));
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS
