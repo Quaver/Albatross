@@ -21,6 +21,7 @@ export default class CloseHandler {
             await user.LeaveMultiplayerGame();
             await user.RemoveAllSpectators();
             await user.StopSpectatingAllUsers();
+            await user.LeaveListeningParty();
             Albatross.Instance.OnlineUsers.RemoveUser(user);
             Albatross.Broadcast(new ServerPacketUserDisconected(user.Id));
 
