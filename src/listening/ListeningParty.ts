@@ -72,10 +72,11 @@ export default class ListeningParty {
      * @param user 
      */
     public async AddListener(user: User): Promise<void> {
+        user.ListeningParty = this;
         this.Listeners.push(user);
 
         // Send a packet to the listener that has joined
-        Albatross.SendToUser(this.Host, new ServerPacketListeningPartyJoined(this));
+        Albatross.SendToUser(user, new ServerPacketListeningPartyJoined(this));
 
         // TODO: Send a packet to all the other listeners that this user has joined
     }
