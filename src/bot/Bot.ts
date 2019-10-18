@@ -118,7 +118,6 @@ export default class Bot {
 
                 await target.ListeningParty.AddListener(sender);
                 break;
-            /*
             case "listenbots":
                 if (sender.ListeningParty == null)
                     return;
@@ -133,7 +132,6 @@ export default class Bot {
                     sender.ListeningParty.AddListener(user);
                 }
                 break;
-            */
             case "removelistenbots":
                 if (sender.ListeningParty == null)
                     return;

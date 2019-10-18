@@ -111,7 +111,8 @@ enum PacketId {
     ServerListeningPartyFellowJoined,
     ServerListeningPartyFellowLeft,
     ClientListeningPartyChangeHost,
-    ServerListeningPartyChangeHost
+    ServerListeningPartyChangeHost,
+    ClientListeningPartyKickUser
 }
 
 export default PacketId;

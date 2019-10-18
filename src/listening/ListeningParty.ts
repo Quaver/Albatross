@@ -116,7 +116,8 @@ export default class ListeningParty {
         Albatross.SendToUser(user, new ServerPacketListeningPartyLeft());
         Albatross.SendToUsers(this.Listeners, new ServerPacketListeningPartyFellowLeft(user));
 
-        // TODO: If the host leaves, then transfer host to another user
+        if (this.Host == user && this.Listeners.length > 0)
+            await this.ChangeHost(this.Listeners[0].Id);
     }
 
     /**
@@ -155,5 +156,18 @@ export default class ListeningParty {
 
         Albatross.SendToUsers(this.Listeners, new ServerPacketListeningPartyChangeHost(this.Host.Id))
         Logger.Info(`The host of ${oldHost.ToNameIdString()}'s listening party has been changed to: ${this.Host.ToNameIdString()}`);
+    }
+
+    /**
+     * Kicks a user from the listening party
+     * @param userId 
+     */
+    public async KickUser(userId: number): Promise<void> {
+        const user = this.Listeners.find((x: User) => x.Id == userId);
+
+        if (!user)
+            return Logger.Warning(`Tried to kick: ${userId} from ${this.Host.ToNameIdString()}'s listening party, but the user is not in the party!`);
+
+        await this.RemoveListener(user);
     }
 }

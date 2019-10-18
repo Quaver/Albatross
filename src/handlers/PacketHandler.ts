@@ -91,6 +91,8 @@ import ListeningPartyStateUpdateHandler from "./ListeningPartyStateUpdateHandler
 import ClientPacketListeningPartyStateUpdate from "../packets/client/ClientPacketListeningPartyStateUpdate";
 import ListeningPartyChangeHostHandler from "./ListeningPartyChangeHostHandler";
 import ClientPacketListeningPartyChangeHost from "../packets/client/ClientPacketListeningPartyChangeHost";
+import ListeningPartyKickUserHandler from "./ListeningPartyKickUserHandler";
+import ClientPacketListeningPartyKickUser from "../packets/client/ClientPacketListeningPartyKickUser";
 const config = require("../config/config.json");
 
 export default class PacketHandler {
@@ -251,6 +253,9 @@ export default class PacketHandler {
                     break;
                 case PacketId.ClientListeningPartyChangeHost:
                     await ListeningPartyChangeHostHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketListeningPartyChangeHost));
+                    break;
+                case PacketId.ClientListeningPartyKickUser:
+                    await ListeningPartyKickUserHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketListeningPartyKickUser));
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS
