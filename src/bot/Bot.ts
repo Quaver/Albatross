@@ -48,6 +48,9 @@ import MultiplayerCommandBots from "./Multiplayer/MultiplayerCommandBots";
 import MultiplayerCommandNukeBots from "./Multiplayer/MultiplayerCommandNukeBots";
 import MultiplayerCommandReferee from "./Multiplayer/MultiplayerCommandReferee";
 import MultiplayerCommandClearReferee from "./Multiplayer/MultiplayerCommandClearReferee";
+import SqlDatabase from "../database/SqlDatabase";
+import ServerPacketUserConnected from "../packets/server/ServerPacketUserConnected";
+import ServerPacketUserDisconected from "../packets/server/ServerPacketUserDisconnected";
 const config = require("../config/config.json");
 
 export default class Bot {
@@ -101,19 +104,50 @@ export default class Bot {
 
         switch (command.toLowerCase()) {
             case "listenwith":
-            if (args.length == 0)
-                return await Bot.SendMessage(to, `Invalid command usage. Try using it like: "!ban <user_name> <reason>"`);
+                if (args.length == 0)
+                    return await Bot.SendMessage(to, `Invalid command usage. Try using it like: "!ban <user_name> <reason>"`);
 
-            const targetUsername: string = args[0].replace(/_/g, " ");
-            const target: User = Albatross.Instance.OnlineUsers.GetUserByUsername(targetUsername);
+                const targetUsername: string = args[0].replace(/_/g, " ");
+                const target: User = Albatross.Instance.OnlineUsers.GetUserByUsername(targetUsername);
 
-            if (!target)
-                return await Bot.SendMessage(to, `Could not ban: "${targetUsername}" because they are offline.`);
+                if (!target)
+                    return await Bot.SendMessage(to, `Could not ban: "${targetUsername}" because they are offline.`);
 
-            if (target.ListeningParty == null)
-                return await Bot.SendMessage(to, `User does not have an active listening party`);
+                if (target.ListeningParty == null)
+                    return await Bot.SendMessage(to, `User does not have an active listening party`);
 
-            await target.ListeningParty.AddListener(sender);
+                await target.ListeningParty.AddListener(sender);
+                break;
+            /*
+            case "listenbots":
+                if (sender.ListeningParty == null)
+                    return;
+
+                for (let i = 0; i < 15; i++) {
+                    const result = await SqlDatabase.Execute("SELECT * FROM users WHERE id = ? LIMIT 1", [i + 10]);
+        
+                    const user: User = new User(null, -i - 1, result[0].steam_id, `Bot ${result[0].username}`, true, 0, "US", Privileges.Normal, UserGroups.Bot, "", true);
+                    Albatross.Instance.OnlineUsers.AddUser(user);
+                    Albatross.SendToUsers(sender.ListeningParty.Listeners, new ServerPacketUserConnected(user));
+        
+                    sender.ListeningParty.AddListener(user);
+                }
+                break;
+            */
+            case "removelistenbots":
+                if (sender.ListeningParty == null)
+                    return;
+
+                for (let i = 0; i < sender.ListeningParty.Listeners.length; i++) {
+                    const listener = sender.ListeningParty.Listeners[i];
+
+                    if (listener == sender)
+                        continue;
+
+                    sender.ListeningParty.RemoveListener(listener);
+                    Albatross.Instance.OnlineUsers.RemoveUser(listener);
+                    Albatross.SendToUsers(sender.ListeningParty.Listeners, new ServerPacketUserDisconected(listener.Id));
+                }
                 break;
             case "help":
                 await Bot.ExecuteHelpCommand(sender, to, args);

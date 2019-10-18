@@ -8,6 +8,8 @@ import ServerPacketListeningPartyLeft from "../packets/server/ServerPacketListen
 import * as _ from "lodash";
 import ServerPacketListeningPartyFellowJoined from "../packets/server/ServerPacketListeningPartyFellowJoined";
 import ServerPacketListeningPartyFellowLeft from "../packets/server/ServerPacketListeningPartyFellowLeft";
+import Logger from "../logging/Logger";
+import ServerPacketListeningPartyChangeHost from "../packets/server/ServerPacketListeningPartyChangeHost";
 
 @JsonObject("ListeningParty")
 export default class ListeningParty {
@@ -57,6 +59,18 @@ export default class ListeningParty {
      */
     @JsonProperty("l")
     public ListenerIds: number[] = [];
+
+    /**
+     * The artist of the song
+     */
+    @JsonProperty("ar")
+    public SongArtist: string = "";
+
+    /**
+     * The title of the song
+     */
+    @JsonProperty("ti")
+    public SongTitle: string  = "";
 
     /**
      * The list of people who are currently listening in the party
@@ -114,11 +128,32 @@ export default class ListeningParty {
         this.LastActionTime = packet.LastActionTime;
         this.IsPaused = packet.IsPaused;
         this.SongTime = packet.SongTime;
+        this.SongArtist = packet.SongArtist;
+        this.SongTitle = packet.SongTitle;
 
         // Relay this packet to all other listeners
         const relayPacket = new ServerPacketListeningPartyStateUpdate(packet.Action, packet.MapMd5, packet.MapId, packet.LastActionTime, 
-            packet.SongTime, packet.IsPaused);
+            packet.SongTime, packet.IsPaused, packet.SongArtist, packet.SongTitle);
 
         Albatross.SendToUsers(this.Listeners, relayPacket);
+    }
+
+    /**
+     * Changes the host of the listening party to a new user.
+     * @param userId 
+     */
+    public async ChangeHost(userId: number): Promise<void> {
+        const oldHost = this.Host;
+
+        const user = this.Listeners.find((x: User) => x.Id == userId);
+
+        if (!user)
+            return Logger.Warning(`Tried to change host of ${this.Host.ToNameIdString()}'s listening party, but the user is not in the party!`);
+
+        this.Host = user;
+        this.HostId = user.Id;
+
+        Albatross.SendToUsers(this.Listeners, new ServerPacketListeningPartyChangeHost(this.Host.Id))
+        Logger.Info(`The host of ${oldHost.ToNameIdString()}'s listening party has been changed to: ${this.Host.ToNameIdString()}`);
     }
 }

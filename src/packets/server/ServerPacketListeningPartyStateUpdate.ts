@@ -5,7 +5,8 @@ import ListeningPartyAction from "../../listening/ListeningPartyAction";
 export default class ServerPacketListeningPartyStateUpdate extends ClientPacketListeningPartyStateUpdate {
     public Id: PacketId = PacketId.ServerListeningPartyStateUpdate;
 
-    constructor(action: ListeningPartyAction, mapMd5: string, mapId: number, lastActionTime: number, songTime: number, isPaused: boolean) {
+    constructor(action: ListeningPartyAction, mapMd5: string, mapId: number, lastActionTime: number, songTime: number, 
+        isPaused: boolean, songArtist: string, songTitle: string) {
         super();
 
         this.Id = PacketId.ServerListeningPartyStateUpdate;
@@ -16,5 +17,7 @@ export default class ServerPacketListeningPartyStateUpdate extends ClientPacketL
         this.LastActionTime = lastActionTime;
         this.SongTime = songTime;
         this.IsPaused = isPaused;
+        this.SongArtist = songArtist;
+        this.SongTitle = songTitle;
     }
 }

@@ -42,4 +42,16 @@ export default class ClientPacketListeningPartyStateUpdate extends Packet {
      */
     @JsonProperty("p")
     public IsPaused: boolean = false;
+
+    /**
+     * The artist of the song
+     */
+    @JsonProperty("ar")
+    public SongArtist: string = "";
+
+    /**
+     * The title of the song
+     */
+    @JsonProperty("ti")
+    public SongTitle: string = ""; 
 }
