@@ -116,9 +116,12 @@ export default class Bot {
                 if (target.ListeningParty == null)
                     return await Bot.SendMessage(to, `User does not have an active listening party`);
 
+                if (target == sender)
+                    return await Bot.SendMessage(to, `You cannot listen with yourself. Give another user!`);
+
                 await target.ListeningParty.AddListener(sender);
                 break;
-            case "listenbots":
+            /*case "listenbots":
                 if (sender.ListeningParty == null)
                     return;
 
@@ -147,6 +150,25 @@ export default class Bot {
                     Albatross.SendToUsers(sender.ListeningParty.Listeners, new ServerPacketUserDisconected(listener.Id));
                 }
                 break;
+            case "listenershasnosong":
+                if (sender.ListeningParty == null)
+                    return;
+
+                for (let i = 0; i < sender.ListeningParty.Listeners.length; i++) {
+                    const listener = sender.ListeningParty.Listeners[i];
+                    await sender.ListeningParty.HandleUserMissingSong(listener);
+                }
+                break;
+            case "listenershassong":
+                if (sender.ListeningParty == null)
+                    return;
+
+                for (let i = 0; i < sender.ListeningParty.Listeners.length; i++) {
+                    const listener = sender.ListeningParty.Listeners[i];
+                    await sender.ListeningParty.HandleUserHasSong(listener);
+                }
+                break;
+            */  
             case "help":
                 await Bot.ExecuteHelpCommand(sender, to, args);
                 break;
