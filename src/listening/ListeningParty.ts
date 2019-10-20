@@ -10,6 +10,8 @@ import ServerPacketListeningPartyFellowJoined from "../packets/server/ServerPack
 import ServerPacketListeningPartyFellowLeft from "../packets/server/ServerPacketListeningPartyFellowLeft";
 import Logger from "../logging/Logger";
 import ServerPacketListeningPartyChangeHost from "../packets/server/ServerPacketListeningPartyChangeHost";
+import ListeningPartyAction from "./ListeningPartyAction";
+import ServerPacketListeningPartyUserMissingSong from "../packets/server/ServerPacketListeningPartyUserMissingSong";
 
 @JsonObject("ListeningParty")
 export default class ListeningParty {
@@ -78,6 +80,17 @@ export default class ListeningParty {
     public Listeners: User[] = [];
 
     /**
+     * The listeners who don't have the currently acitve song
+     */
+    public ListenersWithoutSong: User[] = [];
+
+    /**
+     * The user ids of the listeners without the currently active song.
+     */
+    @JsonProperty("lws")
+    public ListenerIdsWithoutSong: number[] = [];
+
+    /**
      * @param user 
      */
     constructor(user: User, md5: string, mapId: number) {
@@ -112,6 +125,10 @@ export default class ListeningParty {
         _.remove(this.Listeners, user);
         this.ListenerIds = this.ListenerIds.filter((x: number) => x != user.Id);
 
+        // Make sure the user is removed from the users that don't have the active song
+        _.remove(this.ListenersWithoutSong, user);
+        this.ListenerIdsWithoutSong = this.ListenerIdsWithoutSong.filter((x: number) => x != user.Id);
+
         // Send a packet to the user that left.
         Albatross.SendToUser(user, new ServerPacketListeningPartyLeft());
         Albatross.SendToUsers(this.Listeners, new ServerPacketListeningPartyFellowLeft(user));
@@ -131,6 +148,12 @@ export default class ListeningParty {
         this.SongTime = packet.SongTime;
         this.SongArtist = packet.SongArtist;
         this.SongTitle = packet.SongTitle;
+
+        // On map change, reset the listeners who don't have the active song.
+        if (packet.Action == ListeningPartyAction.ChangeSong) {
+            this.ListenersWithoutSong = [];
+            this.ListenerIdsWithoutSong = [];
+        }
 
         // Relay this packet to all other listeners
         const relayPacket = new ServerPacketListeningPartyStateUpdate(packet.Action, packet.MapMd5, packet.MapId, packet.LastActionTime, 
@@ -169,5 +192,22 @@ export default class ListeningParty {
             return Logger.Warning(`Tried to kick: ${userId} from ${this.Host.ToNameIdString()}'s listening party, but the user is not in the party!`);
 
         await this.RemoveListener(user);
+    }
+
+    /**
+     * Informs everyone in the lobby that this user is missing the active song.
+     * @param user 
+     */
+    public async HandleUserMissingSong(user: User): Promise<void> {
+        if (!this.Listeners.includes(user))
+            return;
+
+        if (!this.ListenersWithoutSong.includes(user))
+            this.ListenersWithoutSong.push(user);
+
+        if (!this.ListenerIdsWithoutSong.includes(user.Id))
+            this.ListenerIdsWithoutSong.push(user.Id);
+
+        Albatross.SendToUsers(this.Listeners, new ServerPacketListeningPartyUserMissingSong(user));
     }
 }
