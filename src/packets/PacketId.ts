@@ -114,7 +114,9 @@ enum PacketId {
     ServerListeningPartyChangeHost,
     ClientListeningPartyKickUser,
     ClientListeningPartyUserMissingSong,
-    ServerListeningPartyUserMissingSong
+    ServerListeningPartyUserMissingSong,
+    ClientListeningPartyUserHasSong,
+    ServerListeningPartyUserHasSong
 }
 
 export default PacketId;

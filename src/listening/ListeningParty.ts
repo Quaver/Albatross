@@ -12,6 +12,7 @@ import Logger from "../logging/Logger";
 import ServerPacketListeningPartyChangeHost from "../packets/server/ServerPacketListeningPartyChangeHost";
 import ListeningPartyAction from "./ListeningPartyAction";
 import ServerPacketListeningPartyUserMissingSong from "../packets/server/ServerPacketListeningPartyUserMissingSong";
+import ServerPacketListeningPartyUserHasSong from "../packets/server/ServerPacketListeningPartyUserHasSong";
 
 @JsonObject("ListeningParty")
 export default class ListeningParty {
@@ -195,7 +196,7 @@ export default class ListeningParty {
     }
 
     /**
-     * Informs everyone in the lobby that this user is missing the active song.
+     * Informs everyone in the party that this user is missing the active song.
      * @param user 
      */
     public async HandleUserMissingSong(user: User): Promise<void> {
@@ -209,5 +210,20 @@ export default class ListeningParty {
             this.ListenerIdsWithoutSong.push(user.Id);
 
         Albatross.SendToUsers(this.Listeners, new ServerPacketListeningPartyUserMissingSong(user));
+    }
+
+    /**
+     * Informs everyone in the party that a user has the active song
+     * @param user 
+     */
+    public async HandleUserHasSong(user: User): Promise<void> {
+        if (!this.Listeners.includes(user))
+            return;
+
+        // Make sure the user is removed from the users that don't have the active song
+        _.remove(this.ListenersWithoutSong, user);
+        this.ListenerIdsWithoutSong = this.ListenerIdsWithoutSong.filter((x: number) => x != user.Id);
+
+        Albatross.SendToUsers(this.Listeners, new ServerPacketListeningPartyUserHasSong(user));
     }
 }
