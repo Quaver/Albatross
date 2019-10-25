@@ -996,6 +996,45 @@ export default class User implements IPacketWritable, IStringifyable {
         }
     }
 
+    /**
+     * Gets the user's friends list
+     */
+    public async GetFriendsList(): Promise<number[]> {
+        const friend: number = 1;
+
+        const result = await SqlDatabase.Execute(`SELECT * FROM user_relationships WHERE user_id = ? AND (relationship & ${friend}) != 0`, 
+            [this.Id]);
+
+        const list: number[] = [];
+
+        for (let i = 0; i < result.length; i++)
+            list.push(result[i].target_user_id);
+
+        return list;
+    }
+
+    /**
+     * Adds a user to the friends list
+     * @param userId 
+     */
+    public async AddFriend(userId: number): Promise<void> {
+        const result = await SqlDatabase.Execute("SELECT id FROM users WHERE id = ?", [userId]);
+
+        if (result.length == 0)
+            return;
+
+        await SqlDatabase.Execute("INSERT INTO user_relationships (user_id, target_user_id, relationship) VALUES (?, ?, ?)", 
+            [this.Id, userId, 1]);
+    }
+
+    /**
+     * Removes a user from the friends list.
+     * @param userId 
+     */
+    public async RemoveFriend(userId: number): Promise<void> {
+        await SqlDatabase.Execute("DELETE FROM user_relationships WHERE user_id = ? AND target_user_id = ?", [this.Id, userId]);
+    }
+
     public Serialize(): object {
         return {
             id: this.Id,

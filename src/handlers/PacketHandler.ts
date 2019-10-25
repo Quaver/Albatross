@@ -97,6 +97,8 @@ import ListeningPartyUserMissingSongHandler from "./ListeningPartyUserMissingSon
 import ClientPacketListeningPartyUserMissingSong from "../packets/client/ClientPacketListeningPartyUserMissingSong";
 import ListeningPartyUserHasSongHandler from "./ListeningPartyUserHasSongHandler";
 import ClientPacketListeningPartyUserHasSong from "../packets/client/ClientPacketListeningPartyUserHasSong";
+import FriendsListActionHandler from "./FriendsListActionHandler";
+import ClientPacketFriendship from "../packets/client/ClientPacketFriendship";
 const config = require("../config/config.json");
 
 export default class PacketHandler {
@@ -266,6 +268,9 @@ export default class PacketHandler {
                     break;
                 case PacketId.ClientListeningPartyUserHasSong:
                     await ListeningPartyUserHasSongHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketListeningPartyUserHasSong));
+                    break;
+                case PacketId.ClientFriendship:
+                    await FriendsListActionHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketFriendship));
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS

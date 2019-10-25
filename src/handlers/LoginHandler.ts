@@ -19,6 +19,7 @@ import ServerPacketAvailableChatchannel from "../packets/server/ServerPacketAvai
 import Bot from "../bot/Bot";
 import DiscordWebhookHelper from "../discord/DiscordWebhookHelper";
 import * as Discord from "discord.js";
+import ServerPacketUserFriendsList from "../packets/server/ServerPacketUserFriendsList";
 const axios = require("axios");
 const config = require("../config/config.json");
 const randomstring = require("randomstring");
@@ -111,6 +112,11 @@ export default class LoginHandler {
 
             Albatross.SendToUser(user, new ServerPacketLoginReply(user));
             Albatross.SendToUser(user, Albatross.BuildUsersOnlinePacket());
+
+            // Send user their friends list
+            const friendsListPacket: ServerPacketUserFriendsList = await ServerPacketUserFriendsList.CreateAsync(user);
+            Albatross.SendToUser(user, friendsListPacket);
+
             await LoginHandler.SendAndAutojoinChatChannels(user);
 
             await Albatross.Broadcast(new ServerPacketUserConnected(user));
