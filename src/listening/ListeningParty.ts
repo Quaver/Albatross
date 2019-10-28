@@ -226,4 +226,11 @@ export default class ListeningParty {
 
         Albatross.SendToUsers(this.Listeners, new ServerPacketListeningPartyUserHasSong(user));
     }
+
+    /**
+     * Returns if the listening party is full
+     */
+    public IsFull(): boolean {
+        return this.Listeners.length >= 16;
+    }
 }
