@@ -101,6 +101,8 @@ import FriendsListActionHandler from "./FriendsListActionHandler";
 import ClientPacketFriendship from "../packets/client/ClientPacketFriendship";
 import JoinListeningPartyHandler from "./JoinListeningPartyHandler";
 import ClientPacketJoinListeningParty from "../packets/client/ClientPacketJoinListeningParty";
+import InviteToGameHandler from "./InviteToGameHandler";
+import ClientPacketInviteToGame from "../packets/client/ClientPacketInviteToGame";
 const config = require("../config/config.json");
 
 export default class PacketHandler {
@@ -276,6 +278,9 @@ export default class PacketHandler {
                     break;
                 case PacketId.ClientJoinListeningParty:
                     await JoinListeningPartyHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketJoinListeningParty));
+                    break;
+                case PacketId.ClientInviteToGame:
+                    await InviteToGameHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketInviteToGame));
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS
