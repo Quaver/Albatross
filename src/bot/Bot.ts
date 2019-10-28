@@ -51,6 +51,9 @@ import MultiplayerCommandClearReferee from "./Multiplayer/MultiplayerCommandClea
 import SqlDatabase from "../database/SqlDatabase";
 import ServerPacketUserConnected from "../packets/server/ServerPacketUserConnected";
 import ServerPacketUserDisconected from "../packets/server/ServerPacketUserDisconnected";
+import UserClientStatus from "../objects/UserClientStatus";
+import ClientStatus from "../enums/ClientStatus";
+import OnlineUserStore from "../sessions/OnlineUserStore";
 const config = require("../config/config.json");
 
 export default class Bot {
@@ -103,7 +106,7 @@ export default class Bot {
         args.shift();
 
         switch (command.toLowerCase()) {
-            case "listenwith":
+            /*case "listenwith":
                 if (args.length == 0)
                     return await Bot.SendMessage(to, `Invalid command usage. Try using it like: "!ban <user_name> <reason>"`);
 
@@ -121,18 +124,20 @@ export default class Bot {
 
                 await target.ListeningParty.AddListener(sender);
                 break;
-            /*case "listenbots":
-                if (sender.ListeningParty == null)
-                    return;
+            case "listenbots":
 
-                for (let i = 0; i < 15; i++) {
+                for (let i = 0; i < 30; i++) {
                     const result = await SqlDatabase.Execute("SELECT * FROM users WHERE id = ? LIMIT 1", [i + 10]);
         
-                    const user: User = new User(null, -i - 1, result[0].steam_id, `Bot ${result[0].username}`, true, 0, "US", Privileges.Normal, UserGroups.Bot, "", true);
+                    const user: User = new User(null, result[0].id, result[0].steam_id, `Bot ${result[0].username}`, true, 0, "US", Privileges.Normal, UserGroups.Bot, "", true);
                     Albatross.Instance.OnlineUsers.AddUser(user);
-                    Albatross.SendToUsers(sender.ListeningParty.Listeners, new ServerPacketUserConnected(user));
+
+                    user.StartListeningParty();
+                    user.CurrentStatus = new UserClientStatus();
+                    user.CurrentStatus.Status = ClientStatus.Listening;
+
         
-                    sender.ListeningParty.AddListener(user);
+                    Albatross.SendToUsers(Albatross.Instance.OnlineUsers.Users, new ServerPacketUserConnected(user));
                 }
                 break;
             case "removelistenbots":
@@ -150,25 +155,7 @@ export default class Bot {
                     Albatross.SendToUsers(sender.ListeningParty.Listeners, new ServerPacketUserDisconected(listener.Id));
                 }
                 break;
-            case "listenershasnosong":
-                if (sender.ListeningParty == null)
-                    return;
-
-                for (let i = 0; i < sender.ListeningParty.Listeners.length; i++) {
-                    const listener = sender.ListeningParty.Listeners[i];
-                    await sender.ListeningParty.HandleUserMissingSong(listener);
-                }
-                break;
-            case "listenershassong":
-                if (sender.ListeningParty == null)
-                    return;
-
-                for (let i = 0; i < sender.ListeningParty.Listeners.length; i++) {
-                    const listener = sender.ListeningParty.Listeners[i];
-                    await sender.ListeningParty.HandleUserHasSong(listener);
-                }
-                break;
-            */  
+            */
             case "help":
                 await Bot.ExecuteHelpCommand(sender, to, args);
                 break;
