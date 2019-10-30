@@ -775,8 +775,8 @@ export default class User implements IPacketWritable, IStringifyable {
         if (this == player)
             return await this.SendNotification(ServerNotificationType.Error, "You cannot spectate yourself! What are you doing?!");
 
-        /*if (player.IsBot())
-            return await this.SendNotification(ServerNotificationType.Error, "You cannot spectate bots!"); - TEMP */
+        if (player.IsBot())
+            return await this.SendNotification(ServerNotificationType.Error, "You cannot spectate bots!");
 
         const found = this.SpectatingUsers.find(x => x == player);
 
@@ -821,7 +821,12 @@ export default class User implements IPacketWritable, IStringifyable {
             await player.JoinChatChannel(chan);
         }
 
-        // TODO: Other people who are spectating as well
+        // If we have spectator frames already, dump them all to the user.
+        for (let i = 0; i < player.CurrentSpectatorReplayFrames.length; i++) {
+            const spectatorPacket = player.CurrentSpectatorReplayFrames[i];
+            Albatross.SendToUser(this, new ServerPacketSpectatorReplayFrames(player, spectatorPacket.Status, spectatorPacket.AudioTime, spectatorPacket.Frames))
+        }
+
 
         Logger.Info(`[Spectator] ${this.ToNameIdString()} is now spectating: ${player.ToNameIdString()}`);
     }
@@ -905,7 +910,6 @@ export default class User implements IPacketWritable, IStringifyable {
 
             Albatross.SendToUser(this.Spectators[i], new ServerPacketSpectatorReplayFrames(this, packet.Status, packet.AudioTime, packet.Frames));
         }
-
     }
 
     /**
