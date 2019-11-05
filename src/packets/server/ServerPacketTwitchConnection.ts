@@ -36,7 +36,12 @@ export default class ServerPacketTwitchConnection extends Packet {
             if (result.length == 0)
                 throw new Error("User could not be found!");
 
-            return new ServerPacketTwitchConnection(result[0].twitch_username != null, result[0].twitch_username)
+            let username = result[0].twitch_username;
+
+            if (username == "")
+                username = null;
+
+            return new ServerPacketTwitchConnection(username != null, username);
         } catch (err) {
             Logger.Error(err);
             return new ServerPacketTwitchConnection(false, null);
