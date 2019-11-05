@@ -20,6 +20,8 @@ export default class RedisHelper {
 
     private static SongRequestsChannel: string = "quaver:song_requests";
 
+    private static TwitchConnectionChannel: string = "quaver:twitch_connection";
+
     /**
      * Initializes the redis client.
      * @constructor
@@ -47,12 +49,17 @@ export default class RedisHelper {
                 case RedisHelper.SongRequestsChannel:
                     await SongRequestHandler.HandleTwitchSongRequest(JSON.parse(message));
                     break;
+                // User has connected their twitch account
+                case RedisHelper.TwitchConnectionChannel:
+                    await SongRequestHandler.HandleTwitchConnection(JSON.parse(message));
+                    break;
             }
         });
 
 
         this.Sub.subscribe(RedisHelper.FirstPlaceScoresChannel);
         this.Sub.subscribe(RedisHelper.SongRequestsChannel);
+        this.Sub.subscribe(RedisHelper.TwitchConnectionChannel);
         
         try {
             // Grab all existing login tokens on the server.
