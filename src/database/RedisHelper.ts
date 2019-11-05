@@ -3,6 +3,7 @@ import {RedisClient} from "redis";
 import Logger from "../logging/Logger";
 import ChatManager from "../chat/ChatManager";
 import Bot from "../bot/Bot";
+import SongRequestHandler from "../twitch/SongRequestHandler";
 
 export default class RedisHelper {
     /**
@@ -16,6 +17,8 @@ export default class RedisHelper {
     public static Sub: RedisClient;
     
     private static FirstPlaceScoresChannel: string = "quaver:first_place_scores";
+
+    private static SongRequestsChannel: string = "quaver:song_requests";
 
     /**
      * Initializes the redis client.
@@ -40,11 +43,16 @@ export default class RedisHelper {
                     await ChatManager.SendMessage(Bot.User, "#announcements", `${firstPlaceScore.user.username} has just achieved first place ` 
                         + `on: "${firstPlaceScore.map.artist} - ${firstPlaceScore.map.title} [${firstPlaceScore.map.difficulty_name}]."`);
                     break;
+                // Twitch Song Requests
+                case RedisHelper.SongRequestsChannel:
+                    await SongRequestHandler.HandleTwitchSongRequest(JSON.parse(message));
+                    break;
             }
         });
 
 
         this.Sub.subscribe(RedisHelper.FirstPlaceScoresChannel);
+        this.Sub.subscribe(RedisHelper.SongRequestsChannel);
         
         try {
             // Grab all existing login tokens on the server.
