@@ -121,7 +121,8 @@ enum PacketId {
     ClientFriendship,
     ClientJoinListeningParty,
     ClientInviteToGame,
-    ServerSongRequest
+    ServerSongRequest,
+    ServerTwitchConnection
 }
 
 export default PacketId;

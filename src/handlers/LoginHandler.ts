@@ -20,6 +20,7 @@ import Bot from "../bot/Bot";
 import DiscordWebhookHelper from "../discord/DiscordWebhookHelper";
 import * as Discord from "discord.js";
 import ServerPacketUserFriendsList from "../packets/server/ServerPacketUserFriendsList";
+import ServerPacketTwitchConnection from "../packets/server/ServerPacketTwitchConnection";
 const axios = require("axios");
 const config = require("../config/config.json");
 const randomstring = require("randomstring");
@@ -116,6 +117,9 @@ export default class LoginHandler {
             // Send user their friends list
             const friendsListPacket: ServerPacketUserFriendsList = await ServerPacketUserFriendsList.CreateAsync(user);
             Albatross.SendToUser(user, friendsListPacket);
+
+            const twitchConnectionPacket: ServerPacketTwitchConnection = await ServerPacketTwitchConnection.Create(user);
+            Albatross.SendToUser(user, twitchConnectionPacket);
 
             await LoginHandler.SendAndAutojoinChatChannels(user);
 
