@@ -103,6 +103,8 @@ import JoinListeningPartyHandler from "./JoinListeningPartyHandler";
 import ClientPacketJoinListeningParty from "../packets/client/ClientPacketJoinListeningParty";
 import InviteToGameHandler from "./InviteToGameHandler";
 import ClientPacketInviteToGame from "../packets/client/ClientPacketInviteToGame";
+import TwitchUnlinkHandler from "./TwitchUnlinkHandler";
+import ClientPacketTwitchUnlink from "../packets/client/ClientPacketTwitchUnlink";
 const config = require("../config/config.json");
 
 export default class PacketHandler {
@@ -281,6 +283,9 @@ export default class PacketHandler {
                     break;
                 case PacketId.ClientInviteToGame:
                     await InviteToGameHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketInviteToGame));
+                    break;
+                case PacketId.ClientTwitchUnlink:
+                    await TwitchUnlinkHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketTwitchUnlink));
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS

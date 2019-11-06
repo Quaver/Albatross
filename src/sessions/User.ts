@@ -54,6 +54,7 @@ import ServerPacketUserInfo from "../packets/server/ServerPacketUserInfo";
 import ListeningParty from "../listening/ListeningParty";
 import ServerPacketListeningPartyJoined from "../packets/server/ServerPacketListeningPartyJoin";
 import ServerPacketListeningPartyLeft from "../packets/server/ServerPacketListeningPartyLeft";
+import ServerPacketTwitchConnection from "../packets/server/ServerPacketTwitchConnection";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -1029,6 +1030,16 @@ export default class User implements IPacketWritable, IStringifyable {
 
         await SqlDatabase.Execute("INSERT INTO user_relationships (user_id, target_user_id, relationship) VALUES (?, ?, ?)", 
             [this.Id, userId, 1]);
+    }
+
+    /**
+     * Unlinks the user's Twitch account from their Quaver account
+     */
+    public async UnlinkTwitch(): Promise<void> {
+        await SqlDatabase.Execute("UPDATE users SET twitch_username = NULL WHERE id = ?", [this.Id]);
+
+        const packet = await ServerPacketTwitchConnection.Create(this);
+        Albatross.SendToUser(this, packet);
     }
 
     /**
