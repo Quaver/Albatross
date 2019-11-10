@@ -11,6 +11,8 @@ import ServerPacketLeftChatChannel from "../packets/server/ServerPacketLeftChatC
 import ServerPacketMuteEndTime from "../packets/server/ServerPacketMuteEndTime";
 import * as Discord from "discord.js";
 import DiscordWebhookHelper from "../discord/DiscordWebhookHelper";
+import SqlDatabase from "../database/SqlDatabase";
+import ChatMessageType from "./ChatMessageType";
 const config = require("../config/config.json");
 const randomcolor = require("randomcolor");
 
@@ -124,6 +126,7 @@ export default class ChatManager {
 
         await Bot.HandlePublicMessageCommands(sender, channel, message);
         await ChatManager.LogPublicMessageToDiscord(sender, channel, message);
+        await ChatManager.LogPublicMessageToDatabase(sender, channel, message);
     }
 
     /**
@@ -139,12 +142,12 @@ export default class ChatManager {
             return Logger.Warning(`${sender.Username} (#${sender.Id}) has tried to send a message to: ${to}, but they are offline`);
 
         // Handle bot messages.
-        if (receiver == Bot.User) {
+        if (receiver == Bot.User)
             await Bot.HandlePrivateMessageCommands(sender, receiver, message);
-            return await ChatManager.LogPrivateMessageToDiscord(sender, receiver, message);
-        }
+        else
+            Albatross.SendToUser(receiver, new ServerPacketChatMessage(sender, to, message)); 
 
-        Albatross.SendToUser(receiver, new ServerPacketChatMessage(sender, to, message));  
+        await ChatManager.LogPrivateMessageToDatabase(sender, receiver, message);
         await ChatManager.LogPrivateMessageToDiscord(sender, receiver, message);
     }
 
@@ -189,6 +192,36 @@ export default class ChatManager {
             .setColor(randomcolor());
 
             await DiscordWebhookHelper.PrivateMessageHook.send(embed);
+        } catch (err) {
+            Logger.Error(err);
+        }
+    }
+
+    /**
+     * Logs a public chat message to the database
+     * @param sender 
+     * @param chatChannel 
+     * @param message 
+     */
+    private static async LogPublicMessageToDatabase(sender: User, chatChannel: ChatChannel, message: string): Promise<void> {
+        try {
+            await SqlDatabase.Execute("INSERT INTO chat_messages (sender_id, type, channel, message, timestamp) VALUES (?, ?, ?, ?, ?)", 
+                [sender.Id, ChatMessageType.Public, chatChannel.Name, message, Math.round((new Date()).getTime())]);
+        } catch (err) {
+            Logger.Error(err);
+        }
+    }
+
+    /**
+     * Logs a private message to the database
+     * @param sender 
+     * @param receiver 
+     * @param message 
+     */
+    private static async LogPrivateMessageToDatabase(sender: User, receiver: User, message: string): Promise<void> {
+        try {
+            await SqlDatabase.Execute("INSERT INTO chat_messages (sender_id, type, receiver_id, message, timestamp) VALUES (?, ?, ?, ?, ?)", 
+                [sender.Id, ChatMessageType.Private, receiver.Id, message, Math.round((new Date()).getTime())]);
         } catch (err) {
             Logger.Error(err);
         }
