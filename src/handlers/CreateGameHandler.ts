@@ -6,6 +6,8 @@ import MultiplayerGameType from "../multiplayer/MultiplayerGameType";
 import Lobby from "../multiplayer/Lobby";
 import DiscordWebhookHelper from "../discord/DiscordWebhookHelper";
 import * as Discord from "discord.js";
+import Albatross from "../Albatross";
+import ServerPacketMultiplayerGameInfo from "../packets/server/ServerPacketMultiplayerGameInfo";
 
 export default class CreateGameHandler {
     /**
@@ -41,15 +43,16 @@ export default class CreateGameHandler {
 
             // Just set the game to null to prevent accidental usage of it since we now have two games.
             packet.Game = null;
-
-            // Create the actual game.
-            await Lobby.CreateGame(game);
-            await user.JoinMultiplayerGame(game, game.Password);
+        
+            Albatross.SendToUser(user, new ServerPacketMultiplayerGameInfo(game))
             
             // Set the host
             if (game.Type == MultiplayerGameType.Friendly)
                 await game.ChangeHost(user);
                 
+            await Lobby.CreateGame(game);
+            await user.JoinMultiplayerGame(game, game.Password);
+
             if (!DiscordWebhookHelper.EventsHook)
                 return;
         
