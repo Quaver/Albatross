@@ -41,8 +41,8 @@ export default class MultiplayerCommandName extends BotCommand {
 
         const name: string = args.join(" ");
 
-        if (name.length >= 100)
-            return await Bot.SendMessage(game.GetChatChannelName(), "The name you have specified is too long. It must be under 100 characters");
+        if (name.length > 50)
+            return await Bot.SendMessage(game.GetChatChannelName(), "The name you have specified is too long. It must be under 50 characters");
 
         await game.ChangeName(name);
         await Bot.SendMessage(game.GetChatChannelName(), `The game name has been changed to: "${name}"`);        
