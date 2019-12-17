@@ -1732,7 +1732,7 @@ export default class MultiplayerGame {
         await RedisHelper.hset(key, "mid", this.MapId.toString());
         await RedisHelper.hset(key, "msid", this.MapsetId.toString());
         await RedisHelper.hset(key, "map", this.Map);
-        await RedisHelper.hset(key, "h", this.HostId.toString());
+        await RedisHelper.hset(key, "host", this.HostId.toString());
         await RedisHelper.hset(key, "r", Number(this.Ruleset).toString());
         await RedisHelper.hset(key, "hr", Number(this.AutoHostRotation).toString());
         await RedisHelper.hset(key, "gm", Number(this.GameMode).toString());
