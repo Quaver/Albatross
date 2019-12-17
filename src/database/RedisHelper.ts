@@ -4,6 +4,7 @@ import Logger from "../logging/Logger";
 import ChatManager from "../chat/ChatManager";
 import Bot from "../bot/Bot";
 import SongRequestHandler from "../twitch/SongRequestHandler";
+import Albatross from "../Albatross";
 
 export default class RedisHelper {
     /**
@@ -21,6 +22,8 @@ export default class RedisHelper {
     private static SongRequestsChannel: string = "quaver:song_requests";
 
     private static TwitchConnectionChannel: string = "quaver:twitch_connection";
+
+    private static MultiplayerMapSharesChannel: string = "quaver:multiplayer_map_shares";
 
     /**
      * Initializes the redis client.
@@ -53,6 +56,15 @@ export default class RedisHelper {
                 case RedisHelper.TwitchConnectionChannel:
                     await SongRequestHandler.HandleTwitchConnection(JSON.parse(message));
                     break;
+                // Multiplayer host temporarily shared a map for users
+                case RedisHelper.MultiplayerMapSharesChannel:
+                    const shareInfo = JSON.parse(message);
+                    const multiplayerUser = Albatross.Instance.OnlineUsers.GetUserById(shareInfo.uploader_id);
+
+                    if (multiplayerUser.CurrentGame && multiplayerUser.CurrentGame.GameId == shareInfo.game_id)
+                        await multiplayerUser.CurrentGame.UpdateSharedMapStatus();
+                        
+                    break;
             }
         });
 
@@ -60,6 +72,7 @@ export default class RedisHelper {
         this.Sub.subscribe(RedisHelper.FirstPlaceScoresChannel);
         this.Sub.subscribe(RedisHelper.SongRequestsChannel);
         this.Sub.subscribe(RedisHelper.TwitchConnectionChannel);
+        this.Sub.subscribe(RedisHelper.MultiplayerMapSharesChannel);
         
         try {
             // Grab all existing login tokens on the server.

@@ -64,6 +64,7 @@ import ServerPacketGameHostSelectingMap from "../packets/server/ServerPacketGame
 import ServerPacketNotification from "../packets/server/ServerPacketNotification";
 import ServerNotificationType from "../enums/ServerNotificationType";
 import ServerPacketGameSetReferee from "../packets/server/ServerPacketGameSetReferee";
+import ServerPacketGameMapsetShared from "../packets/server/ServerPacketGameMapsetShared";
 const md5 = require("md5");
 
 /**
@@ -348,6 +349,12 @@ export default class MultiplayerGame {
     public RefereeUserId: number = 0;
 
     /**
+     * If the mapset is temporarily uploaded and shared by the host
+     */
+    @JsonProperty("ims")
+    public IsMapsetShared: boolean = false;
+
+    /**
      * The players that are currently in the game
      */
     public Players: User[] = [];
@@ -489,6 +496,7 @@ export default class MultiplayerGame {
         game.BlueTeamWins = 0;
         game.JudgementCount = judgementCount;
         game.HostSelectingMap = false;
+        game.IsMapsetShared = false;
         if (password) game.HasPassword = true;
 
         game.CacheSelectedMap();
@@ -589,9 +597,11 @@ export default class MultiplayerGame {
         this.CalculatedDifficultyRatings = {};
 
         await this.StopMatchCountdown(false); 
+
         Albatross.SendToUsers(this.Players, new ServerPacketGameMapChanged(md5, mapId, mapsetId, map, mode, difficulty, allDifficultyRatings, 
-            judgementCount, alternativeMd5)); 
+                                            judgementCount, alternativeMd5)); 
                
+        await this.UpdateSharedMapStatus(false);
         await this.InformLobbyUsers();
 
         await this.CacheSelectedMap();
@@ -2062,4 +2072,22 @@ export default class MultiplayerGame {
         if (informLobbyUsers)
             this.InformLobbyUsers();     
     }
+
+
+    /**
+     * Checks if the current map is shared by the host
+     * @param informLobbyUsers 
+     */
+    public async UpdateSharedMapStatus(informLobbyUsers: boolean = true): Promise<void> {
+        // Check to see if the current map is the same as the uploaded map
+        const result = await SqlDatabase.Execute("SELECT * FROM multiplayer_map_shares WHERE game_id = ? ORDER BY id DESC LIMIT 1", [this.GameId]);
+
+        this.IsMapsetShared = result.length != 0 && result[0].map_md5 == this.MapMd5;
+
+        Albatross.SendToUsers(this.Players, new ServerPacketGameMapsetShared(this));
+
+        if (informLobbyUsers)
+            this.InformLobbyUsers();
+    }
+
 }
