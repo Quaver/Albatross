@@ -351,7 +351,7 @@ export default class MultiplayerGame {
     /**
      * If the mapset is temporarily uploaded and shared by the host
      */
-    @JsonProperty("ims")
+    @JsonProperty("ims", Boolean, true)
     public IsMapsetShared: boolean = false;
 
     /**
