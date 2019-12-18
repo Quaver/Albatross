@@ -105,6 +105,10 @@ import InviteToGameHandler from "./InviteToGameHandler";
 import ClientPacketInviteToGame from "../packets/client/ClientPacketInviteToGame";
 import TwitchUnlinkHandler from "./TwitchUnlinkHandler";
 import ClientPacketTwitchUnlink from "../packets/client/ClientPacketTwitchUnlink";
+import GameChangeNameHandler from "./GameChangeNameHandler";
+import ClientPacketChangeGameName from "../packets/client/ClientPacketChangeGameName";
+import GameChangePasswordHandler from "./GameChangePasswordHandler";
+import ClientPacketChangeGamePassword from "../packets/client/ClientPacketChangeGamePassword";
 const config = require("../config/config.json");
 
 export default class PacketHandler {
@@ -286,6 +290,12 @@ export default class PacketHandler {
                     break;
                 case PacketId.ClientTwitchUnlink:
                     await TwitchUnlinkHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketTwitchUnlink));
+                    break;
+                case PacketId.ClientPacketChangeGameName:
+                    await GameChangeNameHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketChangeGameName));
+                    break;
+                case PacketId.ClientPacketChangeGamePassword:
+                    await GameChangePasswordHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketChangeGamePassword));
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS

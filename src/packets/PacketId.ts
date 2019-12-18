@@ -124,7 +124,9 @@ enum PacketId {
     ServerSongRequest,
     ServerTwitchConnection,
     ClientTwitchUnlink,
-    ServerGameMapsetShared
+    ServerGameMapsetShared,
+    ClientPacketChangeGameName,
+    ClientPacketChangeGamePassword
 }
 
 export default PacketId;
