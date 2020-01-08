@@ -451,6 +451,10 @@ export default class User implements IPacketWritable, IStringifyable {
         // the user jining.
         Albatross.SendToUsers(game.Players, new ServerPacketUserJoinedGame(this));
 
+        // Have all spectators begin spectating this user
+        for (let i = 0; i < game.Spectators.length; i++)
+            game.Spectators[i].StartSpectatingPlayer(this.Id);
+
         // Place the player into the game
         this.CurrentGame = game;
         game.Players.push(this);
@@ -512,6 +516,9 @@ export default class User implements IPacketWritable, IStringifyable {
             this.StopSpectatingAllUsers();
         }
 
+        for (let i = 0; i < game.Spectators.length; i++)
+            game.Spectators[i].StopSpectatingPlayer(this.Id);
+
         // No more players, so the game should be disbanded.
         if (game.Players.length == 0) {
             // Autohost games should end automatically if there aren't any players in the match
@@ -563,6 +570,15 @@ export default class User implements IPacketWritable, IStringifyable {
         // Let the player know they've joined the game.
         Albatross.SendToUser(this, new ServerPacketSpectateMultiplayerGame(game));
 
+        // When joining, auto-spectate the correct players
+        if (!game.InProgress) {
+            for (let i = 0; i < game.Players.length; i++)
+                await this.StartSpectatingPlayer(game.Players[i].Id);
+        } else {
+            for (let i = 0; i < game.PlayersGameStartedWith.length; i++)
+                await this.StartSpectatingPlayer(game.PlayersGameStartedWith[i].Id);
+        }
+
         // Let players in the lobby be aware of this change
         game.InformLobbyUsers();
     }
@@ -613,7 +629,7 @@ export default class User implements IPacketWritable, IStringifyable {
         if (!game.FinishedPlayers.includes(this))
             game.FinishedPlayers.push(this);
 
-        if (game.FinishedPlayers.length == game.PlayersGameStartedWith.length)
+        if (game.FinishedPlayers.length >= game.PlayersGameStartedWith.length)
             await game.End();
     }
 
@@ -816,14 +832,15 @@ export default class User implements IPacketWritable, IStringifyable {
         if (this == player)
             return await this.SendNotification(ServerNotificationType.Error, "You cannot spectate yourself! What are you doing?!");
 
-        if (player.IsBot())
-            return await this.SendNotification(ServerNotificationType.Error, "You cannot spectate bots!");
+        if (player.IsBot()) {
+
+        }
 
         const found = this.SpectatingUsers.find(x => x == player);
 
         // Check to see if the player is already spectating them
-        if (found == player)
-            return await this.SendNotification(ServerNotificationType.Error, "You are already spectating this player!");
+        /*if (found == player)
+            return await this.SendNotification(ServerNotificationType.Error, "You are already spectating this player!");*/
 
         // User is not using the tournament client, so they can only spectate one player at a time.
         if (!this.IsSpectatingMultiplayerGame && this.SpectatingUsers.length > 0)

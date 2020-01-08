@@ -65,6 +65,8 @@ import ServerPacketNotification from "../packets/server/ServerPacketNotification
 import ServerNotificationType from "../enums/ServerNotificationType";
 import ServerPacketGameSetReferee from "../packets/server/ServerPacketGameSetReferee";
 import ServerPacketGameMapsetShared from "../packets/server/ServerPacketGameMapsetShared";
+import ClientStatus from "../enums/ClientStatus";
+import UserClientStatus from "../objects/UserClientStatus";
 const md5 = require("md5");
 
 /**
@@ -692,16 +694,33 @@ export default class MultiplayerGame {
         if (this.Ruleset == MultiplayerGameRuleset.Battle_Royale)
             Logger.Info(`[${this.Id}] Battle Royale Game Initiated. Eliminating players every: ${this.GetBattleRoyaleKnockoutInterval()}`);
 
+        for (let i = 0; i < this.PlayersGameStartedWith.length; i++) {
+            if (!this.PlayersGameStartedWith[i].IsMultiplayerBot)
+                continue;
+
+            this.PlayersGameStartedWith[i].CurrentStatus.MapMd5 = this.MapMd5;
+            this.PlayersGameStartedWith[i].CurrentStatus.MapId = this.MapId;
+            this.PlayersGameStartedWith[i].CurrentStatus.Modifiers = 0;
+            this.PlayersGameStartedWith[i].CurrentStatus.Status = ClientStatus.Playing;
+        }
+
+        // Have all spectators begin spectating the correct people
+        for (let i = 0; i < this.Spectators.length; i++) {
+            for (let j = 0; j < this.PlayersGameStartedWith.length; j++)
+                await this.Spectators[i].StartSpectatingPlayer(this.PlayersGameStartedWith[j].Id);
+        }
+
         Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameStart());
 
         for (let i = 0; i < this.PlayersGameStartedWith.length; i++) {
             if (!this.PlayersGameStartedWith[i].IsMultiplayerBot)
                 continue;
 
+                
             this.GenerateBotJudgements(this.PlayersGameStartedWith[i]);
             this.PlayersGameStartedWith[i].ReadyToPlayMultiplayerGame();
             this.PlayersGameStartedWith[i].HandleMultiplayerGameSkipRequest();
-            this.PlayersGameStartedWith[i].FinishPlayingMultiplayerGame();
+            // this.PlayersGameStartedWith[i].FinishPlayingMultiplayerGame();
         }
         
         this.HandleHostSelectingMap(false, false);
@@ -2069,11 +2088,14 @@ export default class MultiplayerGame {
 
         const newReferee = this.Players.find(x => x.Id == this.RefereeUserId);
         
-        if (newReferee)
+        if (newReferee) {
             newReferee.IsSpectatingMultiplayerGame = true;
+            this.Spectators.push(newReferee);
+        }
 
         if (oldReferee) {
             oldReferee.IsSpectatingMultiplayerGame = false;
+            _.remove(this.Spectators, oldReferee);
 
             if (this.Ruleset == MultiplayerGameRuleset.Team)
                 this.ChangeUserTeam(oldReferee, this.GetUnbalancedOrAvailableTeam());
