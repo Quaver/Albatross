@@ -126,7 +126,9 @@ enum PacketId {
     ClientTwitchUnlink,
     ServerGameMapsetShared,
     ClientPacketChangeGameName,
-    ClientPacketChangeGamePassword
+    ClientPacketChangeGamePassword,
+    ClientSpectateMultiplayerGame,
+    ServerSpectateMultiplayerGame
 }
 
 export default PacketId;

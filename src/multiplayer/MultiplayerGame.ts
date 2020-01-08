@@ -360,6 +360,11 @@ export default class MultiplayerGame {
     public Players: User[] = [];
 
     /**
+     * Users who are currently spectating the game
+     */
+    public Spectators : User[] = [];
+
+    /**
      * The host of the game, if any
      */
     public Host: User | null = null;
@@ -544,7 +549,7 @@ export default class MultiplayerGame {
         this.HostId = user.Id;
 
         await this.StopMatchCountdown(false);
-        Albatross.SendToUsers(this.Players, new ServerPacketChangeGameHost(user));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketChangeGameHost(user));
         this.HandleHostSelectingMap(false, false);
 
         if (informLobbyUsers)
@@ -559,7 +564,7 @@ export default class MultiplayerGame {
 
         SqlDatabase.Execute("UPDATE multiplayer_games SET name = ? WHERE id = ?", [this.Name, this.GameId]);
 
-        Albatross.SendToUsers(this.Players, new ServerPacketGameNameChanged(this));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameNameChanged(this));
         await this.InformLobbyUsers();
     }
 
@@ -598,7 +603,7 @@ export default class MultiplayerGame {
 
         await this.StopMatchCountdown(false); 
 
-        Albatross.SendToUsers(this.Players, new ServerPacketGameMapChanged(md5, mapId, mapsetId, map, mode, difficulty, allDifficultyRatings, 
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameMapChanged(md5, mapId, mapsetId, map, mode, difficulty, allDifficultyRatings, 
                                             judgementCount, alternativeMd5)); 
                
         await this.UpdateSharedMapStatus(false);
@@ -687,7 +692,7 @@ export default class MultiplayerGame {
         if (this.Ruleset == MultiplayerGameRuleset.Battle_Royale)
             Logger.Info(`[${this.Id}] Battle Royale Game Initiated. Eliminating players every: ${this.GetBattleRoyaleKnockoutInterval()}`);
 
-        Albatross.SendToUsers(this.Players, new ServerPacketGameStart());
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameStart());
 
         for (let i = 0; i < this.PlayersGameStartedWith.length; i++) {
             if (!this.PlayersGameStartedWith[i].IsMultiplayerBot)
@@ -731,7 +736,7 @@ export default class MultiplayerGame {
         await this.StopMatchCountdown();
 
         // Send packet to all users that the game has finished.
-        Albatross.SendToUsers(this.Players, new ServerPacketGameEnded());
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameEnded());
 
         // Give host to the next person if auto host rotation is enabled
         if (this.AutoHostRotation && this.Host) {
@@ -800,7 +805,7 @@ export default class MultiplayerGame {
         this.CountdownStartTime = Math.round((new Date()).getTime());
         this.CountdownTimer = setTimeout(async () => await this.Start(), 5000);
 
-        Albatross.SendToUsers(this.Players, new ServerPacketGameStartCountdown(this.CountdownStartTime));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameStartCountdown(this.CountdownStartTime));
         await this.InformLobbyUsers();
     }
 
@@ -819,7 +824,7 @@ export default class MultiplayerGame {
         this.CountdownStartTime = -1;
         clearTimeout(this.CountdownTimer);
 
-        Albatross.SendToUsers(this.Players, new ServerPacketGameStopCountdown());
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameStopCountdown());
 
         if (informLobbyUsers)
             await this.InformLobbyUsers();
@@ -833,7 +838,7 @@ export default class MultiplayerGame {
         if (this.InProgress)
             return;
 
-        Albatross.SendToUsers(this.Players, new ServerPacketGamePlayerReady(user));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGamePlayerReady(user));
         await this.InformLobbyUsers();
     }
 
@@ -842,7 +847,7 @@ export default class MultiplayerGame {
      * @param user 
      */
     public async InformPlayerNotReady(user: User): Promise<void> {
-        Albatross.SendToUsers(this.Players, new ServerPacketGamePlayerNotReady(user));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGamePlayerNotReady(user));
         await this.InformLobbyUsers();
     }
 
@@ -871,7 +876,7 @@ export default class MultiplayerGame {
         this.MinimumDifficultyRating = num;
         Logger.Info(`[${this.Id}] Multiplayer game minimum difficulty rating changed: ${this.MinimumDifficultyRating}`);
 
-        Albatross.SendToUsers(this.Players, new ServerPacketDifficultyRangeChanged(this));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketDifficultyRangeChanged(this));
         this.InformLobbyUsers();
     }
 
@@ -885,7 +890,7 @@ export default class MultiplayerGame {
         this.MaximumDifficultyRating = num;
         Logger.Info(`[${this.Id}] Multiplayer game maximum difficulty rating changed: ${this.MaximumDifficultyRating}`);
 
-        Albatross.SendToUsers(this.Players, new ServerPacketDifficultyRangeChanged(this));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketDifficultyRangeChanged(this));
         this.InformLobbyUsers();
     }
 
@@ -900,7 +905,7 @@ export default class MultiplayerGame {
         this.MaximumSongLength = num;
         Logger.Info(`[${this.Id}] Multiplayer game maximum song length changed: ${num}`);
 
-        Albatross.SendToUsers(this.Players, new ServerPacketGameMaxSongLengthChanged(this.MaximumSongLength));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameMaxSongLengthChanged(this.MaximumSongLength));
         this.InformLobbyUsers();
     }
 
@@ -918,7 +923,7 @@ export default class MultiplayerGame {
         this.MinimumLongNotePercentage = percent;
         Logger.Info(`[${this.Id}] Multiplayer - Minimum Long Note Percentage changed to: ${this.MinimumLongNotePercentage}%.`);
 
-        Albatross.SendToUsers(this.Players, new ServerPacketLongNotePercentageChanged(this));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketLongNotePercentageChanged(this));
         this.InformLobbyUsers();
     }
 
@@ -936,7 +941,7 @@ export default class MultiplayerGame {
         this.MaximumLongNotePercentage = percent;
         Logger.Info(`[${this.Id}] Multiplayer - Maximum Long Note Percentage changed to: ${this.MaximumLongNotePercentage}%.`);
 
-        Albatross.SendToUsers(this.Players, new ServerPacketLongNotePercentageChanged(this));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketLongNotePercentageChanged(this));
         this.InformLobbyUsers();
     }
 
@@ -954,7 +959,7 @@ export default class MultiplayerGame {
         this.AllowedGameModes.push(mode);
         Logger.Info(`[${this.Id}] Allowed game mode: ${mode} for this multiplayer game.`);
 
-        Albatross.SendToUsers(this.Players, new ServerPacketGameAllowedModesChanged(this));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameAllowedModesChanged(this));
         this.InformLobbyUsers();
     }
 
@@ -972,7 +977,7 @@ export default class MultiplayerGame {
         this.AllowedGameModes = this.AllowedGameModes.filter(x => x != mode);
         Logger.Info(`[${this.Id}] Disallowed game mode: ${mode} for this multiplayer game.`);
 
-        Albatross.SendToUsers(this.Players, new ServerPacketGameAllowedModesChanged(this));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameAllowedModesChanged(this));
         this.InformLobbyUsers();
     }
 
@@ -990,7 +995,7 @@ export default class MultiplayerGame {
         this.DifficultyRating = difficultyRating;
         Logger.Info(`[${this.Id}] Multiplayer Game Mods Changed: ${this.Modifiers} | Rating: ${difficultyRating}`);
 
-        Albatross.SendToUsers(this.Players, new ServerPacketGameChangeModifiers(this));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameChangeModifiers(this));
         this.InformLobbyUsers();
     }
 
@@ -1013,7 +1018,7 @@ export default class MultiplayerGame {
         playerMods.Mods = mods;
         Logger.Info(`[${this.Id}] Multiplayer - ${user.ToNameIdString()} <pds Changed: ${playerMods.Mods}.`);
 
-        Albatross.SendToUsers(this.Players, new ServerPacketGamePlayerChangeModifiers(user, mods));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGamePlayerChangeModifiers(user, mods));
         this.InformLobbyUsers();
     }
 
@@ -1033,7 +1038,7 @@ export default class MultiplayerGame {
 
         this.FreeModType |= type;
         
-        Albatross.SendToUsers(this.Players, new ServerPacketFreeModTypeChanged(this));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketFreeModTypeChanged(this));
         this.ChangeModifiers("0", this.DifficultyRating);
 
         for (let i = 0; i < this.Players.length; i++)
@@ -1054,7 +1059,7 @@ export default class MultiplayerGame {
             this.FreeModType -= type;
         }
 
-        Albatross.SendToUsers(this.Players, new ServerPacketFreeModTypeChanged(this));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketFreeModTypeChanged(this));
         this.ChangeModifiers("0", this.DifficultyRating);
 
         for (let i = 0; i < this.Players.length; i++)
@@ -1074,7 +1079,7 @@ export default class MultiplayerGame {
             
         this.FreeModType = type;
         
-        Albatross.SendToUsers(this.Players, new ServerPacketFreeModTypeChanged(this));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketFreeModTypeChanged(this));
         this.ChangeModifiers("0", this.DifficultyRating);
 
         for (let i = 0; i < this.Players.length; i++)
@@ -1119,7 +1124,7 @@ export default class MultiplayerGame {
 
         this.HealthType = type;
 
-        Albatross.SendToUsers(this.Players, new ServerPacketGameHealthTypeChanged(this));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameHealthTypeChanged(this));
         this.InformLobbyUsers();
     }
 
@@ -1136,7 +1141,7 @@ export default class MultiplayerGame {
 
         this.Lives = lives;
 
-        Albatross.SendToUsers(this.Players, new ServerPacketGameLivesChanged(this));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameLivesChanged(this));
         this.InformLobbyUsers();
     }
 
@@ -1147,7 +1152,7 @@ export default class MultiplayerGame {
     public ChangeAutoHostRotation(on: boolean): void {
         this.AutoHostRotation = on;
         
-        Albatross.SendToUsers(this.Players, new ServerPacketGameHostRotationChanged(this));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameHostRotationChanged(this));
         this.InformLobbyUsers();
     }
 
@@ -1188,7 +1193,7 @@ export default class MultiplayerGame {
 
         Logger.Info(`[${this.Id}] Multiplayer - ${user.ToNameIdString()} has been switched to the ${MultiplayerTeam[team]} team!`);
 
-        Albatross.SendToUsers(this.Players, new ServerPacketGamePlayerTeamChanged(user, team));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGamePlayerTeamChanged(user, team));
 
         const teamChat: ChatChannel = ChatManager.Channels[this.GetTeamChatChannelName()];
 
@@ -1279,12 +1284,12 @@ export default class MultiplayerGame {
         for (let i = 0; i < this.Players.length; i++) {
             const playerWins = new MultiplayerPlayerWins(this.Players[i], 0);
             this.PlayerWins.push(playerWins);
-            Albatross.SendToUsers(this.Players, new ServerPacketGamePlayerWinCount(playerWins));
+            Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGamePlayerWinCount(playerWins));
         }
 
         // Send packet first to all players in the current game that the ruleset has changed, so they're
         // aware of if the game is team based or not
-        Albatross.SendToUsers(this.Players, new ServerPacketGameRulesetChanged(this));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameRulesetChanged(this));
 
         switch (this.Ruleset) {
             // Moving to teams, so populate each team with players
@@ -1319,7 +1324,7 @@ export default class MultiplayerGame {
 
         this.MaxPlayers = players;
 
-        Albatross.SendToUsers(this.Players, new ServerPacketGameMaxPlayersChanged(this));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameMaxPlayersChanged(this));
         this.InformLobbyUsers();
     }
 
@@ -1329,7 +1334,7 @@ export default class MultiplayerGame {
     public ChangeMinimumRate(rate: number): void {
         rate = Math.round(10 * rate) / 10;
 
-        Albatross.SendToUsers(this.Players, new ServerPacketGameMinimumRateChanged(this));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameMinimumRateChanged(this));
         this.InformLobbyUsers();
     }
 
@@ -1342,7 +1347,7 @@ export default class MultiplayerGame {
         this.RedTeamWins = redTeam;
         this.BlueTeamWins = blueTeam;
 
-        Albatross.SendToUsers(this.Players, new ServerPacketGameTeamWinCount(this));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameTeamWinCount(this));
 
         if (informLobbyUsers)
             this.InformLobbyUsers();
@@ -1592,7 +1597,7 @@ export default class MultiplayerGame {
 
         playerWins.Wins = wins;
 
-        Albatross.SendToUsers(this.Players, new ServerPacketGamePlayerWinCount(playerWins));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGamePlayerWinCount(playerWins));
 
         if (informLobbyUsers)
             this.InformLobbyUsers();
@@ -1882,7 +1887,7 @@ export default class MultiplayerGame {
             const user: User = new User(null, -i - 1, result[0].steam_id, `Bot ${result[0].username}`, true, 0, "US", Privileges.Normal, UserGroups.Bot, "", true);
             Albatross.Instance.OnlineUsers.AddUser(user);
 
-            Albatross.SendToUsers(this.Players, new ServerPacketUserConnected(user));
+            Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketUserConnected(user));
             user.JoinMultiplayerGame(this, this.Password);
         }
     }
@@ -2039,7 +2044,7 @@ export default class MultiplayerGame {
     public HandleHostSelectingMap(isSelecting: boolean, informLobbyUsers: boolean = true): void {
         this.HostSelectingMap = isSelecting;
 
-        Albatross.SendToUsers(this.Players, new ServerPacketGameHostSelectingMap(this));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameHostSelectingMap(this));
 
         if (informLobbyUsers)
             this.InformLobbyUsers();
@@ -2067,7 +2072,7 @@ export default class MultiplayerGame {
                 this.ChangeUserTeam(oldReferee, this.GetUnbalancedOrAvailableTeam());
         }
   
-        Albatross.SendToUsers(this.Players, new ServerPacketGameSetReferee(this));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameSetReferee(this));
 
         if (informLobbyUsers)
             this.InformLobbyUsers();     
@@ -2084,10 +2089,24 @@ export default class MultiplayerGame {
 
         this.IsMapsetShared = result.length != 0 && result[0].map_md5 == this.MapMd5;
 
-        Albatross.SendToUsers(this.Players, new ServerPacketGameMapsetShared(this));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameMapsetShared(this));
 
         if (informLobbyUsers)
             this.InformLobbyUsers();
     }
 
+    /**
+     * Retrieves a list of ALL players and spectators in the game.
+     */
+    public GetIngameUsers(): User[] {
+        let users: User[] = [];
+
+        for (let i = 0; i < this.Players.length; i++)
+            users.push(this.Players[i]);
+
+        for (let i = 0; i < this.Spectators.length; i++)
+            users.push(this.Spectators[i]);
+
+        return users;
+    }
 }

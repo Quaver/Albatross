@@ -109,6 +109,8 @@ import GameChangeNameHandler from "./GameChangeNameHandler";
 import ClientPacketChangeGameName from "../packets/client/ClientPacketChangeGameName";
 import GameChangePasswordHandler from "./GameChangePasswordHandler";
 import ClientPacketChangeGamePassword from "../packets/client/ClientPacketChangeGamePassword";
+import SpectateMultiplayerGameHandler from "./SpectateMultiplayerGameHandler";
+import ClientPacketSpectateMultiplayerGame from "../packets/client/ClientPacketSpectateMultiplayerGame";
 const config = require("../config/config.json");
 
 export default class PacketHandler {
@@ -296,6 +298,9 @@ export default class PacketHandler {
                     break;
                 case PacketId.ClientPacketChangeGamePassword:
                     await GameChangePasswordHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketChangeGamePassword));
+                    break;
+                case PacketId.ClientSpectateMultiplayerGame:
+                    await SpectateMultiplayerGameHandler.Handle(user, jsonConvert.deserializeObject(msg, ClientPacketSpectateMultiplayerGame));
                     break;
                 default:
                     // noinspection ExceptionCaughtLocallyJS

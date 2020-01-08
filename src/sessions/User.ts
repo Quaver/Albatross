@@ -55,6 +55,7 @@ import ListeningParty from "../listening/ListeningParty";
 import ServerPacketListeningPartyJoined from "../packets/server/ServerPacketListeningPartyJoin";
 import ServerPacketListeningPartyLeft from "../packets/server/ServerPacketListeningPartyLeft";
 import ServerPacketTwitchConnection from "../packets/server/ServerPacketTwitchConnection";
+import ServerPacketSpectateMultiplayerGame from "../packets/server/ServerPacketSpectateMultiplayerGame";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -152,10 +153,6 @@ export default class User implements IPacketWritable, IStringifyable {
      */
     public IsMultiplayerBot: boolean = false;
 
-    /**
-     * Dictates if the user is currently on a tournament client
-     */
-    public IsUsingTournamentClient: boolean = false;
 
     /**
      * The users that this player is currenty spectating
@@ -184,6 +181,11 @@ export default class User implements IPacketWritable, IStringifyable {
     public ListeningParty: ListeningParty | null = null;
 
     /**
+     * True if spectating the current multiplayer game
+     */
+    public IsSpectatingMultiplayerGame: boolean = false;
+
+    /**
      * @param token 
      * @param steamId 
      * @param username 
@@ -208,7 +210,6 @@ export default class User implements IPacketWritable, IStringifyable {
         this.UserGroups = usergroups;
         this.AvatarUrl = avatarUrl;
         this.IsMultiplayerBot = isMultiplayerBot;
-        this.IsUsingTournamentClient = false;
     }
 
     /**
@@ -430,6 +431,7 @@ export default class User implements IPacketWritable, IStringifyable {
     public async JoinMultiplayerGame(game: MultiplayerGame, password: string | null = null): Promise<void> {
         // Have the player leave their already existing match if they're in one.
         await this.LeaveMultiplayerGame();
+        this.IsSpectatingMultiplayerGame = false;
 
         if (!game)
             return this.SendJoinGameFailurePacket(JoinGameFailureReason.MatchNoExists);
@@ -480,9 +482,9 @@ export default class User implements IPacketWritable, IStringifyable {
         if (!this.CurrentGame)
             return;
 
-        const game: MultiplayerGame = this.CurrentGame;
-        
-        if (game.InProgress && game.Ruleset == MultiplayerGameRuleset.Battle_Royale)
+        let game: MultiplayerGame = this.CurrentGame;
+                  
+        if (!this.IsSpectatingMultiplayerGame && game.InProgress && game.Ruleset == MultiplayerGameRuleset.Battle_Royale)
             game.EliminateBattleRoyalePlayer(this);
 
         _.remove(game.Players, this);
@@ -490,15 +492,25 @@ export default class User implements IPacketWritable, IStringifyable {
         _.remove(game.PlayersGameStartedWith, this);
         _.remove(game.PlayersWithGameScreenLoaded, this);
         _.remove(game.PlayersSkipped, this);
+        _.remove(game.Spectators, this);
         game.PlayerMods = game.PlayerMods.filter((x: MultiplayerPlayerMods) => x.Id != this.Id);
         game.PlayerIds = game.PlayerIds.filter((x: number) => x != this.Id);
         game.PlayersReady = game.PlayersReady.filter((x: number) => x != this.Id);
         game.RedTeamPlayers = game.RedTeamPlayers.filter(x => x != this.Id);
         game.BlueTeamPlayers = game.BlueTeamPlayers.filter(x => x != this.Id);
-        this.LeaveChatChannel(ChatManager.Channels[`#multiplayer_${game.Id}`]);
+
+        const channel = ChatManager.Channels[`#multiplayer_${game.Id}`];
+        Bot.SendMessage(channel.Name, `${this.Username} has stopped spectating this game.`);
+
+        this.LeaveChatChannel(channel);
         this.LeaveChatChannel(ChatManager.Channels[game.GetTeamChatChannelName()]);
 
         this.CurrentGame = null;
+        
+        if (this.IsSpectatingMultiplayerGame) {
+            this.IsSpectatingMultiplayerGame = false;
+            this.StopSpectatingAllUsers();
+        }
 
         // No more players, so the game should be disbanded.
         if (game.Players.length == 0) {
@@ -521,6 +533,38 @@ export default class User implements IPacketWritable, IStringifyable {
         // Let players in the lobby be aware of this change
         game.InformLobbyUsers(); 
         await game.RemoveCachedPlayer(this);  
+    }
+
+    /**
+     * Requests to spectate a multiplayer game
+     */
+    public async SpectateMultiplayerGame(game: MultiplayerGame, password: string | null = null): Promise<void> {
+        await this.LeaveMultiplayerGame();
+        await this.StopSpectatingAllUsers();
+
+        if (!game)
+            return this.SendJoinGameFailurePacket(JoinGameFailureReason.MatchNoExists);
+
+        if (game.HasPassword && game.Password != password && !game.PlayersInvited.includes(this))
+            return this.SendJoinGameFailurePacket(JoinGameFailureReason.Password);
+
+        // Remove the player from the lobby if they're currently in it.
+        Lobby.RemoveUser(this);
+
+        this.CurrentGame = game;
+        this.IsSpectatingMultiplayerGame = true;
+        this.CurrentGame.Spectators.push(this);
+
+        const channel = ChatManager.Channels[`#multiplayer_${game.Id}`];
+        this.JoinChatChannel(channel);
+
+        Bot.SendMessage(channel.Name, `${this.Username} has started spectating this game.`);
+
+        // Let the player know they've joined the game.
+        Albatross.SendToUser(this, new ServerPacketSpectateMultiplayerGame(game));
+
+        // Let players in the lobby be aware of this change
+        game.InformLobbyUsers();
     }
 
     /**
@@ -764,10 +808,6 @@ export default class User implements IPacketWritable, IStringifyable {
      *  Makes the client start spectating a player
      */
     public async StartSpectatingPlayer(id: number): Promise<void> {
-        // Lock spectating for normal people
-        if (this.UserGroups == UserGroups.Normal)
-            return await this.SendNotification(ServerNotificationType.Error, "Spectating is currently only available to developers!");
-
         const player: User = Albatross.Instance.OnlineUsers.GetUserById(id);
 
         if (!player)
@@ -786,7 +826,7 @@ export default class User implements IPacketWritable, IStringifyable {
             return await this.SendNotification(ServerNotificationType.Error, "You are already spectating this player!");
 
         // User is not using the tournament client, so they can only spectate one player at a time.
-        if (!this.IsUsingTournamentClient && this.SpectatingUsers.length > 0)
+        if (!this.IsSpectatingMultiplayerGame && this.SpectatingUsers.length > 0)
             await this.StopSpectatingAllUsers();
 
         // Add the player to our spectating list
