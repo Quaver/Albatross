@@ -2061,13 +2061,20 @@ export default class MultiplayerGame {
             return;
 
         const oldReferee = this.Players.find(x => x.Id == this.RefereeUserId);
-
+        
         this.BlueTeamPlayers = this.BlueTeamPlayers.filter(x => x != user.Id);
         this.RedTeamPlayers = this.RedTeamPlayers.filter(x => x != user.Id);
 
         this.RefereeUserId = user.Id;
 
+        const newReferee = this.Players.find(x => x.Id == this.RefereeUserId);
+        
+        if (newReferee)
+            newReferee.IsSpectatingMultiplayerGame = true;
+
         if (oldReferee) {
+            oldReferee.IsSpectatingMultiplayerGame = false;
+
             if (this.Ruleset == MultiplayerGameRuleset.Team)
                 this.ChangeUserTeam(oldReferee, this.GetUnbalancedOrAvailableTeam());
         }
