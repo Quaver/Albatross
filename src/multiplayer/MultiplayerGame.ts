@@ -1660,11 +1660,11 @@ export default class MultiplayerGame {
         this.PlayerScoreProcessors = {};
         
         for (let i = 0; i < this.PlayersGameStartedWith.length; i++) {
-            let mods = parseInt(this.Modifiers);
+            let mods = Number(this.Modifiers);
             const playerMods = this.PlayerMods.find(x => x.Id == this.PlayersGameStartedWith[i].Id);
 
             if (playerMods)
-                mods |= parseInt(playerMods.Mods);
+                mods |= Number(playerMods.Mods);
 
             const difficultyRating: number = await this.GetDifficultyRatingForPlayer(mods);
 
