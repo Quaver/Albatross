@@ -172,6 +172,17 @@ export default class ModHelper {
             }
         }
         
+        
+        let unique: any = {};
+
+        modStrings.forEach(function(i) {
+          if(!unique[i]) {
+            unique[i] = true;
+          }
+        });
+
+        modStrings = Object.keys(unique);
+        
         return modStrings.join(", ");
     }
 }
