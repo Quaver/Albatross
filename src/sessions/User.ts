@@ -504,7 +504,7 @@ export default class User implements IPacketWritable, IStringifyable {
         game.BlueTeamPlayers = game.BlueTeamPlayers.filter(x => x != this.Id);
 
         const channel = ChatManager.Channels[`#multiplayer_${game.Id}`];
-        Bot.SendMessage(channel.Name, `${this.Username} has stopped spectating this game.`);
+        //Bot.SendMessage(channel.Name, `${this.Username} has stopped spectating this game.`);
 
         this.LeaveChatChannel(channel);
         this.LeaveChatChannel(ChatManager.Channels[game.GetTeamChatChannelName()]);
