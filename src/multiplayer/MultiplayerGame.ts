@@ -2088,15 +2088,7 @@ export default class MultiplayerGame {
 
         const newReferee = this.Players.find(x => x.Id == this.RefereeUserId);
         
-        if (newReferee) {
-            newReferee.IsSpectatingMultiplayerGame = true;
-            this.Spectators.push(newReferee);
-        }
-
         if (oldReferee) {
-            oldReferee.IsSpectatingMultiplayerGame = false;
-            _.remove(this.Spectators, oldReferee);
-
             if (this.Ruleset == MultiplayerGameRuleset.Team)
                 this.ChangeUserTeam(oldReferee, this.GetUnbalancedOrAvailableTeam());
         }
