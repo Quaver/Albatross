@@ -461,6 +461,9 @@ export default class User implements IPacketWritable, IStringifyable {
         game.PlayerIds.push(this.Id);
         game.PlayerMods.push(new MultiplayerPlayerMods(this, "0"));
         
+        if (game.RefereeUserId == this.Id)
+            game.SetReferee(this);
+
         if (!game.PlayerWins.find(x => x.Id == this.Id))
             game.PlayerWins.push(new MultiplayerPlayerWins(this));
 
@@ -843,8 +846,8 @@ export default class User implements IPacketWritable, IStringifyable {
             return await this.SendNotification(ServerNotificationType.Error, "You are already spectating this player!");*/
 
         // User is not using the tournament client, so they can only spectate one player at a time.
-        if (!this.IsSpectatingMultiplayerGame && this.SpectatingUsers.length > 0)
-            await this.StopSpectatingAllUsers();
+        //if (!this.IsSpectatingMultiplayerGame && this.SpectatingUsers.length > 0)
+       //     await this.StopSpectatingAllUsers();
 
         // Add the player to our spectating list
         this.SpectatingUsers.push(player);

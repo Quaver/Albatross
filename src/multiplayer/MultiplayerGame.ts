@@ -698,10 +698,17 @@ export default class MultiplayerGame {
             if (!this.PlayersGameStartedWith[i].IsMultiplayerBot)
                 continue;
 
-            this.PlayersGameStartedWith[i].CurrentStatus.MapMd5 = this.MapMd5;
-            this.PlayersGameStartedWith[i].CurrentStatus.MapId = this.MapId;
-            this.PlayersGameStartedWith[i].CurrentStatus.Modifiers = 0;
-            this.PlayersGameStartedWith[i].CurrentStatus.Status = ClientStatus.Playing;
+            const player = this.PlayersGameStartedWith[i];
+
+            // Update the players' statuses
+            player.CurrentStatus.MapMd5 = this.MapMd5;
+            player.CurrentStatus.MapId = this.MapId;
+            player.CurrentStatus.Modifiers = 0;
+            player.CurrentStatus.Status = ClientStatus.Playing;
+            
+            // Clear each player's replay. This should be done here before spectating to prevent the user's old replay from
+            // sending
+            player.CurrentSpectatorReplayFrames = [];
         }
 
         // Have all spectators begin spectating the correct people
@@ -2073,12 +2080,6 @@ export default class MultiplayerGame {
      * Sets the referee of the game
      */
     public async SetReferee(user: User, informLobbyUsers: boolean = true): Promise<void> {
-        if (this.InProgress)
-            return;
-
-        if (this.RefereeUserId == user.Id)
-            return;
-
         const oldReferee = this.Players.find(x => x.Id == this.RefereeUserId);
         
         this.BlueTeamPlayers = this.BlueTeamPlayers.filter(x => x != user.Id);
@@ -2089,11 +2090,6 @@ export default class MultiplayerGame {
         const newReferee = this.Players.find(x => x.Id == this.RefereeUserId);
         
         
-        if (newReferee) {
-            newReferee.IsSpectatingMultiplayerGame = true;
-            this.Spectators.push(newReferee);
-        }
-
         if (oldReferee) {
             oldReferee.IsSpectatingMultiplayerGame = false;
             _.remove(this.Spectators, oldReferee);
@@ -2101,8 +2097,13 @@ export default class MultiplayerGame {
             if (this.Ruleset == MultiplayerGameRuleset.Team)
                 this.ChangeUserTeam(oldReferee, this.GetUnbalancedOrAvailableTeam());
         }
-  
-        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameSetReferee(this));
+
+        if (newReferee) {
+            newReferee.IsSpectatingMultiplayerGame = true;
+            this.Spectators.push(newReferee);
+        }
+
+          Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameSetReferee(this));
 
         if (informLobbyUsers)
             this.InformLobbyUsers();     
@@ -2134,8 +2135,10 @@ export default class MultiplayerGame {
         for (let i = 0; i < this.Players.length; i++)
             users.push(this.Players[i]);
 
-        for (let i = 0; i < this.Spectators.length; i++)
-            users.push(this.Spectators[i]);
+        for (let i = 0; i < this.Spectators.length; i++) {
+            if (!users.includes(this.Spectators[i]))
+                users.push(this.Spectators[i]);
+        }
 
         return users;
     }
