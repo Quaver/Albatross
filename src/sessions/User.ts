@@ -56,6 +56,7 @@ import ServerPacketListeningPartyJoined from "../packets/server/ServerPacketList
 import ServerPacketListeningPartyLeft from "../packets/server/ServerPacketListeningPartyLeft";
 import ServerPacketTwitchConnection from "../packets/server/ServerPacketTwitchConnection";
 import ServerPacketSpectateMultiplayerGame from "../packets/server/ServerPacketSpectateMultiplayerGame";
+import ServerPacketGameDisbanded from "../packets/server/ServerPacketGameDisbanded"
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -530,12 +531,15 @@ export default class User implements IPacketWritable, IStringifyable {
 
             // No players left in a non-autohost game, so delete it
             Albatross.SendToUsers(game.GetIngameUsers(), new ServerPacketUserLeftGame(this));  
+            Albatross.SendToUsers(game.GetIngameUsers(), new ServerPacketGameDisbanded(game));  
             return await Lobby.DeleteGame(game);
         }
     
         // The current host of the game was us, so we'll need to find a new host.   
         if (game.Type == MultiplayerGameType.Friendly && game.Host == this)
             await game.ChangeHost(game.Players[0]);
+
+        Albatross.SendToUsers(game.GetIngameUsers(), new ServerPacketUserLeftGame(this));  
 
         // Let players in the lobby be aware of this change
         game.InformLobbyUsers(); 
