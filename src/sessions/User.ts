@@ -449,7 +449,7 @@ export default class User implements IPacketWritable, IStringifyable {
         // Send packet to users already in the game, letting them know that a new player has joined.
         // send it BEFORE pushing the new player to the list, so we don't send an unnecessary packet to 
         // the user jining.
-        Albatross.SendToUsers(game.Players, new ServerPacketUserJoinedGame(this));
+        Albatross.SendToUsers(game.GetIngameUsers(), new ServerPacketUserJoinedGame(this));
 
         // Have all spectators begin spectating this user
         for (let i = 0; i < game.Spectators.length; i++)
@@ -538,7 +538,7 @@ export default class User implements IPacketWritable, IStringifyable {
             await game.ChangeHost(game.Players[0]);
 
         // Send a packet to users already in the game.
-        Albatross.SendToUsers(game.Players, new ServerPacketUserLeftGame(this));   
+        Albatross.SendToUsers(game.GetIngameUsers(), new ServerPacketUserLeftGame(this));   
         
         // Let players in the lobby be aware of this change
         game.InformLobbyUsers(); 
@@ -598,7 +598,7 @@ export default class User implements IPacketWritable, IStringifyable {
         if (!game.PlayersWithoutMap.includes(this.Id))
             game.PlayersWithoutMap.push(this.Id);
 
-        Albatross.SendToUsers(game.Players, new ServerPacketGameNoMap(this));
+        Albatross.SendToUsers(game.GetIngameUsers(), new ServerPacketGameNoMap(this));
         game.InformLobbyUsers();
     }
 
@@ -613,7 +613,7 @@ export default class User implements IPacketWritable, IStringifyable {
 
         game.PlayersWithoutMap = game.PlayersWithoutMap.filter(x => x != this.Id);
         
-        Albatross.SendToUsers(game.Players, new ServerPacketGamePlayerHasMap(this));
+        Albatross.SendToUsers(game.GetIngameUsers(), new ServerPacketGamePlayerHasMap(this));
         game.InformLobbyUsers();
     }
 
