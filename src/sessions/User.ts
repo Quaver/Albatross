@@ -529,17 +529,14 @@ export default class User implements IPacketWritable, IStringifyable {
                 return await game.End();
 
             // No players left in a non-autohost game, so delete it
+            Albatross.SendToUsers(game.GetIngameUsers(), new ServerPacketUserLeftGame(this));  
             return await Lobby.DeleteGame(game);
         }
-
-        
+    
         // The current host of the game was us, so we'll need to find a new host.   
         if (game.Type == MultiplayerGameType.Friendly && game.Host == this)
             await game.ChangeHost(game.Players[0]);
 
-        // Send a packet to users already in the game.
-        Albatross.SendToUsers(game.GetIngameUsers(), new ServerPacketUserLeftGame(this));   
-        
         // Let players in the lobby be aware of this change
         game.InformLobbyUsers(); 
         await game.RemoveCachedPlayer(this);  
