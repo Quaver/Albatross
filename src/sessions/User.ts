@@ -633,6 +633,8 @@ export default class User implements IPacketWritable, IStringifyable {
         if (!game.FinishedPlayers.includes(this))
             game.FinishedPlayers.push(this);
 
+        Logger.Info(`${this.ToNameIdString()} has finished the multiplayer match! [${game.FinishedPlayers.length}/${game.PlayersGameStartedWith.length}]`);
+
         if (game.FinishedPlayers.length >= game.PlayersGameStartedWith.length)
             await game.End();
     }
@@ -673,11 +675,7 @@ export default class User implements IPacketWritable, IStringifyable {
                 for (let j = judgementsBefore; j < game.PlayerScoreProcessors[this.Id].JudgementList.length; j++)
                     judgements.push(game.PlayerScoreProcessors[game.PlayersGameStartedWith[i].Id].JudgementList[j]);
 
-                setTimeout(() =>  {
-                    try {
-                        Albatross.SendToUser(this, new ServerPacketGameJudgements(game.PlayersGameStartedWith[i], judgements))
-                    } catch (err) {}
-                }, 400); 
+                Albatross.SendToUser(this, new ServerPacketGameJudgements(game.PlayersGameStartedWith[i], judgements));
             }
         }
 
