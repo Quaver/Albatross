@@ -727,7 +727,7 @@ export default class MultiplayerGame {
             this.GenerateBotJudgements(this.PlayersGameStartedWith[i]);
             this.PlayersGameStartedWith[i].ReadyToPlayMultiplayerGame();
             this.PlayersGameStartedWith[i].HandleMultiplayerGameSkipRequest();
-            // this.PlayersGameStartedWith[i].FinishPlayingMultiplayerGame();
+            this.PlayersGameStartedWith[i].FinishPlayingMultiplayerGame();
         }
         
         this.HandleHostSelectingMap(false, false);
