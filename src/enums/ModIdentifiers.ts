@@ -32,18 +32,18 @@ enum ModIdentifiers {
     Inverse = 1 << 29, // Converts regular notes into LNs and vice versa.
     FullLN = 1 << 30, // Converts regular notes into LNs, keeps existing LNs.
     Mirror = (0 | 1 << 31) >>> 0, // Flips the map horizontally
-    Coop = (0 | 1 << 32) >>> 0, // Allows multiple people to play together on one client
-    Speed105X = (0 | 1 << 33) >>> 0, // Speed 1.05x
-    Speed115X = (0 | 1 << 34) >>> 0, // Speed 1.15x
-    Speed125X = (0 | 1 << 35) >>> 0, // Speed 1.25x
-    Speed135X = (0 | 1 << 36) >>> 0, // Speed 1.35x
-    Speed145X = (0 | 1 << 37) >>> 0, // Speed 1.45x
-    Speed155X = (0 | 1 << 38) >>> 0, // Speed 1.55x
-    Speed165X = (0 | 1 << 39) >>> 0, // Speed 1.65x
-    Speed175X = (0 | 1 << 40) >>> 0, // Speed 1.75x
-    Speed185X = (0 | 1 << 41) >>> 0, // Speed 1.85x
-    Speed195X = (0 | 1 << 42) >>> 0, // Speed 1.95x
-    HeatlthAdjust = (0 | 1 << 43) >>> 0 // Test mod for making long note windows easier
+    Coop = 4294967296, // Allows multiple people to play together on one client
+    Speed105X = 8589934592, // Speed 1.05x
+    Speed115X = 17179869184, // Speed 1.15x
+    Speed125X = 34359738368, // Speed 1.25x
+    Speed135X = 68719476736, // Speed 1.35x
+    Speed145X = 137438953472, // Speed 1.45x
+    Speed155X = 274877906944, // Speed 1.55x
+    Speed165X = 549755813888, // Speed 1.65x
+    Speed175X = 1099511627776, // Speed 1.75x
+    Speed185X = 2199023255552, // Speed 1.85x
+    Speed195X = 4398046511104, // Speed 1.95x
+    HeatlthAdjust = 8796093022208 // Test mod for making long note windows easier
 }
 
 export default ModIdentifiers;

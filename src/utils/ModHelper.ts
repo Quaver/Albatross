@@ -1,4 +1,5 @@
 import ModIdentifiers from "../enums/ModIdentifiers";
+const bignum = require("bignum");
 
 export default class ModHelper {
     /**
@@ -29,25 +30,45 @@ export default class ModHelper {
         else if ((mods & ModIdentifiers.Speed09X) != 0)
                 rate = 0.9;
         else if ((mods & ModIdentifiers.Speed095X) != 0)
-                rate = 0.95;                    
+                rate = 0.95;  
+        else if ((bignum(mods).and(ModIdentifiers.Speed105X)) != 0)
+                rate = 1.05;                    
         else if ((mods & ModIdentifiers.Speed11X) != 0)
                 rate = 1.1;
+        else if ((bignum(mods).and(ModIdentifiers.Speed115X)) != 0)
+                rate = 1.15;                
         else if ((mods & ModIdentifiers.Speed12X) != 0)
                 rate = 1.2;
+        else if ((bignum(mods).and(ModIdentifiers.Speed125X)) != 0)
+                rate = 1.25;                       
         else if ((mods & ModIdentifiers.Speed13X) != 0)
                 rate = 1.3;
+        else if ((bignum(mods).and(ModIdentifiers.Speed135X)) != 0)
+                rate = 1.35;                
         else if ((mods & ModIdentifiers.Speed14X) != 0)
                 rate = 1.4;
+        else if ((bignum(mods).and(ModIdentifiers.Speed145X)) != 0)
+                rate = 1.45;        
         else if ((mods & ModIdentifiers.Speed15X) != 0)
                 rate = 1.5;
+        else if ((bignum(mods).and(ModIdentifiers.Speed155X)) != 0)
+                rate = 1.55;        
         else if ((mods & ModIdentifiers.Speed16X) != 0)
                 rate = 1.6;
+        else if ((bignum(mods).and(ModIdentifiers.Speed165X))!= 0)
+                rate = 1.65;
         else if ((mods & ModIdentifiers.Speed17X) != 0)
                 rate = 1.7;
+        else if ((bignum(mods).and(ModIdentifiers.Speed175X)) != 0)
+                rate = 1.75;        
         else if ((mods & ModIdentifiers.Speed18X) != 0)
                 rate = 1.8;
+        else if ((bignum(mods).and(ModIdentifiers.Speed185X))!= 0)
+                rate = 1.85;         
         else if ((mods & ModIdentifiers.Speed19X) != 0)
                 rate = 1.9;
+        else if ((bignum(mods).and(ModIdentifiers.Speed195X)) != 0)
+                rate = 1.95;
         else if ((mods & ModIdentifiers.Speed20X) != 0)
                 rate = 2.0;
     
@@ -72,7 +93,7 @@ export default class ModHelper {
             if (mod == ModIdentifiers.None)
                 continue;
             
-            if (!((mods & mod) != 0))
+            if (!((bignum(mods).and(mod)) != 0))
                 continue;
 
             switch (mod)
@@ -110,33 +131,63 @@ export default class ModHelper {
                 case ModIdentifiers.Speed095X:
                     modStrings.push("0.95x");
                     break;
+                case ModIdentifiers.Speed105X:
+                    modStrings.push("1.05x");
+                    break;
                 case ModIdentifiers.Speed11X:
                     modStrings.push("1.1x");
                     break;
+                case ModIdentifiers.Speed115X:
+                    modStrings.push("1.15x");
+                    break;    
                 case ModIdentifiers.Speed12X:
                     modStrings.push("1.2x");
+                    break;
+                case ModIdentifiers.Speed125X:
+                    modStrings.push("1.25x");
                     break;
                 case ModIdentifiers.Speed13X:
                     modStrings.push("1.3x");
                     break;
+                case ModIdentifiers.Speed135X:
+                    modStrings.push("1.35x");
+                    break;
                 case ModIdentifiers.Speed14X:
                     modStrings.push("1.4x");
                     break;
+                case ModIdentifiers.Speed145X:
+                    modStrings.push("1.45x");
+                    break;   
                 case ModIdentifiers.Speed15X:
                     modStrings.push("1.5x");
                     break;
+                case ModIdentifiers.Speed155X:
+                    modStrings.push("1.55x");
+                    break;    
                 case ModIdentifiers.Speed16X:
                     modStrings.push("1.6x");
                     break;
+                case ModIdentifiers.Speed165X:
+                    modStrings.push("1.65x");
+                    break;    
                 case ModIdentifiers.Speed17X:
                     modStrings.push("1.7x");
                     break;
+                case ModIdentifiers.Speed175X:
+                    modStrings.push("1.75x");
+                    break;    
                 case ModIdentifiers.Speed18X:
                     modStrings.push("1.8x");
+                    break;
+                case ModIdentifiers.Speed185X:
+                    modStrings.push("1.85x");
                     break;
                 case ModIdentifiers.Speed19X:
                     modStrings.push("1.9x");
                     break;
+                case ModIdentifiers.Speed195X:
+                    modStrings.push("1.95x");
+                    break;    
                 case ModIdentifiers.Speed20X:
                     modStrings.push("2.0x");
                     break;
@@ -155,24 +206,12 @@ export default class ModHelper {
                 case ModIdentifiers.Mirror:
                     modStrings.push("Mirror");
                     break;
-                case ModIdentifiers.FullLN:
-                    modStrings.push("Full LN");
-                    break;
-                case ModIdentifiers.Inverse:
-                    modStrings.push("Inverse");
-                    break;
-                case ModIdentifiers.NoLongNotes:
-                    modStrings.push("No Long Notes");
-                    break;
-                case ModIdentifiers.NoFail:
-                    modStrings.push("No Fail");
-                    break;
                 default:
                     break;
             }
         }
         
-        
+
         let unique: any = {};
 
         modStrings.forEach(function(i) {

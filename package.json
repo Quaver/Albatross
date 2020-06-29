@@ -32,6 +32,7 @@
     "@types/redis": "^2.8.10",
     "axios": "^0.18.0",
     "azure-storage": "^2.10.3",
+    "bignum": "^0.13.1",
     "chalk": "^2.4.2",
     "discord.js": "^11.4.2",
     "express": "^4.16.4",
