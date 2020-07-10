@@ -225,7 +225,6 @@ export default class Albatross {
                 // Timeout the socket if they haven't responding to our pings in a while.
                 if (currentTime - user.LastPongTime >= this.PING_TIMEOUT_TIME) 
                 {
-                    Logger.Warning(`Timing out inactive client session for: ${user.Username} (#${user.Id}) <${user.Token}>.`);
                     user.Socket.close();
                 }
             }
