@@ -18,14 +18,7 @@ export default class CloseHandler {
             if (!user)
                 return;
 
-            await user.LeaveMultiplayerGame();
-            await user.RemoveAllSpectators();
-            await user.StopSpectatingAllUsers();
-            await user.LeaveListeningParty();
-            Albatross.Instance.OnlineUsers.RemoveUser(user);
-            Albatross.Broadcast(new ServerPacketUserDisconected(user.Id));
-
-            await CloseHandler.SendDisconnectionEventToDiscord(user);
+            await user.DisconnectUserSession();
         } catch (err) {
             Logger.Error(err);
         }
@@ -35,7 +28,7 @@ export default class CloseHandler {
      * Sends the disconnection event for this user to Discord.
      * @param user 
      */
-    private static async SendDisconnectionEventToDiscord(user: User): Promise<void> {
+    public static async SendDisconnectionEventToDiscord(user: User): Promise<void> {
         if (!DiscordWebhookHelper.EventsHook)
             return;
         

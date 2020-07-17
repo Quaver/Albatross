@@ -57,6 +57,8 @@ import ServerPacketListeningPartyLeft from "../packets/server/ServerPacketListen
 import ServerPacketTwitchConnection from "../packets/server/ServerPacketTwitchConnection";
 import ServerPacketSpectateMultiplayerGame from "../packets/server/ServerPacketSpectateMultiplayerGame";
 import ServerPacketGameDisbanded from "../packets/server/ServerPacketGameDisbanded"
+import ServerPacketUserDisconected from "../packets/server/ServerPacketUserDisconnected";
+import CloseHandler from "../handlers/CloseHandler";
 
 export default class User implements IPacketWritable, IStringifyable {
     /**
@@ -1099,6 +1101,24 @@ export default class User implements IPacketWritable, IStringifyable {
 
         const packet = await ServerPacketTwitchConnection.Create(this);
         Albatross.SendToUser(this, packet);
+    }
+
+    /**
+     * Disconnects a user from the server 
+     */
+    public async DisconnectUserSession(): Promise<void> {
+        try {
+            await this.LeaveMultiplayerGame();
+            await this.RemoveAllSpectators();
+            await this.StopSpectatingAllUsers();
+            await this.LeaveListeningParty();
+            Albatross.Instance.OnlineUsers.RemoveUser(this);
+            Albatross.Broadcast(new ServerPacketUserDisconected(this.Id));
+    
+            await CloseHandler.SendDisconnectionEventToDiscord(this);
+        } catch (err) {
+            Logger.Error(err);
+        }
     }
 
     /**

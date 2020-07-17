@@ -226,7 +226,9 @@ export default class Albatross {
                 if (currentTime - user.LastPongTime >= this.PING_TIMEOUT_TIME) 
                 {
                     Logger.Warning(`Timing out inactive client session for: ${user.Username} (#${user.Id}) <${user.Token}>.`);
+
                     user.Socket.close();
+                    user.DisconnectUserSession();
                 }
             }
 
