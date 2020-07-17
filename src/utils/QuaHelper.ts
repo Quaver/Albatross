@@ -9,7 +9,7 @@ export default class QuaHelper {
      */
     public static async RunDifficultyCalculator(path: string, mods: ModIdentifiers): Promise<any> {
         try {
-            const result: any = await CLI.RunAndGetOutput("dotnet ../Quaver.API/Quaver.Tools/bin/Release/netcoreapp2.0/" +
+            const result: any = await CLI.RunAndGetOutput("dotnet ../Quaver.API/Quaver.Tools/bin/Release/netcoreapp3.1/" +
                 "Quaver.Tools.dll -calcdiff " + path + " " + mods);
             
             if (result.stderr != "") {
