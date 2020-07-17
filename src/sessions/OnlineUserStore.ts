@@ -58,7 +58,7 @@ export default class OnlineUserStore {
             await RedisHelper.set(`quaver:server:session:${user.Token}`, user.Id.toString());
 
         Logger.Success(`${user.Username} (#${user.Id}) [${user.SteamId}] <${user.Token}> has successfully logged in!`);
-        Logger.Info(`There are now: ${this.Count} users online.`);
+        Logger.Info(`There are now: ${Albatross.Instance.OnlineUsers.Users.length} users online.`);
     }
 
     /**
@@ -97,7 +97,7 @@ export default class OnlineUserStore {
         await RedisHelper.del(`quaver:server:user_status:${user.Id}`);
 
         Logger.Info(`${user.Username} (#${user.Id}) [${user.SteamId}] <${user.Token}> has disconnected from the server.`);
-        Logger.Info(`There are now: ${this.Count} users online.`);
+        Logger.Info(`There are now: ${Albatross.Instance.OnlineUsers.Users.length} users online.`);
     }
 
     /**
