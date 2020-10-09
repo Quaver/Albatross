@@ -8,6 +8,8 @@ import DiscordWebhookHelper from "../discord/DiscordWebhookHelper";
 import * as Discord from "discord.js";
 import Albatross from "../Albatross";
 import ServerPacketMultiplayerGameInfo from "../packets/server/ServerPacketMultiplayerGameInfo";
+import { Profanity } from "@2toad/profanity";
+import ChatManager from "../chat/ChatManager";
 
 export default class CreateGameHandler {
     /**
@@ -36,6 +38,9 @@ export default class CreateGameHandler {
                 Logger.Warning(`${user.ToNameIdString()} created a game with too long of a name!`);
                 packet.Game.Name = packet.Game.Name.substring(0, 50);
             }
+
+            // Add profanity filter to game name
+            packet.Game.Name = ChatManager.Profanity.censor(packet.Game.Name);
 
             const game: MultiplayerGame = MultiplayerGame.Create(MultiplayerGameType.Friendly, packet.Game.Name, packet.Game.Password, packet.Game.MaxPlayers, 
                 packet.Game.MapMd5, packet.Game.MapId, packet.Game.MapsetId, packet.Game.Map, packet.Game.Ruleset, packet.Game.AutoHostRotation,

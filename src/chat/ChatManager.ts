@@ -13,6 +13,7 @@ import * as Discord from "discord.js";
 import DiscordWebhookHelper from "../discord/DiscordWebhookHelper";
 import SqlDatabase from "../database/SqlDatabase";
 import ChatMessageType from "./ChatMessageType";
+import { Profanity, ProfanityOptions } from '@2toad/profanity';
 const config = require("../config/config.json");
 const randomcolor = require("randomcolor");
 
@@ -21,6 +22,11 @@ export default class ChatManager {
      * All of the currently available chat channels
      */
     public static Channels: StringToChannelMap = {};
+
+    /**
+     * Profanity filter
+     */
+    public static Profanity: any = null;
 
     /**
      * Initializes all of the chat channels for the server.
@@ -41,6 +47,12 @@ export default class ChatManager {
 
             Logger.Info(`Chat Channel: ${channel.Name} [${UserGroups[channel.AllowedUserGroups]}] (WH: ${webhook != null}) has been initialized!`);
         }
+
+        // Initialize profanity filter
+        const options = new ProfanityOptions();
+        options.wholeWord = true;
+        options.grawlix = '*****';
+        ChatManager.Profanity = new Profanity(options);
     }
 
     /**
@@ -84,6 +96,8 @@ export default class ChatManager {
             Logger.Warning(`${sender.Username} (#${sender.Id}) has sent ${sender.SpamRate} messages in a short amount of time. Auto-muting!`);
             return await sender.MuteForSpamming(to);
         }
+
+        message = ChatManager.Profanity.censor(message);
 
         // Go through with sending the mesage
         if (to.startsWith("#"))

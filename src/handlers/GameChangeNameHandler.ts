@@ -1,6 +1,7 @@
 import User from "../sessions/User";
 import ClientPacketChangeGameName from "../packets/client/ClientPacketChangeGameName";
 import Logger from "../logging/Logger";
+import ChatManager from "../chat/ChatManager";
 
 export default class GameChangeNameHandler {
     /**
@@ -15,6 +16,8 @@ export default class GameChangeNameHandler {
 
             if (!packet.Name)
                 return;
+
+            packet.Name = ChatManager.Profanity.censor(packet.Name);
 
             await user.CurrentGame.ChangeName(packet.Name.substring(0, 50));
         } catch (err) {
