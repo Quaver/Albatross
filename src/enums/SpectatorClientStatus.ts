@@ -2,7 +2,8 @@ enum SpectatorClientStatus {
     SelectingSong,
     NewSong,
     Playing,
-    Paused
+    Paused,
+    FinishedPlaying
 }
 
 export default SpectatorClientStatus;
