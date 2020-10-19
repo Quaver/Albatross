@@ -128,7 +128,8 @@ enum PacketId {
     ClientPacketChangeGameName,
     ClientPacketChangeGamePassword,
     ClientSpectateMultiplayerGame,
-    ServerSpectateMultiplayerGame
+    ServerSpectateMultiplayerGame,
+    ServerGameTournamentMode
 }
 
 export default PacketId;

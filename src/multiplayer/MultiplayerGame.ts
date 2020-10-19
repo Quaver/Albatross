@@ -67,6 +67,7 @@ import ServerPacketGameSetReferee from "../packets/server/ServerPacketGameSetRef
 import ServerPacketGameMapsetShared from "../packets/server/ServerPacketGameMapsetShared";
 import ClientStatus from "../enums/ClientStatus";
 import UserClientStatus from "../objects/UserClientStatus";
+import ServerPacketGameTournamentMode from "../packets/server/ServerPacketGameTournamentMode";
 const md5 = require("md5");
 
 /**
@@ -357,6 +358,12 @@ export default class MultiplayerGame {
     public IsMapsetShared: boolean = false;
 
     /**
+     * If the multiplayer game is in tournament mode, all passing scores and replays set in this match will be saved.
+     */
+    @JsonProperty("trn")
+    public TournamentMode: boolean = false;
+
+    /**
      * The players that are currently in the game
      */
     public Players: User[] = [];
@@ -453,11 +460,6 @@ export default class MultiplayerGame {
     private EliminatedBattleRoyalePlayers: User[] = [];
 
     /**
-     * If the multiplayer game is in tournament mode, all passing scores and replays set in this match will be saved.
-     */
-    public TournamentMode: boolean = false;
-
-    /**
      * Creates and returns a multiplayer game
      * @param type 
      * @param name 
@@ -509,7 +511,7 @@ export default class MultiplayerGame {
         game.JudgementCount = judgementCount;
         game.HostSelectingMap = false;
         game.IsMapsetShared = false;
-        game.ToggleTournamentMode(false);
+        game.TournamentMode = false;
 
         if (password) game.HasPassword = true;
 
@@ -2133,7 +2135,7 @@ export default class MultiplayerGame {
     /**
      * Toggles tournament mode on or off and saves it in Redis.
      */
-    public async ToggleTournamentMode(enable: boolean): Promise<void> {
+    public async ToggleTournamentMode(enable: boolean, informLobbyUsers: boolean = true): Promise<void> {
         this.TournamentMode = enable;
 
         if (this.TournamentMode)
@@ -2142,6 +2144,11 @@ export default class MultiplayerGame {
             await Bot.SendMessage(this.GetChatChannelName(), `Tournament mode has been turned off. Replays will only be saved on personal best scores.`);
 
         await RedisHelper.hset(`quaver:server:multiplayer:${this.GameId}`, "tournament_mode", Number(this.TournamentMode).toString());
+
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameTournamentMode(this));
+
+        if (informLobbyUsers)
+            this.InformLobbyUsers();
     }
 
     /**
