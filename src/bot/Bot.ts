@@ -54,6 +54,7 @@ import ServerPacketUserDisconected from "../packets/server/ServerPacketUserDisco
 import UserClientStatus from "../objects/UserClientStatus";
 import ClientStatus from "../enums/ClientStatus";
 import OnlineUserStore from "../sessions/OnlineUserStore";
+import MultiplayerCommandTournamentMode from "./Multiplayer/MultiplayerCommandTournamentMode";
 const config = require("../config/config.json");
 
 export default class Bot {
@@ -626,6 +627,9 @@ export default class Bot {
                 break;
             case "clearreferee":
                 await new MultiplayerCommandClearReferee().Execute(sender, args);
+                break;
+            case "tournament":
+                await new MultiplayerCommandTournamentMode().Execute(sender, args);
                 break;
         }
     }

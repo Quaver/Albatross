@@ -453,6 +453,11 @@ export default class MultiplayerGame {
     private EliminatedBattleRoyalePlayers: User[] = [];
 
     /**
+     * If the multiplayer game is in tournament mode, all passing scores and replays set in this match will be saved.
+     */
+    public TournamentMode: boolean = false;
+
+    /**
      * Creates and returns a multiplayer game
      * @param type 
      * @param name 
@@ -504,6 +509,8 @@ export default class MultiplayerGame {
         game.JudgementCount = judgementCount;
         game.HostSelectingMap = false;
         game.IsMapsetShared = false;
+        game.ToggleTournamentMode(false);
+
         if (password) game.HasPassword = true;
 
         game.CacheSelectedMap();
@@ -640,9 +647,6 @@ export default class MultiplayerGame {
     public async ChangePassword(password: string | null): Promise<void> {
         this.Password = password;
         this.HasPassword = password != null;
-
-
-        // TODO: Send packet to users currently in the game.
 
         await this.InformLobbyUsers();
     }
@@ -2124,6 +2128,20 @@ export default class MultiplayerGame {
 
         if (informLobbyUsers)
             this.InformLobbyUsers();
+    }
+
+    /**
+     * Toggles tournament mode on or off and saves it in Redis.
+     */
+    public async ToggleTournamentMode(enable: boolean): Promise<void> {
+        this.TournamentMode = enable;
+
+        if (this.TournamentMode)
+            await Bot.SendMessage(this.GetChatChannelName(), `Tournament mode has been turned on. All replays submitted in this game will be saved.`);
+        else
+            await Bot.SendMessage(this.GetChatChannelName(), `Tournament mode has been turned off. Replays will only be saved on personal best scores.`);
+
+        await RedisHelper.hset(`quaver:server:multiplayer:${this.GameId}`, "tournament_mode", Number(this.TournamentMode).toString());
     }
 
     /**
