@@ -7,7 +7,8 @@ enum Privileges {
     RankMapsets = 1 << 5,
     ViewAdminLogs = 1 << 6,
     EditUsers = 1 << 7,
-    ManageBuilds = 1 << 8
+    ManageBuilds = 1 << 8,
+    EnableTournamentMode = 1 << 9
 }
 
 export default Privileges;

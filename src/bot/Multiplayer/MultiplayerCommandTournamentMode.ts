@@ -27,6 +27,9 @@ export default class MultiplayerCommandTournamentMode extends BotCommand {
         if (user == null || user.CurrentGame == null)
             return;
 
+        if (!user.HasPrivilege(Privileges.EnableTournamentMode))
+            return;
+            
         const game = user.CurrentGame;
         await game.ToggleTournamentMode(!game.TournamentMode);
     }
