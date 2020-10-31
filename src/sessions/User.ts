@@ -454,9 +454,11 @@ export default class User implements IPacketWritable, IStringifyable {
         // the user jining.
         Albatross.SendToUsers(game.GetIngameUsers(), new ServerPacketUserJoinedGame(this));
 
-        // Have all spectators begin spectating this user
-        for (let i = 0; i < game.Spectators.length; i++)
-            game.Spectators[i].StartSpectatingPlayer(this.Id);
+        // Have all multiplayer spectators begin spectating this user if they aren't the referee.
+        if (game.RefereeUserId != this.Id) {
+            for (let i = 0; i < game.Spectators.length; i++)
+                game.Spectators[i].StartSpectatingPlayer(this.Id);
+        }
 
         // Place the player into the game
         this.CurrentGame = game;
