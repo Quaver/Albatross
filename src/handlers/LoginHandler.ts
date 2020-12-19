@@ -242,6 +242,8 @@ export default class LoginHandler {
      * @param user 
      */
     private static async UpdateLatestActivityAndAvatar(socket: any, user: User): Promise<void> {
+        return;
+        
         const avatar = await SteamWebAPI.GetUserAvatarLink(user.SteamId.toString());
         await SqlDatabase.Execute("UPDATE users SET avatar_url = ?, latest_activity = ? WHERE id = ?", [avatar, Date.now(), user.Id]);
     }
