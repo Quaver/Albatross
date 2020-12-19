@@ -173,7 +173,7 @@ export default class LoginHandler {
             LoginHandler.LogInvalidRequest(socket, "Publisher Banned");
             
         // Check to see if the user actually owns the game.
-        const ownershipResponse = await axios.get("https://partner.steam-api.com/ISteamUser/CheckAppOwnership/v2/", {
+        /*const ownershipResponse = await axios.get("https://partner.steam-api.com/ISteamUser/CheckAppOwnership/v2/", {
             params: {
                 key: config.steam.publisherKey,
                 appid: config.steam.appId,
@@ -183,7 +183,7 @@ export default class LoginHandler {
 
         // User doesn't own Quaver
         if (!ownershipResponse.data.appownership.ownsapp)
-            LoginHandler.LogInvalidRequest(socket, "Doesn't own Quaver on Steam!");
+            LoginHandler.LogInvalidRequest(socket, "Doesn't own Quaver on Steam!");*/
 
         return authResponse.data.response.params;
     }
