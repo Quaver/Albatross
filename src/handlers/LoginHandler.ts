@@ -71,7 +71,12 @@ export default class LoginHandler {
             };
 
             // Make sure the user is the Steam user they say they are.
-            const steamLogin: any = await LoginHandler.HandleSteamAuthentication(socket, loginDetails);
+            //const steamLogin: any = await LoginHandler.HandleSteamAuthentication(socket, loginDetails);
+            let steamLogin: any = {};
+
+            // TEMP REMOVE
+            steamLogin.steamid = steamId;
+
             const user: User | null = await LoginHandler.GetUser(socket, steamLogin);
 
             // User doesn't exist, so a packet needs to be sent that alerts them to choose a username.
