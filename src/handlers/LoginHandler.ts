@@ -71,12 +71,7 @@ export default class LoginHandler {
             };
 
             // Make sure the user is the Steam user they say they are.
-            //const steamLogin: any = await LoginHandler.HandleSteamAuthentication(socket, loginDetails);
-            let steamLogin: any = {};
-
-            // TEMP REMOVE
-            steamLogin.steamid = steamId;
-
+            const steamLogin: any = await LoginHandler.HandleSteamAuthentication(socket, loginDetails);
             const user: User | null = await LoginHandler.GetUser(socket, steamLogin);
 
             // User doesn't exist, so a packet needs to be sent that alerts them to choose a username.
@@ -178,7 +173,7 @@ export default class LoginHandler {
             LoginHandler.LogInvalidRequest(socket, "Publisher Banned");
             
         // Check to see if the user actually owns the game.
-        /*const ownershipResponse = await axios.get("https://partner.steam-api.com/ISteamUser/CheckAppOwnership/v2/", {
+        const ownershipResponse = await axios.get("https://partner.steam-api.com/ISteamUser/CheckAppOwnership/v2/", {
             params: {
                 key: config.steam.publisherKey,
                 appid: config.steam.appId,
@@ -188,7 +183,7 @@ export default class LoginHandler {
 
         // User doesn't own Quaver
         if (!ownershipResponse.data.appownership.ownsapp)
-            LoginHandler.LogInvalidRequest(socket, "Doesn't own Quaver on Steam!");*/
+            LoginHandler.LogInvalidRequest(socket, "Doesn't own Quaver on Steam!");
 
         return authResponse.data.response.params;
     }
@@ -242,8 +237,6 @@ export default class LoginHandler {
      * @param user 
      */
     private static async UpdateLatestActivityAndAvatar(socket: any, user: User): Promise<void> {
-        return;
-        
         const avatar = await SteamWebAPI.GetUserAvatarLink(user.SteamId.toString());
         await SqlDatabase.Execute("UPDATE users SET avatar_url = ?, latest_activity = ? WHERE id = ?", [avatar, Date.now(), user.Id]);
     }
