@@ -17,6 +17,7 @@ import ChatChannel from "../chat/ChatChannel";
 import UserGroups from "../enums/UserGroups";
 import RedisHelper from "../database/RedisHelper";
 import SqlDatabase from "../database/SqlDatabase";
+import { Multi } from "redis";
 const config = require("../config/config.json");
 
 export default class Lobby {
@@ -109,6 +110,24 @@ export default class Lobby {
         await RedisHelper.decr("quaver:server:multiplayer_matches");
         await game.DeleteCachedMatchScores();
         await game.DeleteCachedMatchSettings();
+    }
+
+    /**
+     * Deletes empty multiplayer games
+     */
+    public static async DeleteEmptyGames(): Promise<void> {
+        const gamesToDelete: any[] = [];
+        
+        for (let i in Lobby.Games) {
+            if (Lobby.Games[i].PlayerIds.length == 0) {
+                Logger.Info(`Removing zero-player multiplayer game: ${Lobby.Games[i].GameId}`);
+                gamesToDelete.push(Lobby.Games[i]);
+            }
+
+        }
+
+        for (let i = 0; i < gamesToDelete.length; i++)
+            await Lobby.DeleteGame(gamesToDelete[i]);
     }
 
     /**

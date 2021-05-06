@@ -14,6 +14,10 @@ import User from "./sessions/User";
 import ChatManager from "./chat/ChatManager";
 import PacketId from "./packets/PacketId";
 import Lobby from "./multiplayer/Lobby";
+import MultiplayerGame from "./multiplayer/MultiplayerGame";
+import MultiplayerGameType from "./multiplayer/MultiplayerGameType";
+import MultiplayerGameRuleset from "./multiplayer/MultiplayerGameRuleset";
+import GameMode from "./enums/GameMode";
 
 const config = require("./config/config.json");
 const express = require("express");
@@ -239,6 +243,8 @@ export default class Albatross {
             if (currentTime - this.TimeSpamRateLastCleared >= this.SPAM_RATE_CLEAR_INTERVAL)
                 this.TimeSpamRateLastCleared = currentTime;
         }, 500);
+
+        setInterval(async () => await Lobby.DeleteEmptyGames(), 5000);
     }
 
     /**
