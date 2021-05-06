@@ -1484,6 +1484,11 @@ export default class MultiplayerGame {
      * @param winResult 
      */
     private async IncrementPlayerWinResultCount(player: User, winResult: MultiplayerWinResult): Promise<void> { 
+        if (this.PlayersGameStartedWith.length < 2) {
+            Logger.Warning(`[${this.Id}] Multiplayer - Skipping win result incremenent. Not enough players.`);
+            return;
+        }
+
         // Check if the map actually exists inside of the database first
         const mapResults = await SqlDatabase.Execute("SELECT id FROM maps WHERE md5 = ?", [this.MapMd5]);
 
