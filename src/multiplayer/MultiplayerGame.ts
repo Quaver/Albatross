@@ -664,14 +664,14 @@ export default class MultiplayerGame {
         const playingPlayers = this.Players.filter(x => !this.PlayersWithoutMap.includes(x.Id) && this.RefereeUserId != x.Id);
 
         // Less than 2 players, prevent match start entirely
-        if (playingPlayers.length < 2) {
+        /*if (playingPlayers.length < 2) {
             this.StopMatchCountdown();
 
             if (this.Host)
                 Albatross.SendToUser(this.Host, new ServerPacketNotification(ServerNotificationType.Error, "You must have at least 2 players to start!"));
 
             return;
-        }
+        }*/
 
         // Less than 3 players for battle royale
         if (this.Ruleset == MultiplayerGameRuleset.Battle_Royale && playingPlayers.length < 3) {
