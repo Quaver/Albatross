@@ -107,7 +107,7 @@ export default class Lobby {
         Albatross.SendToUsers(Lobby.Users, new ServerPacketGameDisbanded(game));
         Logger.Success(`Multiplayer Game: "${game.Name}" <${game.Id}> has been disbanded.`);
 
-        await RedisHelper.decr("quaver:server:multiplayer_matches");
+        await RedisHelper.del("quaver:server:multiplayer_matches");
         await game.DeleteCachedMatchScores();
         await game.DeleteCachedMatchSettings();
     }
