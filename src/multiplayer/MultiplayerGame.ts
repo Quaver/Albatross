@@ -381,7 +381,7 @@ export default class MultiplayerGame {
     /**
      * The owner of the multiplayer game.
      */
-    public Creator: User | null = null;
+    public CreatorId: number = -1;
 
     /**
      * The players that the game has started with.
@@ -477,7 +477,7 @@ export default class MultiplayerGame {
         game.Id = game.GenerateGameIdentifier();
         game.Name = name;
         game.Host = host;
-        game.Creator = host;
+        if (host != null) game.CreatorId = host.Id;
         game.MaxPlayers = game.ClampMaxPlayers(maxPlayers);
         game.MapMd5 = mapMd5;
         game.MapId = mapId;

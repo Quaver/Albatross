@@ -43,7 +43,7 @@ export default abstract class BotCommand {
             if (!user.CurrentGame)
                 return false;
 
-            if (user.CurrentGame.Host == user || user.CurrentGame.Creator == user)
+            if (user.CurrentGame.Host == user || user.CurrentGame.CreatorId == user.Id)
                 return true;
         }
 
