@@ -723,9 +723,6 @@ export default class User implements IPacketWritable, IStringifyable {
 
         const game: MultiplayerGame = this.CurrentGame;
 
-        if (game.MatchSkipped)
-            return Logger.Warning(`${this.ToNameIdString()} requested to skip, but the multiplayer game was already skipped.`);
-
         if (!game.InProgress)
             return Logger.Warning(`${this.ToNameIdString()} requested to skip, but the multiplayer game is not in progress.`);
 
