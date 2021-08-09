@@ -547,14 +547,11 @@ export default class MultiplayerGame {
      * @param informLobbyUsers
      */
     public async ChangeHost(user: User, informLobbyUsers: boolean = true): Promise<void> {
-        // User is already host
-        if (this.Host == user)
-            return;
-
         this.Host = user;
         this.HostId = user.Id;
 
         await this.StopMatchCountdown(false);
+        
         Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketChangeGameHost(user));
         this.HandleHostSelectingMap(false, false);
 
@@ -781,23 +778,6 @@ export default class MultiplayerGame {
         else {
             await this.InformLobbyUsers();
         }
-
-        /*for (let id in this.PlayerScoreProcessors) {
-            let player = this.Players.find(x => x.Id == parseInt(id));
-
-            if (!player)
-                continue;
-
-            const processor = this.PlayerScoreProcessors[id];
-            
-            if (!processor)
-                continue;
-
-            if (!processor.Multiplayer)
-                continue;
-
-            console.log(`#${processor.Multiplayer.BattleRoyaleRank}: ${player.ToNameIdString()}`);
-        }*/
     }
 
     /**
