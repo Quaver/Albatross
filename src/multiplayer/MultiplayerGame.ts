@@ -416,11 +416,6 @@ export default class MultiplayerGame {
     public PlayersSkipped: User[] = [];
 
     /**
-     * If the match has already been skipped or not.
-     */
-    public MatchSkipped: boolean = false;
-
-    /**
      * The physical countdown timeout handler.
      */
     private CountdownTimer: any;
@@ -759,7 +754,6 @@ export default class MultiplayerGame {
         await this.DeleteCachedMatchScores();
 
         this.InProgress = false;
-        this.MatchSkipped = false;
         this.PlayersGameStartedWith = [];
         this.FinishedPlayers = [];
         this.PlayersWithGameScreenLoaded = [];
@@ -818,8 +812,8 @@ export default class MultiplayerGame {
      * Informs all players that we're skipping the beginning of the song.
      */
     public HandleAllPlayersSkipped(): void {
-        this.MatchSkipped = true;
         Albatross.SendToUsers(this.PlayersGameStartedWith, new ServerPacketAllPlayersSkipped());
+        this.PlayersSkipped = [];
     }
 
     /**
