@@ -1086,10 +1086,19 @@ export default class User implements IPacketWritable, IStringifyable {
      * @param userId 
      */
     public async AddFriend(userId: number): Promise<void> {
-        const result = await SqlDatabase.Execute("SELECT id FROM users WHERE id = ?", [userId]);
+        const result = await SqlDatabase.Execute("SELECT id FROM users WHERE id = ? LIMIT 1", [userId]);
 
         if (result.length == 0)
             return;
+
+        const friendCheck = await SqlDatabase.Execute("SELECT id FROM user_relationships WHERE user_id = ? AND " +
+        "target_user_id = ? LIMIT 1", [this.Id, userId]);
+
+        // Existing relationship exists, so just update it.
+        if (friendCheck.length > 0) {
+            await SqlDatabase.Execute("UPDATE user_relationships SET relationship = 1 WHERE id = ?", [friendCheck[0].id]);
+            return;
+        }
 
         await SqlDatabase.Execute("INSERT INTO user_relationships (user_id, target_user_id, relationship) VALUES (?, ?, ?)", 
             [this.Id, userId, 1]);
