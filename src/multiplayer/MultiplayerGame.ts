@@ -1770,6 +1770,7 @@ export default class MultiplayerGame {
         await RedisHelper.hset(key, "lv", this.Lives.toString());
         await RedisHelper.hset(key, "rtw", this.RedTeamWins.toString());
         await RedisHelper.hset(key, "btw", this.BlueTeamWins.toString());
+        await RedisHelper.hset(key, "trn", Number(this.TournamentMode).toString());
 
         await this.CacheAllPlayers();
     }

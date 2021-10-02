@@ -669,7 +669,8 @@ export default class User implements IPacketWritable, IStringifyable {
         if (game.Ruleset == MultiplayerGameRuleset.Battle_Royale && livesBefore > 0 && processor.Multiplayer.Lives == 0) 
             game.EliminateBattleRoyalePlayer(this);
 
-        // await game.CachePlayerCurrentScore(this);
+        if (game.TournamentMode)
+            await game.CachePlayerCurrentScore(this);
 
         // BOTS
         for (let i = 0; i < game.PlayersGameStartedWith.length; i++ ) {
