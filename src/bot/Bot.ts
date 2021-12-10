@@ -448,10 +448,20 @@ export default class Bot {
             return await Bot.ShowInvalidMuteCommandMessage(to);
 
         const targetUsername: string = args[0].replace(/_/g, " ");
-        const target: User = Albatross.Instance.OnlineUsers.GetUserByUsername(targetUsername);
+        let target: User = Albatross.Instance.OnlineUsers.GetUserByUsername(targetUsername);
 
-        if (!target)
-            return await Bot.SendMessage(to, `Could not unmute: "${targetUsername}" because they are offline.`);
+        if (!target) {
+            const result = await SqlDatabase.Execute("SELECT * FROM users WHERE username = ? LIMIT 1", [targetUsername]);
+
+            if (result.length == 0)
+                return await Bot.SendMessage(to, `Could not unmute: "${targetUsername}" because they do not exist.`);
+
+            const user = result[0];
+
+            target = new User(null, user.id, user.steam_id, user.username, Boolean(user.allowed), user.mute_endtime, user.country,
+             user.privileges, user.usergroups, user.avatar_url);
+        }
+
 
         if (target == Bot.User)
             return await Bot.SendIdiotMessage(to);
