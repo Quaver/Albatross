@@ -576,8 +576,9 @@ export default class Bot {
         if (!game)
             return;
 
+        // This is kind of a hack to make it work with any game regardless if the user is in it or not 
+        // since the current MP command API requires the sender to be in a game.
         const oldGame = sender.CurrentGame;
-
         sender.CurrentGame = game;
 
         switch (args[0]) {
