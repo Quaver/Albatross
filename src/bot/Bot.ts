@@ -56,6 +56,7 @@ import ClientStatus from "../enums/ClientStatus";
 import OnlineUserStore from "../sessions/OnlineUserStore";
 import MultiplayerCommandTournamentMode from "./Multiplayer/MultiplayerCommandTournamentMode";
 import { isNaN } from "lodash";
+import MultiplayerCommandChangeMap from "./Multiplayer/MultiplayerCommandChangeMap";
 const config = require("../config/config.json");
 
 export default class Bot {
@@ -680,6 +681,9 @@ export default class Bot {
                 break;
             case "tournament":
                 await new MultiplayerCommandTournamentMode().Execute(sender, args);
+                break;
+            case "map":
+                await new MultiplayerCommandChangeMap().Execute(sender, args);
                 break;
         }
 
