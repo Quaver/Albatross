@@ -55,6 +55,7 @@ import UserClientStatus from "../objects/UserClientStatus";
 import ClientStatus from "../enums/ClientStatus";
 import OnlineUserStore from "../sessions/OnlineUserStore";
 import MultiplayerCommandTournamentMode from "./Multiplayer/MultiplayerCommandTournamentMode";
+import { isNaN } from "lodash";
 const config = require("../config/config.json");
 
 export default class Bot {
@@ -208,6 +209,9 @@ export default class Bot {
                 break;
             case "mp":
                 await Bot.HandleMultiplayerCommands(sender, to, args);
+                break;
+            case "joinmpchat":
+                await Bot.JoinMultiplayerChat(sender, to, args);
                 break;
         }
     }
@@ -503,6 +507,36 @@ export default class Bot {
     }
 
     /**
+     * Places the user in a given multiplayer chat room
+     * @param sender 
+     * @param to 
+     * @param args 
+     */
+    private static async JoinMultiplayerChat(sender: User, to: string, args: string[]): Promise<void> {
+        if (!sender.HasPrivilege(Privileges.EnableTournamentMode))
+            return;
+
+        if (args.length == 0)
+            return await Bot.SendMessage(to, "Invalid command usage. Try using it like: !joinmpchat <game_id>");
+
+        const id = parseInt(args[0]);
+
+        if (isNaN(id))
+            return await Bot.SendMessage(to, "You have provided an invalid game id.");
+           
+        for (let i in Lobby.Games) {
+            const game = Lobby.Games[i];
+
+            if (game.GameId != id)
+                continue;
+
+            return await sender.JoinChatChannel(ChatManager.Channels[game.GetChatChannelName()], true);
+        }
+        
+        return await Bot.SendMessage(to, "A multiplayer game with that id does not exist!");
+    }
+
+    /**
      * Sends a bot by QuaverBot
      * @param to 
      * @param message 
@@ -536,10 +570,15 @@ export default class Bot {
         if (args.length == 0)
             return;
 
-        if (!sender.CurrentGame)
+        const hash = to.replace("#multiplayer_", "").replace("team_", "");
+        const game = Lobby.Games[hash];
+
+        if (!game)
             return;
 
-        const game: MultiplayerGame = sender.CurrentGame;
+        const oldGame = sender.CurrentGame;
+
+        sender.CurrentGame = game;
 
         switch (args[0]) {
             // Starts the match immediately.
@@ -642,5 +681,7 @@ export default class Bot {
                 await new MultiplayerCommandTournamentMode().Execute(sender, args);
                 break;
         }
+
+        sender.CurrentGame = oldGame;
     }
 }
