@@ -11,9 +11,14 @@ export default class MapsHelper {
      * @param map
      */
     public static async CacheMap(map: any): Promise<boolean> {
-        await FileHelper.CreateDirectoryIfNotExists(config.api.dataFolderPath);
-        await FileHelper.CreateDirectoryIfNotExists(`${config.api.dataFolderPath}/maps`);
-        
+        try {
+            await FileHelper.CreateDirectoryIfNotExists(config.api.dataFolderPath);
+            await FileHelper.CreateDirectoryIfNotExists(`${config.api.dataFolderPath}/maps`);
+        } catch (err) {
+            Logger.Error(err);
+            return false;
+        }
+       
         const path: string = `${config.api.dataFolderPath}/maps/${map.id}.qua`;
         let needToDownload: boolean = false;
         
