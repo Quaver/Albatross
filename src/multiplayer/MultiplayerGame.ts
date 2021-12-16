@@ -575,20 +575,22 @@ export default class MultiplayerGame {
      * Changes the selected map of the game
      */
     public async ChangeMap(md5: string, mapId: number, mapsetId: number, map: string, mode: GameMode, difficulty: number,
-        allDifficultyRatings: number[], judgementCount: number, alternativeMd5: string): Promise<void> {
+        allDifficultyRatings: number[], judgementCount: number, alternativeMd5: string, skipChecks: boolean = false): Promise<void> {
         if (this.InProgress)
             return;
-            
-        // Prevent diffs not in range
-        if (difficulty < this.MinimumDifficultyRating || difficulty > this.MaximumDifficultyRating)
-            return Logger.Warning(`[${this.Id}] Multiplayer map change failed. Difficulty rating not in min-max range.`);
+          
+        if (!skipChecks) {
+            // Prevent diffs not in range
+            if (difficulty < this.MinimumDifficultyRating || difficulty > this.MaximumDifficultyRating)
+                return Logger.Warning(`[${this.Id}] Multiplayer map change failed. Difficulty rating not in min-max range.`);
 
-        // Prevent disallowed game modes
-        if (!this.AllowedGameModes.includes(mode))
-            return Logger.Warning(`[${this.Id}] Multiplayer map change failed. Game mode not allowed`);
+            // Prevent disallowed game modes
+            if (!this.AllowedGameModes.includes(mode))
+                return Logger.Warning(`[${this.Id}] Multiplayer map change failed. Game mode not allowed`);
 
-        if (allDifficultyRatings.length != 21)
-            return Logger.Warning(`[${this.Id}] Multiplayer - Map change failed. Incorrect number of difficulty ratings!`);
+            if (allDifficultyRatings.length != 21)
+                return Logger.Warning(`[${this.Id}] Multiplayer - Map change failed. Incorrect number of difficulty ratings!`);
+        }
 
         this.MapMd5 = md5;
         this.AlternativeMapMd5 = alternativeMd5;
