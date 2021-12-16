@@ -5,6 +5,7 @@ import ChatManager from "../chat/ChatManager";
 import Bot from "../bot/Bot";
 import SongRequestHandler from "../twitch/SongRequestHandler";
 import Albatross from "../Albatross";
+import { values } from "lodash";
 
 export default class RedisHelper {
     /**
@@ -193,6 +194,8 @@ export default class RedisHelper {
      * @param value 
      */
     public static async hset(key: string, field: string, value: string): Promise<any> {
+        if (!value) return;
+
         return new Promise((resolve, reject) => {
             this.Client.hset(key, field, value, (err, val) => {
                 if (err)
