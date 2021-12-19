@@ -53,7 +53,5 @@ export default class MultiplayerCommandChangeMap extends BotCommand {
 
         await game.ChangeMap(map.md5, map.id, map.mapset_id, mapStr, map.game_mode, map.difficulty_rating, 
             [], 0, map.alternative_md5, true);
-
-        await Bot.SendMessage(game.GetChatChannelName(), `Map has been changed to: ${mapStr} (#${id})`);
     }
 }

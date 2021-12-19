@@ -554,6 +554,7 @@ export default class MultiplayerGame {
         
         Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketChangeGameHost(user));
         this.HandleHostSelectingMap(false, false);
+        await Bot.SendMessage(this.GetChatChannelName(), `The host has been transferred to: ${this.Host.Username}.`);
 
         if (informLobbyUsers)
             await this.InformLobbyUsers();
@@ -613,8 +614,9 @@ export default class MultiplayerGame {
                
         await this.UpdateSharedMapStatus(false);
         await this.InformLobbyUsers();
-
         await this.CacheSelectedMap();
+
+        await Bot.SendMessage(this.GetChatChannelName(), `The map has been changed to: ${map}.`);
     }
 
     /**
@@ -731,6 +733,7 @@ export default class MultiplayerGame {
         }
         
         this.HandleHostSelectingMap(false, false);
+        await Bot.SendMessage(this.GetChatChannelName(), "The match has been started.");
         await this.InformLobbyUsers();
     }
 
@@ -780,6 +783,8 @@ export default class MultiplayerGame {
         else {
             await this.InformLobbyUsers();
         }
+
+        await Bot.SendMessage(this.GetChatChannelName(), "The match has ended.");
     }
 
     /**
@@ -814,6 +819,7 @@ export default class MultiplayerGame {
         this.CountdownTimer = setTimeout(async () => await this.Start(), 5000);
 
         Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameStartCountdown(this.CountdownStartTime));
+        await Bot.SendMessage(this.GetChatChannelName(), "The countdown has started. The match will begin in 5 seconds.");
         await this.InformLobbyUsers();
     }
 
@@ -833,6 +839,7 @@ export default class MultiplayerGame {
         clearTimeout(this.CountdownTimer);
 
         Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameStopCountdown());
+        await Bot.SendMessage(this.GetChatChannelName(), "The countdown has been aborted.");
 
         if (informLobbyUsers)
             await this.InformLobbyUsers();
@@ -2109,6 +2116,7 @@ export default class MultiplayerGame {
         this.IsMapsetShared = result.length != 0 && result[0].map_md5 == this.MapMd5;
 
         Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameMapsetShared(this));
+        await Bot.SendMessage(this.GetChatChannelName(), "The map has been uploaded to the server by the host. It is now available to download.")
 
         if (informLobbyUsers)
             this.InformLobbyUsers();
