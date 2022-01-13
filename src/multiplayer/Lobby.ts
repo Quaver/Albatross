@@ -119,7 +119,7 @@ export default class Lobby {
         const gamesToDelete: any[] = [];
         
         for (let i in Lobby.Games) {
-            if (Lobby.Games[i].PlayerIds.length == 0) {
+            if (!Lobby.Games[i].TournamentMode && Lobby.Games[i].PlayerIds.length == 0) {
                 Logger.Info(`Removing zero-player multiplayer game: ${Lobby.Games[i].GameId}`);
                 gamesToDelete.push(Lobby.Games[i]);
             }

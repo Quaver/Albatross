@@ -534,7 +534,12 @@ export default class User implements IPacketWritable, IStringifyable {
                 return await game.End();
 
             // No players left in a non-autohost game, so delete it
-            Albatross.SendToUsers(game.GetIngameUsers(), new ServerPacketUserLeftGame(this));  
+            Albatross.SendToUsers(game.GetIngameUsers(), new ServerPacketUserLeftGame(this)); 
+
+            // Don't disband the match in tournament mode
+            if (game.TournamentMode)
+                return;
+
             Albatross.SendToUsers(game.GetIngameUsers(), new ServerPacketGameDisbanded(game));  
             return await Lobby.DeleteGame(game);
         }
