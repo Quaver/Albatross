@@ -7,4 +7,11 @@ export default class ClientPacketPong extends Packet {
     /**
      */
     public Id: PacketId = PacketId.ClientPong;
+
+    @JsonProperty("p")
+    public ProcessList: string = "";
+
+    public ParseProcessList(): any {
+        return JSON.parse(this.ProcessList);
+    }
 }

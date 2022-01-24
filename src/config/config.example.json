@@ -13,6 +13,10 @@
     "multiplayerMessageWebhook": {
       "id": "",
       "token": ""
+    },
+    "anticheatWebhook": {
+      "id": "",
+      "token": ""
     }
   },
   "steam": {

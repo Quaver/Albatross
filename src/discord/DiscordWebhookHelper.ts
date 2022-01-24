@@ -19,6 +19,11 @@ export default class DiscordWebhookHelper {
     public static MultiplayerMessageHook: Discord.WebhookClient | null = null;
 
     /**
+     * Anti-cheat Logs
+     */
+    public static AnticheatWebhook: Discord.WebhookClient | null = null;
+
+    /**
      * Initializes the discord webhook
      * @constructor
      */
@@ -50,6 +55,17 @@ export default class DiscordWebhookHelper {
                     config.discord.multiplayerMessageWebhook.token);
     
                 DiscordWebhookHelper.MultiplayerMessageHook.client.listenerCount = function(){return 0};
+            }
+        } catch (err) {
+            Logger.Error(err);
+        }
+
+        try {
+            if (config.discord.anticheatWebhook) {
+                                DiscordWebhookHelper.AnticheatWebhook = new Discord.WebhookClient(config.discord.anticheatWebhook.id, 
+                    config.discord.anticheatWebhook.token);
+    
+                DiscordWebhookHelper.AnticheatWebhook.client.listenerCount = function(){return 0};
             }
         } catch (err) {
             Logger.Error(err);
