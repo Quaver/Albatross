@@ -8,7 +8,7 @@ export default class ClientPacketPong extends Packet {
      */
     public Id: PacketId = PacketId.ClientPong;
 
-    @JsonProperty("p")
+    @JsonProperty("p", String, false)
     public ProcessList: string = "";
 
     public ParseProcessList(): any {
