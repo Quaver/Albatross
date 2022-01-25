@@ -4,6 +4,7 @@ import ClientPacketPong from "../packets/client/ClientPacketPong";
 import User from "../sessions/User";
 import * as Discord from "discord.js";
 import DiscordWebhookHelper from "../discord/DiscordWebhookHelper";
+import { date } from "azure-storage";
 const crypto = require('crypto');
 
 export default class PongHandler {
@@ -39,9 +40,19 @@ export default class PongHandler {
                 }
             }
 
-            if (detectedProcesses.length == 0)
+            if (detectedProcesses.length == 0) {
+                user.LastDetectedProcesses = [];
                 return;
-                
+            }
+
+            console.log(JSON.stringify(detectedProcesses) == JSON.stringify(user.LastDetectedProcesses))
+            
+            // Running processes are the same as the last time it was provided.
+            if (JSON.stringify(detectedProcesses) == JSON.stringify(user.LastDetectedProcesses))
+                return;
+
+            user.LastDetectedProcesses = detectedProcesses;
+
             let str: string = "";
             detectedProcesses.forEach(x => str += `• **${x.id}. ${x.name}**\n`);
 

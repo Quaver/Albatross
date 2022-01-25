@@ -189,6 +189,11 @@ export default class User implements IPacketWritable, IStringifyable {
     public IsSpectatingMultiplayerGame: boolean = false;
 
     /**
+     * The running processes that were detected in the previous ping time.
+     */
+    public LastDetectedProcesses: any[] = [];
+
+    /**
      * @param token 
      * @param steamId 
      * @param username 
