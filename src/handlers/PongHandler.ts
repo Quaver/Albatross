@@ -63,9 +63,13 @@ export default class PongHandler {
                 .setTimestamp()
                 .setThumbnail("https://i.imgur.com/DkJhqvT.jpg")
                 .setFooter("Quaver", "https://i.imgur.com/DkJhqvT.jpg")
-                .setColor(0xFF0000);
+                .setColor(0xFF0000)
 
-            await DiscordWebhookHelper.AnticheatWebhook.send(embed);
+            if (user.CurrentGame != null && user.CurrentGame.TournamentMode)
+                await DiscordWebhookHelper.AnticheatWebhook.send("@everyone - **Player Cheating in Tournament**", { embeds: [embed] });
+            else
+                await DiscordWebhookHelper.AnticheatWebhook.send(embed);
+                
         } catch (err) {
             Logger.Error(err);
         }
