@@ -2124,7 +2124,9 @@ export default class MultiplayerGame {
         this.IsMapsetShared = result.length != 0 && result[0].map_md5 == this.MapMd5;
 
         Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameMapsetShared(this));
-        await Bot.SendMessage(this.GetChatChannelName(), "The map has been uploaded to the server by the host. It is now available to download.")
+
+        if (this.IsMapsetShared)
+            await Bot.SendMessage(this.GetChatChannelName(), "The map has been uploaded to the server by the host. It is now available to download.")
 
         if (informLobbyUsers)
             this.InformLobbyUsers();
