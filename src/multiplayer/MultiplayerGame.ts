@@ -1816,9 +1816,17 @@ export default class MultiplayerGame {
             await RedisHelper.hset(key, "c", this.Players[i].Country);
 
             const playerWins = this.PlayerWins.find(x => x.Id == this.Players[i].Id);
+            if (playerWins) await RedisHelper.hset(key, "w", Number(playerWins.Wins).toString());
 
-            if (playerWins)
-                await RedisHelper.hset(key, "w", Number(playerWins.Wins).toString());
+            const playerMods = this.PlayerMods.find(x => x.Id == this.Players[i].Id);
+            if (playerMods) await RedisHelper.hset(key, "m", Number(playerMods.Mods).toString());   
+            
+            const playerReady = this.PlayersReady.find(x => x == this.Players[i].Id)
+            await RedisHelper.hset(key, "r", playerReady ? "1" : "0");
+
+            // Caches if the player has the map rather than doesn't.
+            const playerNoMap = this.PlayersWithoutMap.find(x => x == this.Players[i].Id);
+            await RedisHelper.hset(key, "hm", playerNoMap ? "0": "1");
         }
     }
 
