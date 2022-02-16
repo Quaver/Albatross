@@ -73,13 +73,14 @@ export default class LoginHandler {
             // Make sure the user is the Steam user they say they are.
             const steamLogin: any = await LoginHandler.HandleSteamAuthentication(socket, loginDetails);
             const user: User | null = await LoginHandler.GetUser(socket, steamLogin);
+            const sleepTime: number = 1500;
 
             // User doesn't exist, so a packet needs to be sent that alerts them to choose a username.
             // Close the connection as well, as username creation is handled by the API server.
             if (!user) {
                 Logger.Warning(`Received login request from: ${steamLogin.steamid}. (they do not have an account yet!)`);
                 Albatross.SendToSocket(socket, new ServerPacketChooseUsername());
-                return await AsyncHelper.Sleep(50, () => socket.close());            
+                return await AsyncHelper.Sleep(sleepTime, () => socket.close());            
             }
 
             // Check if the user is banned
@@ -90,7 +91,7 @@ export default class LoginHandler {
                 const banned: ServerPacketNotification = new ServerPacketNotification(ServerNotificationType.Error, "You are banned. Email support@quavergame.com.");
                 Albatross.SendToUser(user, banned);
 
-                return await AsyncHelper.Sleep(50, () => socket.close());
+                return await AsyncHelper.Sleep(sleepTime, () => socket.close());
             }
 
             if (!await LoginHandler.VerifyGameBuild(socket, user, loginDetails))
@@ -143,7 +144,7 @@ export default class LoginHandler {
             Logger.Error(loginFailureLog);
 
             Albatross.SendToSocket(socket, new ServerPacketNotification(ServerNotificationType.Error, "Failed to login: Unknown Server Error!"))
-            return await AsyncHelper.Sleep(50, () => socket.close());  
+            return await AsyncHelper.Sleep(sleepTime, () => socket.close());  
         }
     }
 
