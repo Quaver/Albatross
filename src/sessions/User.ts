@@ -570,7 +570,7 @@ export default class User implements IPacketWritable, IStringifyable {
         if (!game)
             return this.SendJoinGameFailurePacket(JoinGameFailureReason.MatchNoExists);
 
-        if (game.HasPassword && game.Password != password && !game.PlayersInvited.includes(this))
+        if (game.HasPassword && game.Password != password && !game.PlayersInvited.includes(this) && !this.IsSwan())
             return this.SendJoinGameFailurePacket(JoinGameFailureReason.Password);
 
         // Remove the player from the lobby if they're currently in it.
