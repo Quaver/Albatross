@@ -224,4 +224,47 @@ export default class ModHelper {
         
         return modStrings.join(", ");
     }
+
+    public static GetModStrings(): Map<string, ModIdentifiers> {
+        const map = new Map<string, ModIdentifiers>();
+
+        map.set("NSV", ModIdentifiers.NoSliderVelocity);
+        map.set("0.5x", ModIdentifiers.Speed05X);
+        map.set("0.55x", ModIdentifiers.Speed055X);
+        map.set("0.6x", ModIdentifiers.Speed06X);
+        map.set("0.65x", ModIdentifiers.Speed065X);
+        map.set("0.7x", ModIdentifiers.Speed07X);
+        map.set("0.75x", ModIdentifiers.Speed075X);
+        map.set("0.8x", ModIdentifiers.Speed08X);
+        map.set("0.85x", ModIdentifiers.Speed085X);
+        map.set("0.9x", ModIdentifiers.Speed09X);
+        map.set("0.95x", ModIdentifiers.Speed095X);
+        map.set("1.05x", ModIdentifiers.Speed105X);
+        map.set("1.1x", ModIdentifiers.Speed11X);
+        map.set("1.15x", ModIdentifiers.Speed115X);
+        map.set("1.2x", ModIdentifiers.Speed12X);
+        map.set("1.25x", ModIdentifiers.Speed125X);
+        map.set("1.3x", ModIdentifiers.Speed13X);
+        map.set("1.35x", ModIdentifiers.Speed135X);
+        map.set("1.4x", ModIdentifiers.Speed14X);
+        map.set("1.45x", ModIdentifiers.Speed145X);
+        map.set("1.5x", ModIdentifiers.Speed15X);
+        map.set("1.55x", ModIdentifiers.Speed155X);
+        map.set("1.6x", ModIdentifiers.Speed16X);
+        map.set("1.65x", ModIdentifiers.Speed165X);
+        map.set("1.7x", ModIdentifiers.Speed17X);
+        map.set("1.75x", ModIdentifiers.Speed175X);
+        map.set("1.8x", ModIdentifiers.Speed18X);
+        map.set("1.85x", ModIdentifiers.Speed185X);
+        map.set("1.9x", ModIdentifiers.Speed19X);
+        map.set("1.95x", ModIdentifiers.Speed195X);
+        map.set("2.0x", ModIdentifiers.Speed20X);
+        map.set("NF", ModIdentifiers.NoFail);
+        map.set("MR", ModIdentifiers.Mirror);
+        map.set("NLN", ModIdentifiers.NoLongNotes);
+        map.set("FLN", ModIdentifiers.FullLN);
+        map.set("INV", ModIdentifiers.Inverse);
+
+        return map;
+    }
 }
