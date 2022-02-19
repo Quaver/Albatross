@@ -49,6 +49,9 @@ export default class MultiplayerCommandMods extends BotCommand {
             if (!mod)
                 return;
 
+            if ((mods & mod) != 0)
+                return;
+
             mods += mod;
         });
 
