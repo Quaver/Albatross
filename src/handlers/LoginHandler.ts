@@ -21,6 +21,8 @@ import DiscordWebhookHelper from "../discord/DiscordWebhookHelper";
 import * as Discord from "discord.js";
 import ServerPacketUserFriendsList from "../packets/server/ServerPacketUserFriendsList";
 import ServerPacketTwitchConnection from "../packets/server/ServerPacketTwitchConnection";
+import ServerPacketUserInfo from "../packets/server/ServerPacketUserInfo";
+import RequestUserInfoHandler from "./RequestUserInfoHandler";
 const axios = require("axios");
 const config = require("../config/config.json");
 const randomstring = require("randomstring");
@@ -114,16 +116,17 @@ export default class LoginHandler {
 
             Albatross.SendToUser(user, new ServerPacketLoginReply(user));
             Albatross.SendToUser(user, Albatross.BuildUsersOnlinePacket());
+            Albatross.SendToUser(user, new ServerPacketUserInfo(Albatross.Instance.OnlineUsers.Users.map(x => x.Serialize())))
 
             // Send user their friends list
             const friendsListPacket: ServerPacketUserFriendsList = await ServerPacketUserFriendsList.CreateAsync(user);
             Albatross.SendToUser(user, friendsListPacket);
 
+            // Send user twitch connection status
             const twitchConnectionPacket: ServerPacketTwitchConnection = await ServerPacketTwitchConnection.Create(user);
             Albatross.SendToUser(user, twitchConnectionPacket);
 
             await LoginHandler.SendAndAutojoinChatChannels(user);
-
             await Albatross.Broadcast(new ServerPacketUserConnected(user));
  
             // await ChatManager.SendMessage(Bot.User, user.Username, `Welcome to the Quaver alpha, ${user.Username}!`);
