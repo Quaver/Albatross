@@ -80,8 +80,7 @@ export default class Bot {
      * Responds to any bot commands in public chats
      */
     public static async HandlePublicMessageCommands(sender: User, channel: ChatChannel, message: string): Promise<void> {
-        
-        Bot.HandleCommands(sender, channel.Name, message.split(" "));
+        Bot.HandleCommands(sender, channel.Name, message.trim().split(" "));
     }
 
     /**
@@ -93,7 +92,7 @@ export default class Bot {
 
         // We give the username of the sender here because we want confirmations to be sent
         // back to the user.
-        Bot.HandleCommands(sender, sender.Username, message.split(" "))
+        Bot.HandleCommands(sender, sender.Username, message.trim().split(" "))
     }
 
     /**
