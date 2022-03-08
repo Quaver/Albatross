@@ -58,6 +58,7 @@ import MultiplayerCommandTournamentMode from "./Multiplayer/MultiplayerCommandTo
 import { isNaN } from "lodash";
 import MultiplayerCommandChangeMap from "./Multiplayer/MultiplayerCommandChangeMap";
 import MultiplayerCommandMods from "./Multiplayer/MultiplayerCommandMods";
+import MultiplayerCommandWinCondition from "./Multiplayer/MultiplayerCommandWinCondition";
 const config = require("../config/config.json");
 
 export default class Bot {
@@ -687,6 +688,9 @@ export default class Bot {
                 break;
             case "mods":
                 await new MultiplayerCommandMods().Execute(sender, args);
+                break;
+            case "wincondition":
+                await new MultiplayerCommandWinCondition().Execute(sender, args);
                 break;
         }
 

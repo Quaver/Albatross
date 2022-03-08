@@ -68,6 +68,7 @@ import ServerPacketGameMapsetShared from "../packets/server/ServerPacketGameMaps
 import ClientStatus from "../enums/ClientStatus";
 import UserClientStatus from "../objects/UserClientStatus";
 import ServerPacketGameTournamentMode from "../packets/server/ServerPacketGameTournamentMode";
+import MultiplayerWinCondition from "./MultiplayerWinCondition";
 const md5 = require("md5");
 
 /**
@@ -453,6 +454,11 @@ export default class MultiplayerGame {
      * Players that are eliminated in the current battle royale game
      */
     private EliminatedBattleRoyalePlayers: User[] = [];
+
+    /**
+     * How the winner of the match is determined (rating, accuracy, etc).
+     */
+    public WinCondition: MultiplayerWinCondition = MultiplayerWinCondition.PerformanceRating;
 
     /**
      * Creates and returns a multiplayer game
@@ -1541,17 +1547,36 @@ export default class MultiplayerGame {
             if (this.PlayersGameStartedWith[i] == player)
                 continue;
 
-            // Check if the user has a smaller performance rating than the rest of the players
-            if (this.PlayerScoreProcessors[player.Id].PerformanceRating < 
-                this.PlayerScoreProcessors[this.PlayersGameStartedWith[i].Id].PerformanceRating)
-                return MultiplayerWinResult.Loss;
+            const playerProcessor = this.PlayerScoreProcessors[player.Id];
+            const otherProcessor = this.PlayerScoreProcessors[this.PlayersGameStartedWith[i].Id];
+
+            switch (this.WinCondition) {
+                case MultiplayerWinCondition.Accuracy:
+                    if (playerProcessor.Accuracy < otherProcessor.Accuracy)
+                        return MultiplayerWinResult.Loss;
+                    break;
+                default: 
+                    if (playerProcessor.PerformanceRating < otherProcessor.PerformanceRating)
+                        return MultiplayerWinResult.Loss;
+                    break;
+            }
         }
 
-        // Check if the match was a tie.
-        if (this.PlayersGameStartedWith.every(x => this.PlayerScoreProcessors[x.Id].PerformanceRating == 
-            this.PlayerScoreProcessors[this.PlayersGameStartedWith[0].Id].PerformanceRating) && this.PlayersGameStartedWith.length > 1) {
-                return MultiplayerWinResult.Tie;
-            }
+        switch (this.WinCondition) {
+            case MultiplayerWinCondition.Accuracy:
+                if (this.PlayersGameStartedWith.every(x => this.PlayerScoreProcessors[x.Id].Accuracy == 
+                    this.PlayerScoreProcessors[this.PlayersGameStartedWith[0].Id].Accuracy) && this.PlayersGameStartedWith.length > 1) {
+                        return MultiplayerWinResult.Tie;
+                }                
+                break;
+            default:
+                if (this.PlayersGameStartedWith.every(x => this.PlayerScoreProcessors[x.Id].PerformanceRating == 
+                    this.PlayerScoreProcessors[this.PlayersGameStartedWith[0].Id].PerformanceRating) && this.PlayersGameStartedWith.length > 1) {
+                        return MultiplayerWinResult.Tie;
+                }
+                break;
+        }
+
         
         return MultiplayerWinResult.Won;
     }
