@@ -156,6 +156,9 @@ export default class LoginHandler {
      * @param loginDetails 
      */
     private static async HandleSteamAuthentication(socket: any, loginDetails: any): Promise<object> {
+        if (config.devLogin)
+            return { steamid: loginDetails.steamId }
+
         const authResponse = await axios.get("https://api.steampowered.com/ISteamUserAuth/AuthenticateUserTicket/v1/", {
             params: {
                 key: config.steam.publisherKey,

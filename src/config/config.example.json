@@ -1,6 +1,7 @@
 {
   "port": 3000,
   "logPackeTransfer": true,
+  "devLogin": false,
   "discord": {
     "eventsWebhook": {
       "id": "",
