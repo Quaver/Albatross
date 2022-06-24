@@ -43,7 +43,8 @@ enum ModIdentifiers {
     Speed175X = 1099511627776, // Speed 1.75x
     Speed185X = 2199023255552, // Speed 1.85x
     Speed195X = 4398046511104, // Speed 1.95x
-    HeatlthAdjust = 8796093022208 // Test mod for making long note windows easier
+    HeatlthAdjust = 8796093022208, // Test mod for making long note windows easier
+    NoMiss =  17592186044416
 }
 
 export default ModIdentifiers;

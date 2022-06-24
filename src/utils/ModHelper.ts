@@ -206,6 +206,9 @@ export default class ModHelper {
                 case ModIdentifiers.Mirror:
                     modStrings.push("Mirror");
                     break;
+                case ModIdentifiers.NoMiss:
+                    modStrings.push("NM")
+                    break;
                 default:
                     break;
             }
