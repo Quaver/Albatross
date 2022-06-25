@@ -6,7 +6,8 @@ enum UserGroups {
     Moderator = 1 << 4,
     RankingSupervisor = 1 << 5,
     Swan = 1 << 6,
-    Contributor = 1 << 7
+    Contributor = 1 << 7,
+    Donator = 1 << 8
 }
 
 export default UserGroups;

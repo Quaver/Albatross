@@ -402,6 +402,13 @@ export default class User implements IPacketWritable, IStringifyable {
     }
 
     /**
+     * Returns if the user is a donator
+     */
+    public IsDonator(): boolean {
+        return (this.UserGroups & UserGroups.Donator) != 0;
+    }
+        
+    /**
      * Returns if the user has a certain privilege
      * @param privilege 
      */
