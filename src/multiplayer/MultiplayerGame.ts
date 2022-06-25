@@ -69,6 +69,7 @@ import ClientStatus from "../enums/ClientStatus";
 import UserClientStatus from "../objects/UserClientStatus";
 import ServerPacketGameTournamentMode from "../packets/server/ServerPacketGameTournamentMode";
 import MultiplayerWinCondition from "./MultiplayerWinCondition";
+import MultiplayerAutoHost from "./MultiplayerAutoHost";
 const md5 = require("md5");
 
 /**
@@ -93,16 +94,6 @@ export default class MultiplayerGame {
      * If the game is autohosted by the server
      */
     public IsAutohost: boolean = false;
-
-    /**
-     * If the game is autohosted, this is the rotation of maps that'll be played
-     */
-    public Playlist: any[] = [];
-
-    /**
-     * The index of the map that will be played in the playlist
-     */
-    public PlaylistMapIndex: number = 0;
 
     /**
      * The type of multiplayer game this is.
@@ -461,6 +452,11 @@ export default class MultiplayerGame {
     public WinCondition: MultiplayerWinCondition = MultiplayerWinCondition.PerformanceRating;
 
     /**
+     * AutoHost for the game
+     */
+    public AutoHost: MultiplayerAutoHost | null = null;
+
+    /**
      * Creates and returns a multiplayer game
      * @param type 
      * @param name 
@@ -625,24 +621,6 @@ export default class MultiplayerGame {
         await Bot.SendMessage(this.GetChatChannelName(), `The map has been changed to: ${map}.`);
     }
 
-    /**
-     * Changes to the next map in the playlist
-     * @param selectNext 
-     */
-    public async ChangePlaylistMap(selectNext: boolean = true): Promise<void> {
-        // Select the next map/index in the playlist
-        if (selectNext) {
-            if (this.PlaylistMapIndex + 1 < this.Playlist.length)
-                this.PlaylistMapIndex++;
-            else
-                this.PlaylistMapIndex = 0;
-        }
-
-        const map = this.Playlist[this.PlaylistMapIndex];
-
-        /*await this.ChangeMap(map.md5, map.id, map.mapset_id, `${map.artist} - ${map.title} [${map.difficulty_name}]`, 
-                map.game_mode, map.difficulty_rating, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, parseFloat(map.difficulty_rating), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 0);*/
-    }
 
     /**
      * Changes the password of the game
@@ -782,10 +760,8 @@ export default class MultiplayerGame {
                 await this.ChangeHost(this.Players[0], false);
         }
 
-        // Changing the playlist map will automatically inform lobby users.
-        // We don't want to do it more than once.
         if (this.IsAutohost)
-            await this.ChangePlaylistMap(true);
+            await this.AutoHost?.SelectMap();
         else {
             await this.InformLobbyUsers();
         }
@@ -812,7 +788,7 @@ export default class MultiplayerGame {
     /**
      * Starts the countdown before the game starts
      */
-    public async StartMatchCountdown(): Promise<void> {
+    public async StartMatchCountdown(time: number = 5000): Promise<void> {
         if (this.InProgress)
             return;
 
@@ -822,10 +798,10 @@ export default class MultiplayerGame {
         Logger.Success(`[${this.Id}] Multiplayer Match Countdown Started`);
 
         this.CountdownStartTime = Math.round((new Date()).getTime());
-        this.CountdownTimer = setTimeout(async () => await this.Start(), 5000);
+        this.CountdownTimer = setTimeout(async () => await this.Start(), time);
 
         Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameStartCountdown(this.CountdownStartTime));
-        await Bot.SendMessage(this.GetChatChannelName(), "The countdown has started. The match will begin in 5 seconds.");
+        await Bot.SendMessage(this.GetChatChannelName(), `The countdown has started. The match will begin in ${time / 1000} seconds.`);
         await this.InformLobbyUsers();
     }
 

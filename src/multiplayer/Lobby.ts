@@ -18,6 +18,8 @@ import UserGroups from "../enums/UserGroups";
 import RedisHelper from "../database/RedisHelper";
 import SqlDatabase from "../database/SqlDatabase";
 import { Multi } from "redis";
+import GameModeHelper from "../utils/GameModeHelper";
+import MultiplayerAutoHost from "./MultiplayerAutoHost";
 const config = require("../config/config.json");
 
 export default class Lobby {
@@ -34,13 +36,8 @@ export default class Lobby {
     /**
      * Used strictly as a test game that can be joined.
      */
-    public static InitializeTest(): void {
-        /*var game = MultiplayerGame.Create(MultiplayerGameType.Friendly, "Test Game", "testing123", 16, "None", 2, 2, "Artist - Title [Diff]", 
-        MultiplayerGameRuleset.Free_For_All, false, GameMode.Keys4, 50.24);
-        
-        Bot.User.JoinMultiplayerGame(game, "testing123");
-        game.ChangeHost(Bot.User);
-        Lobby.CreateGame(game);*/
+    public static async Initialize(): Promise<void> {
+        await Lobby.CreateAutohostGames();
     }
 
     /**
@@ -119,11 +116,21 @@ export default class Lobby {
         const gamesToDelete: any[] = [];
         
         for (let i in Lobby.Games) {
-            if (!Lobby.Games[i].TournamentMode && Lobby.Games[i].PlayerIds.length == 0) {
-                Logger.Info(`Removing zero-player multiplayer game: ${Lobby.Games[i].GameId}`);
-                gamesToDelete.push(Lobby.Games[i]);
-            }
+            const game = Lobby.Games[i];
 
+            if (!game.TournamentMode && game.PlayerIds.length == 0) {
+                // End auto-host games if it got stuck
+                if (game.IsAutohost) {
+                    if (game.InProgress) {
+                        Logger.Info(`Ending stuck AutoHost game: ${game.GameId}`);
+                        await game.End();
+                        continue;
+                    }
+                } else {
+                    Logger.Info(`Removing zero-player multiplayer game: ${Lobby.Games[i].GameId}`);
+                    gamesToDelete.push(Lobby.Games[i]);
+                }
+            }
         }
 
         for (let i = 0; i < gamesToDelete.length; i++)
@@ -135,33 +142,45 @@ export default class Lobby {
      */
     public static async CreateAutohostGames(): Promise<void> {
         try {
-            for (let i  = 0 ; i < config.autohostGames.length; i++)
-                await Lobby.CreateAutohostGame(config.autohostGames[i]);
+            for (let i = 0; i < 2; i++) {
+                for (let j = 0; j < 40; j += 5) {
+                    const mode = i + 1;
+                    const modeStr = `${GameModeHelper.GetShortStringFromMode(mode)}`;
+                    const minDiff = j;
+                    const maxDiff = j + 5;
+                    const name = `${modeStr} AutoHost Game | Difficulty: ${minDiff} - ${maxDiff}`;
+                    console.log(name);
+
+                    const game = MultiplayerGame.Create(MultiplayerGameType.Friendly, name, null, 16, "md5", -1, -1, "map name", 
+                        MultiplayerGameRuleset.Free_For_All, false, i, 0, [], 0, "md5", Bot.User);
+
+                    game.IsAutohost = true;
+                    game.AutoHost = new MultiplayerAutoHost(game, mode, minDiff, maxDiff);
+                    await game.AutoHost.SelectMap();
+                    await Lobby.CreateGame(game);
+                }
+            }
         } catch (err) {
             Logger.Error(err);
         }
     }
 
     /**
-     * Creates an individual autohost game
+     * Automatically start auto-host matches
      */
-    private static async CreateAutohostGame(game: any): Promise<void> {
-        const playlist = await SqlDatabase.Execute("SELECT m.id, m.mapset_id, m.md5, m.game_mode, m.artist, m.title, m.difficulty_name, " + 
-            "m.difficulty_rating FROM maps m " + 
-            "INNER JOIN playlists_maps p ON p.map_id = m.id " + 
-            "WHERE p.playlist_id = ?", [game.playlistId]);
+    public static async StartAutoHostMatches(): Promise<void> {
+        try { 
+            for (let i in Lobby.Games) {
+                const game = Lobby.Games[i];
 
-        if (playlist.length == 0)
-            throw new Error("Playlist not found or no maps exist in playlist!");
+                if (!game.IsAutohost || game.InProgress || game.Players.length == 0 || game.CountdownStartTime != -1)
+                    continue;
 
-        const mpGame: MultiplayerGame = MultiplayerGame.Create(MultiplayerGameType.Friendly, game.name, null, game.maxPlayers, "md5", -1, -1, "map name", 
-            MultiplayerGameRuleset.Free_For_All, false, GameMode.Keys4, 0, [], 0, "md5", Bot.User);
-
-        mpGame.IsAutohost = true;
-        mpGame.Playlist = playlist;
-        mpGame.PlaylistMapIndex = Math.floor(Math.random() * Math.floor(playlist.length - 1));
-
-        await mpGame.ChangePlaylistMap();
-        await Lobby.CreateGame(mpGame);
+                await game.StartMatchCountdown(90000);
+                Logger.Info(`Starting AutoHost game countdown: ${game.Name}`);
+            }
+        } catch (err) {
+            Logger.Error(err);
+        }
     }
 }

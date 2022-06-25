@@ -15,4 +15,15 @@ export default class GameModeHelper {
                 return undefined;
         }
     }
+
+    public static GetShortStringFromMode(mode: GameMode): string {
+        switch (mode) {
+            case GameMode.Keys4:
+                return "4K";
+            case GameMode.Keys7:
+                return "7K";
+            default:
+                return "None";
+        }
+    }
 }

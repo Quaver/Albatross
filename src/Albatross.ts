@@ -83,7 +83,7 @@ export default class Albatross {
         await this.CleanPreviousMultiplayerMatches();
 
         await Bot.Initialize();
-        // await Lobby.CreateAutohostGames();
+        await Lobby.Initialize();
         
         this.StartBackgroundWorker();
         this.Server = new WebSocketServer({ port: this.Port });
@@ -244,7 +244,10 @@ export default class Albatross {
                 this.TimeSpamRateLastCleared = currentTime;
         }, 500);
 
-        setInterval(async () => await Lobby.DeleteEmptyGames(), 5000);
+        setInterval(async () => {
+            await Lobby.DeleteEmptyGames();
+            await Lobby.StartAutoHostMatches();
+        }, 5000);
     }
 
     /**
