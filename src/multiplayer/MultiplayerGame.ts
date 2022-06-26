@@ -1896,17 +1896,6 @@ export default class MultiplayerGame {
     }
 
     /**
-     * Handles when a player has ready'd up in an autohost lobby
-     */
-    public async HandleAutohostPlayerActionReady(): Promise<void> {
-        if (!this.IsAutohost || this.InProgress)
-            return;
-
-        if (this.PlayersReady.length == this.Players.length && this.Players.length >= 1)
-            this.Start();
-    }
-
-    /**
      * Adds multiplayer bots to the game
      * @param num 
      */

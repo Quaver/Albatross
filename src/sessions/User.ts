@@ -772,9 +772,9 @@ export default class User implements IPacketWritable, IStringifyable {
         if (game.PlayersReady.includes(this.Id))
             return Logger.Warning(`${this.ToNameIdString()} said they were ready, but they are already ready.`);
 
+        
         game.PlayersReady.push(this.Id);
         await game.InformPlayerIsReady(this);
-        await game.HandleAutohostPlayerActionReady();
     }
 
     /**
