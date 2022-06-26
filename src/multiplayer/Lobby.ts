@@ -20,6 +20,7 @@ import SqlDatabase from "../database/SqlDatabase";
 import { Multi } from "redis";
 import GameModeHelper from "../utils/GameModeHelper";
 import MultiplayerAutoHost from "./MultiplayerAutoHost";
+import MultiplayerFreeModType from "./MultiplayerFreeModType";
 const config = require("../config/config.json");
 
 export default class Lobby {
@@ -57,7 +58,6 @@ export default class Lobby {
 
             Albatross.SendToUser(user, new ServerPacketMultiplayerGameInfo(game));
         }
-
     }
 
     /**
@@ -156,14 +156,14 @@ export default class Lobby {
                     const minDiff = j;
                     const maxDiff = j + 5;
                     const name = `${modeStr} AutoHost Game | Difficulty: ${minDiff} - ${maxDiff}`;
-                    console.log(name);
-
+ 
                     const game = MultiplayerGame.Create(MultiplayerGameType.Friendly, name, null, 16, "md5", -1, -1, "map name", 
                         MultiplayerGameRuleset.Free_For_All, false, i, 0, [], 0, "md5", Bot.User);
 
                     game.IsAutohost = true;
                     game.AutoHost = new MultiplayerAutoHost(game, mode, minDiff, maxDiff);
                     await game.AutoHost.SelectMap();
+                    await game.SetFreeModType(MultiplayerFreeModType.Regular);
                     await Lobby.CreateGame(game);
                 }
             }
