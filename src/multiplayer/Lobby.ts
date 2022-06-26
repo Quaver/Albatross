@@ -162,8 +162,11 @@ export default class Lobby {
 
                     game.IsAutohost = true;
                     game.AutoHost = new MultiplayerAutoHost(game, mode, minDiff, maxDiff);
-                    await game.AutoHost.SelectMap();
+
                     await game.SetFreeModType(MultiplayerFreeModType.Regular);
+                    await game.ChangeMinimumDifficulty(minDiff);
+                    await game.ChangeMaximumDifficulty(maxDiff);
+                    await game.AutoHost.SelectMap();
                     await Lobby.CreateGame(game);
                 }
             }
