@@ -186,6 +186,10 @@ export default class Lobby {
                 if (!game.IsAutohost || game.InProgress || game.Players.length == 0 || game.CountdownStartTime != -1)
                     continue;
 
+                // Don't start if there's only one person in the lobby and they don't have the map.
+                if (game.PlayerIds.length == 1 && game.PlayersWithoutMap.length == 1)
+                    continue;
+
                 await game.StartMatchCountdown(90000);
                 Logger.Info(`Starting AutoHost game countdown: ${game.Name}`);
             }
