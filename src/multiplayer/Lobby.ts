@@ -52,10 +52,6 @@ export default class Lobby {
 
         for (let i in Lobby.Games) {
             const game = Lobby.Games[i];
-
-            if (game.IsAutohost && !user.IsDonator())
-                continue;
-
             Albatross.SendToUser(user, new ServerPacketMultiplayerGameInfo(game));
         }
     }
