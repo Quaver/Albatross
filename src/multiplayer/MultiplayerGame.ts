@@ -1274,6 +1274,9 @@ export default class MultiplayerGame {
         if (this.InProgress)
             return;
             
+        if (ruleset == MultiplayerGameRuleset.Battle_Royale)
+            return;
+            
         this.Ruleset = ruleset;
 
         // Clear all teams to start off with
