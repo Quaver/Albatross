@@ -800,7 +800,7 @@ export default class MultiplayerGame {
         this.CountdownStartTime = Math.round((new Date()).getTime());
         this.CountdownTimer = setTimeout(async () => await this.Start(), time);
 
-        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameStartCountdown(this.CountdownStartTime));
+        Albatross.SendToUsers(this.GetIngameUsers(), new ServerPacketGameStartCountdown(this.CountdownStartTime + time));
         await Bot.SendMessage(this.GetChatChannelName(), `The countdown has started. The match will begin in ${time / 1000} seconds.`);
         await this.InformLobbyUsers();
     }
