@@ -247,6 +247,7 @@ export default class Albatross {
         setInterval(async () => {
             await Lobby.DeleteEmptyGames();
             await Lobby.StartAutoHostMatches();
+            await Lobby.FixStuckMultiplayerGames();
         }, 5000);
     }
 

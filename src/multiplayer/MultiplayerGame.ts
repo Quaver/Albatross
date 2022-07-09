@@ -457,6 +457,11 @@ export default class MultiplayerGame {
     public AutoHost: MultiplayerAutoHost | null = null;
 
     /**
+     * If all players are loaded and ready to play the match
+     */
+    public AllPlayersLoaded: boolean = false;
+
+    /**
      * Creates and returns a multiplayer game
      * @param type 
      * @param name 
@@ -509,6 +514,7 @@ export default class MultiplayerGame {
         game.HostSelectingMap = false;
         game.IsMapsetShared = false;
         game.TournamentMode = false;
+        game.AllPlayersLoaded = true;
 
         if (password) game.HasPassword = true;
 
@@ -745,6 +751,7 @@ export default class MultiplayerGame {
         this.PlayersWithGameScreenLoaded = [];
         this.PlayersSkipped = [];
         this.PlayersReady = [];
+        this.AllPlayersLoaded = false;
         await this.StopMatchCountdown();
 
         // Send packet to all users that the game has finished.

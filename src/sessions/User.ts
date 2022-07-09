@@ -729,6 +729,7 @@ export default class User implements IPacketWritable, IStringifyable {
                 return;
         }
 
+        game.AllPlayersLoaded = true;
         Albatross.SendToUsers(game.PlayersGameStartedWith, new ServerPacketAllPlayersLoaded());
     }
 

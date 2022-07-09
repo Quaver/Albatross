@@ -21,6 +21,7 @@ import { Multi } from "redis";
 import GameModeHelper from "../utils/GameModeHelper";
 import MultiplayerAutoHost from "./MultiplayerAutoHost";
 import MultiplayerFreeModType from "./MultiplayerFreeModType";
+import ServerPacketAllPlayersLoaded from "../packets/server/ServerPacketAllPlayersLoaded";
 const config = require("../config/config.json");
 
 export default class Lobby {
@@ -193,4 +194,26 @@ export default class Lobby {
             Logger.Error(err);
         }
     }
+
+     /**
+     * Automatically start auto-host matches
+     */
+    public static async FixStuckMultiplayerGames(): Promise<void> {
+        try { 
+            for (let i in Lobby.Games) {
+                const game = Lobby.Games[i];
+
+                if (!game.InProgress || game.AllPlayersLoaded)
+                    return;
+
+                if (game.PlayersGameStartedWith.length != game.PlayersWithGameScreenLoaded.length)
+                    return;
+
+                game.AllPlayersLoaded = true;
+                Albatross.SendToUsers(game.PlayersGameStartedWith, new ServerPacketAllPlayersLoaded());
+            }
+        } catch (err) {
+            Logger.Error(err);
+        }
+    }    
 }
