@@ -11,7 +11,7 @@ Albatross is one of many servers that power the rhythm game [Quaver](https://git
 * Twitch Song Requests
 * & More!
 
-This application is being developed for **internal use.** As such, **no support or proper documentation** will be provided for the usage this software.
+This application is being developed for **internal use.** As such, **no support or proper documentation** will be provided for the usage of this software.
 
 ## LICENSE
 
