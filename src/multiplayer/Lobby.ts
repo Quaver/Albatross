@@ -203,11 +203,19 @@ export default class Lobby {
             for (let i in Lobby.Games) {
                 const game = Lobby.Games[i];
 
+                // Remove any ghost users from game
+                for (let j = game.Players.length - 1; j >= 0; j--) {
+                    const player = game.Players[j];
+
+                    if (!Albatross.Instance.OnlineUsers.GetUserById(player.Id))
+                        await player.DisconnectUserSession();
+                }
+
                 if (!game.InProgress || game.AllPlayersLoaded)
-                    return;
+                    continue;
 
                 if (game.PlayersGameStartedWith.length != game.PlayersWithGameScreenLoaded.length)
-                    return;
+                    continue;
 
                 game.AllPlayersLoaded = true;
                 Albatross.SendToUsers(game.PlayersGameStartedWith, new ServerPacketAllPlayersLoaded());
