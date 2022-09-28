@@ -222,7 +222,7 @@ export default class LoginHandler {
                     "quaver_server_client_dll": split[2],
                     "quaver_server_common_dll": split[3],
                     "quaver_shared_dll": split[4],
-                }), false)
+                }, null, 2), false)
                 .addField("Admin Actions", `[View Profile](https://quavergame.com/profile/${user.Id}) | ` + 
                                             `[Ban User](https://a.quavergame.com/ban/${user.id}) | ` + 
                                             `[Edit User](https://a.quavergame.com/edituser/${user.Id})`, false)
