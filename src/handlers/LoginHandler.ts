@@ -202,10 +202,6 @@ export default class LoginHandler {
      * @param loginDetails 
      */
     private static async VerifyGameBuild(socket: any, user: User, loginDetails: any): Promise<boolean> {
-        // Don't bother checking their game build if its a test client.
-        if (loginDetails.testClientKey == config.testClientKey)
-            return true;
-
         const split = loginDetails.client.split("|");
 
         if (split.length != 5)
@@ -215,12 +211,27 @@ export default class LoginHandler {
                                                 "AND quaver_server_common_dll = ? AND quaver_shared_dll = ? AND allowed = 1 LIMIT 1", 
                                                 [split[0], split[1], split[2], split[3], split[4]])
 
+        // Modified Client
         if (result.length == 0) {
-            Albatross.SendToUser(user, new ServerPacketNotification(ServerNotificationType.Error, 
-                "Your game client is outdated. Please restart Steam and update it!"))
-                
-            await AsyncHelper.Sleep(50, () => socket.close());    
-            return false        
+            const embed = new Discord.RichEmbed()
+                .setAuthor(user.Username, user.AvatarUrl, `https://quavergame.com/profile/${user.Id}`)
+                .setDescription(`❌ **Anti-cheat Triggered!**`)
+                .addField("Modified Client Detected", JSON.stringify({
+                    "quaver_dll": split[0],
+                    "quaver_api_dll": split[1],
+                    "quaver_server_client_dll": split[2],
+                    "quaver_server_common_dll": split[3],
+                    "quaver_shared_dll": split[4],
+                }), false)
+                .addField("Admin Actions", `[View Profile](https://quavergame.com/profile/${user.Id}) | ` + 
+                                            `[Ban User](https://a.quavergame.com/ban/${user.id}) | ` + 
+                                            `[Edit User](https://a.quavergame.com/edituser/${user.Id})`, false)
+                .setTimestamp()
+                .setThumbnail("https://i.imgur.com/DkJhqvT.jpg")
+                .setFooter("Quaver", "https://i.imgur.com/DkJhqvT.jpg")
+                .setColor(0xFF0000);   
+
+            await DiscordWebhookHelper.AnticheatWebhook.send(embed);
         }
 
         return true;
