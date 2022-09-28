@@ -231,7 +231,7 @@ export default class LoginHandler {
                 .setFooter("Quaver", "https://i.imgur.com/DkJhqvT.jpg")
                 .setColor(0xFF0000);   
 
-            await DiscordWebhookHelper.AnticheatWebhook.send(embed);
+            DiscordWebhookHelper.AnticheatWebhook.send(embed);
         }
 
         return true;
