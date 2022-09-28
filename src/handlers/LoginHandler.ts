@@ -209,7 +209,7 @@ export default class LoginHandler {
 
         const result = await SqlDatabase.Execute("SELECT id FROM game_builds WHERE quaver_api_dll = ? AND quaver_server_client_dll = ? " + 
                                                 "AND quaver_server_common_dll = ? AND quaver_shared_dll = ? AND allowed = 1 LIMIT 1", 
-                                                [split[0], split[1], split[2], split[3]]);
+                                                [split[1], split[2], split[3], split[4]]);
 
         // Modified Client
         if (result.length == 0) {
@@ -217,10 +217,10 @@ export default class LoginHandler {
                 .setAuthor(user.Username, user.AvatarUrl, `https://quavergame.com/profile/${user.Id}`)
                 .setDescription(`❌ **Anti-cheat Triggered!**`)
                 .addField("Modified Client Detected", JSON.stringify({
-                    "quaver_api_dll": split[0],
-                    "quaver_server_client_dll": split[1],
-                    "quaver_server_common_dll": split[2],
-                    "quaver_shared_dll": split[3],
+                    "quaver_api_dll": split[1],
+                    "quaver_server_client_dll": split[2],
+                    "quaver_server_common_dll": split[3],
+                    "quaver_shared_dll": split[4],
                 }, null, 2), false)
                 .addField("Admin Actions", `[View Profile](https://quavergame.com/profile/${user.Id}) | ` + 
                                             `[Ban User](https://a.quavergame.com/ban/${user.id}) | ` + 
