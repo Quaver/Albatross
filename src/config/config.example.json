@@ -48,7 +48,10 @@
     "connectionString": ""
   },
   "api": {
-    "dataFolderPath": ""
+    "url": "http://localhost:8082",
+    "dataFolderPath": "",
+    "adminKey": "",
+    "enableAutoBan": false
   },
   "chatChannels": [
     {
