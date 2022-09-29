@@ -1,7 +1,7 @@
 import Logger from "../logging/Logger";
 import PacketId from "../packets/PacketId";
 import { JsonObject, JsonConvert } from "json2typescript";
-import PongHandler from "./PongHandler";
+import PongHandler from "./rooster/PongHandler";
 import ClientPacketPong from "../packets/client/ClientPacketPong";
 import ChatMessageHander from "./ChatMessageHandler";
 import ClientPacketChatMessage from "../packets/client/ClientPacketChatMessage";

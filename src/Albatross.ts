@@ -1,6 +1,6 @@
 import Logger from "./logging/Logger";
 import StringHelper from "./utils/StringHelper";
-import LoginHandler from "./handlers/LoginHandler";
+import LoginHandler from "./handlers/rooster/LoginHandler";
 import PacketHandler from "./handlers/PacketHandler";
 import CloseHandler from "./handlers/CloseHandler";
 import ServerPacketPing from "./packets/server/ServerPacketPing";
