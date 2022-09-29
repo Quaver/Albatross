@@ -117,6 +117,11 @@ export default class User implements IPacketWritable, IStringifyable {
     public AvatarUrl: string;
 
     /**
+     * If the user is shadow banned from the game
+     */
+    public ShadowBanned: boolean;
+
+    /**
      *  Statistics for the user.
      */
     public Stats: ModeToUserStatsMap = {};
@@ -200,7 +205,8 @@ export default class User implements IPacketWritable, IStringifyable {
      * @param socket 
      */
     constructor(socket: any, userId: number, steamId: string, username: string, allowed: boolean, muteEndTime: number, country: string,
-        privileges: Privileges, usergroups: UserGroups, avatarUrl: string, isMultiplayerBot: boolean = false, isUsingTournamentClient = false) {
+        privileges: Privileges, usergroups: UserGroups, avatarUrl: string, isMultiplayerBot: boolean = false, isUsingTournamentClient = false, 
+        isShadowBanned = false) {
         // For artifical users such as bots.
         if (socket)
             this.Token = socket.token;
@@ -218,6 +224,7 @@ export default class User implements IPacketWritable, IStringifyable {
         this.UserGroups = usergroups;
         this.AvatarUrl = avatarUrl;
         this.IsMultiplayerBot = isMultiplayerBot;
+        this.ShadowBanned = isShadowBanned;
     }
 
     /**
