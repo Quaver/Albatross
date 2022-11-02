@@ -1,4 +1,4 @@
-import User from "../sessions/User";
+import User from "./rooster/User";
 import ClientPacketGamePlayerHasMap from "../packets/client/ClientPacketGamePlayerHasMap";
 import Logger from "../logging/Logger";
 

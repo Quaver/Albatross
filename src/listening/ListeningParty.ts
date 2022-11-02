@@ -1,5 +1,5 @@
 import { JsonObject, JsonProperty } from "json2typescript";
-import User from "../sessions/User";
+import User from "../handlers/rooster/User";
 import ClientPacketListeningPartyStateUpdate from "../packets/client/ClientPacketListeningPartyStateUpdate";
 import Albatross from "../Albatross";
 import ServerPacketListeningPartyStateUpdate from "../packets/server/ServerPacketListeningPartyStateUpdate";

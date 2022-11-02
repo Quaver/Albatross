@@ -1,7 +1,7 @@
 import Logger from "../logging/Logger";
 import Albatross from "../Albatross";
 import ServerPacketUserDisconected from "../packets/server/ServerPacketUserDisconnected";
-import User from "../sessions/User";
+import User from "./rooster/User";
 import * as Discord from "discord.js";
 import DiscordWebhookHelper from "../discord/DiscordWebhookHelper";
 

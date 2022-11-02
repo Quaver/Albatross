@@ -1,5 +1,5 @@
 import Logger from "../logging/Logger";
-import User from "../sessions/User";
+import User from "../handlers/rooster/User";
 import Albatross from "../Albatross";
 import ServerPacketSongRequest from "../packets/server/ServerPacketSongRequest";
 import Game from "../enums/Game";

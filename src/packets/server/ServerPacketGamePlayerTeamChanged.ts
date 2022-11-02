@@ -1,7 +1,7 @@
 import Packet from "../Packet";
 import { JsonObject, JsonProperty } from "json2typescript";
 import PacketId from "../PacketId";
-import User from "../../sessions/User";
+import User from "../../handlers/rooster/User";
 import MultiplayerTeam from "../../multiplayer/MultiplayerTeam";
 
 @JsonObject("ServerPacketGamePlayerTeamChanged")

@@ -1,4 +1,4 @@
-import User from "../sessions/User";
+import User from "../handlers/rooster/User";
 import AdminActionLogType from "./AdminActionLogType";
 import SqlDatabase from "../database/SqlDatabase";
 

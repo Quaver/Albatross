@@ -1,4 +1,4 @@
-import User from "../sessions/User";
+import User from "./rooster/User";
 import ClientPacketTwitchUnlink from "../packets/client/ClientPacketTwitchUnlink";
 import Logger from "../logging/Logger";
 

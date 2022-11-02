@@ -2,7 +2,7 @@ import StringToChannelMap from "./maps/StringToChannelMap";
 import ChatChannel from "./ChatChannel";
 import Logger from "../logging/Logger";
 import UserGroups from "../enums/UserGroups";
-import User from "../sessions/User";
+import User from "../handlers/rooster/User";
 import Albatross from "../Albatross";
 import ServerPacketAvailableChatchannel from "../packets/server/ServerPacketAvailableChatChannel";
 import Bot from "../bot/Bot";

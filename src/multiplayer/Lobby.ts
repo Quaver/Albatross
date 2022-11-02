@@ -1,5 +1,5 @@
 import * as _ from "lodash";
-import User from "../sessions/User";
+import User from "../handlers/rooster/User";
 import MultiplayerGame from "./MultiplayerGame";
 import IUniqueIdtoGameMap from "./maps/IUniqueIdToGameMap";
 import Logger from "../logging/Logger";

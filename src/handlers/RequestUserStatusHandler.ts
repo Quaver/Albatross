@@ -1,4 +1,4 @@
-import User from "../sessions/User";
+import User from "./rooster/User";
 import ClientPacketRequestUserStatus from "../packets/client/ClientPacketRequestUserStatus";
 import Albatross from "../Albatross";
 import { JsonConvert } from "json2typescript";

@@ -1,6 +1,6 @@
 import ClientPacketRequestUserStats from "../packets/client/ClientPacketRequestUserStats";
 import Logger from "../logging/Logger";
-import User from "../sessions/User";
+import User from "./rooster/User";
 import { JsonConvert } from "json2typescript";
 import Albatross from "../Albatross";
 import GameMode from "../enums/GameMode";

@@ -1,4 +1,4 @@
-import User from "../sessions/User";
+import User from "./rooster/User";
 import ClientPacketFriendship from "../packets/client/ClientPacketFriendship";
 import Logger from "../logging/Logger";
 import FriendsListAction from "../enums/FriendsListAction";

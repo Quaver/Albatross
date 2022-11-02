@@ -1,6 +1,6 @@
 import ClientPacketChatMessage from "../packets/client/ClientPacketChatMessage";
 import Logger from "../logging/Logger";
-import User from "../sessions/User";
+import User from "./rooster/User";
 import Albatross from "../Albatross";
 import ChatManager from "../chat/ChatManager";
 

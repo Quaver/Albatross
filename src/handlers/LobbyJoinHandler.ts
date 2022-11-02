@@ -1,6 +1,6 @@
 import ClientPacketLobbyJoin from "../packets/client/ClientPacketLobbyJoin";
 import Logger from "../logging/Logger";
-import User from "../sessions/User";
+import User from "./rooster/User";
 import Lobby from "../multiplayer/Lobby";
 import ServerPacketMultiplayerGameInfo from "../packets/server/ServerPacketMultiplayerGameInfo";
 

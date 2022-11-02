@@ -1,6 +1,6 @@
 import IPacketWritable from "../packets/IPacketWritable";
 import { JsonObject, JsonProperty } from "json2typescript";
-import User from "../sessions/User";
+import User from "../handlers/rooster/User";
 import UserGroups from "../enums/UserGroups";
 import * as Discord from "discord.js";
 

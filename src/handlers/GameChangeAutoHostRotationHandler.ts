@@ -1,5 +1,5 @@
 import ClientPacketGameChangeAutoHostRotation from "../packets/client/ClientPacketGameChangeAutoHostRotation";
-import User from "../sessions/User";
+import User from "./rooster/User";
 import Logger from "../logging/Logger";
 
 export default class GameChangeAutoHostRotationHandler {

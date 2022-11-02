@@ -1,6 +1,6 @@
 import ClientPacketGameNoMap from "../packets/client/ClientPacketNoMap";
 import Logger from "../logging/Logger";
-import User from "../sessions/User";
+import User from "./rooster/User";
 
 export default class ClientNoMapHandler {
     /**

@@ -1,5 +1,5 @@
 import ClientPacketStatusUpdate from "../packets/client/ClientPacketStatusUpdate";
-import User from "../sessions/User";
+import User from "./rooster/User";
 import Logger from "../logging/Logger";
 import RedisHelper from "../database/RedisHelper";
 import Albatross from "../Albatross";

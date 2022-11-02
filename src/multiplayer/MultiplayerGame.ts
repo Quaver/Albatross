@@ -1,6 +1,6 @@
 import { JsonObject, JsonProperty } from "json2typescript";
 import * as _ from "lodash";
-import User from "../sessions/User";
+import User from "../handlers/rooster/User";
 import MultiplayerGameType from "./MultiplayerGameType";
 import Albatross from "../Albatross";
 import ServerPacketChangeGameHost from "../packets/server/ServerPacketChangeGameHost";

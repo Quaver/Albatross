@@ -1,7 +1,7 @@
 import Packet from "../Packet";
 import PacketId from "../PacketId";
 import { JsonObject, JsonProperty } from "json2typescript";
-import User from "../../sessions/User";
+import User from "../../handlers/rooster/User";
 
 @JsonObject("ServerPacketMuteEndTime")
 export default class ServerPacketMuteEndTime extends Packet {

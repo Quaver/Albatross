@@ -1,5 +1,5 @@
 import ClientPacketRequestLeaveChatChannel from "../packets/client/ClientPacketRequestLeaveChatChannel";
-import User from "../sessions/User";
+import User from "./rooster/User";
 import ChatChannel from "../chat/ChatChannel";
 import ChatManager from "../chat/ChatManager";
 import Logger from "../logging/Logger";

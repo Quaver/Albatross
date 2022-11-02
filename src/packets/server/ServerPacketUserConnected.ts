@@ -1,7 +1,7 @@
 import Packet from "../Packet";
 import PacketId from "../PacketId";
 import { JsonProperty, JsonObject } from "json2typescript";
-import User from "../../sessions/User";
+import User from "../../handlers/rooster/User";
 
 @JsonObject("ServerPacketUserConnected")
 export default class ServerPacketUserConnected extends Packet {

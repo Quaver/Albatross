@@ -1,7 +1,7 @@
 import BotCommand from "../BotCommand";
 import UserGroups from "../../enums/UserGroups";
 import Privileges from "../../enums/Privileges";
-import User from "../../sessions/User";
+import User from "../../handlers/rooster/User";
 
 export default class MultiplayerCommandStartCountdown extends BotCommand {
     /**

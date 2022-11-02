@@ -1,4 +1,4 @@
-import User from "../sessions/User";
+import User from "../handlers/rooster/User";
 import Albatross from "../Albatross";
 import Privileges from "../enums/Privileges";
 import UserGroups from "../enums/UserGroups";

@@ -1,5 +1,5 @@
 import IUserIdToUserMap from "./maps/IUserIdToUserMap";
-import User from "./User";
+import User from "../handlers/rooster/User";
 import Logger from "../logging/Logger";
 import IUsernameToUserMap from "./maps/IUsernameToUserMap";
 import ISocketTokenToUserMap from "./maps/ISocketTokenToUserMap";

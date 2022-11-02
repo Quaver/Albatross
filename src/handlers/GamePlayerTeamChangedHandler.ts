@@ -1,6 +1,6 @@
 import ClientPacketGamePlayerTeamChanged from "../packets/client/ClientPacketGamePlayerTeamChanged";
 import Logger from "../logging/Logger";
-import User from "../sessions/User";
+import User from "./rooster/User";
 
 export default class GamePlayerTeamChangedHandler {
     /**

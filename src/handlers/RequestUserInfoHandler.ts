@@ -1,4 +1,4 @@
-import User from "../sessions/User";
+import User from "./rooster/User";
 import ClientPacketRequestUserInfo from "../packets/client/ClientPacketRequestUserInfo";
 import Albatross from "../Albatross";
 import ServerPacketUserInfo from "../packets/server/ServerPacketUserInfo";

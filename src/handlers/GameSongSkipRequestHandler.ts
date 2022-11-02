@@ -1,4 +1,4 @@
-import User from "../sessions/User";
+import User from "./rooster/User";
 import ClientPacketGameSongSkipRequest from "../packets/client/ClientPacketGameSongSkipRequest";
 import Logger from "../logging/Logger";
 

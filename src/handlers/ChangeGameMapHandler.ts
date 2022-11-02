@@ -1,6 +1,6 @@
 import ClientPacketChangeGameMap from "../packets/client/ClientPacketChangeGameMap";
 import Logger from "../logging/Logger";
-import User from "../sessions/User";
+import User from "./rooster/User";
 
 export default class ChangeGameMapHandler {
     /**

@@ -1,5 +1,5 @@
 import Logger from "../logging/Logger";
-import User from "../sessions/User";
+import User from "./rooster/User";
 import ClientPacketGamePlayerChangeModifiers from "../packets/client/ClientPacketGamePlayerChangeModifiers";
 
 export default class GamePlayerChangeModifiersHandler {

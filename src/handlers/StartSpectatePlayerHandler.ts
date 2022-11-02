@@ -1,4 +1,4 @@
-import User from "../sessions/User";
+import User from "./rooster/User";
 import ClientPacketStartSpectatePlayer from "../packets/client/ClientPacketStartSpectatePlayer";
 import Logger from "../logging/Logger";
 

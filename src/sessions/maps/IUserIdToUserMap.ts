@@ -1,4 +1,4 @@
-import User from "../User";
+import User from "../../handlers/rooster/User";
 
 interface IUserIdToUserMap {
     [id: number]: User

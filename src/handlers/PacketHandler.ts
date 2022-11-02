@@ -7,7 +7,7 @@ import ChatMessageHander from "./ChatMessageHandler";
 import ClientPacketChatMessage from "../packets/client/ClientPacketChatMessage";
 import RequestLeaveChatChannelHandler from "./RequestLeaveChatChannelHandler";
 import ClientPacketRequestLeaveChatChannel from "../packets/client/ClientPacketRequestLeaveChatChannel";
-import User from "../sessions/User";
+import User from "./rooster/User";
 import Albatross from "../Albatross";
 import RequestJoinChatChannelHandler from "./RequestJoinChatChannelHandler";
 import ClientPacketRequestJoinChatChannel from "../packets/client/ClientPacketRequestJoinChatChannel";

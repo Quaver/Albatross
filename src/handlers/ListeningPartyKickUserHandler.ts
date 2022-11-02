@@ -1,4 +1,4 @@
-import User from "../sessions/User";
+import User from "./rooster/User";
 import ClientPacketListeningPartyKickUser from "../packets/client/ClientPacketListeningPartyKickUser";
 import Logger from "../logging/Logger";
 import PacketId from "../packets/PacketId";

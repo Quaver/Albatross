@@ -2,7 +2,7 @@ import ClientPacketSpectatorReplayFrames from "../client/ClientPacketSpectatorRe
 import { JsonObject, JsonProperty } from "json2typescript";
 import PacketId from "../PacketId";
 import SpectatorClientStatus from "../../enums/SpectatorClientStatus";
-import User from "../../sessions/User";
+import User from "../../handlers/rooster/User";
 
 @JsonObject("ServerPacketSpectatorReplayFrames")
 export default class ServerPacketSpectatorReplayFrames extends ClientPacketSpectatorReplayFrames {

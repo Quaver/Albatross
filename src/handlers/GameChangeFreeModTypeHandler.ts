@@ -1,4 +1,4 @@
-import User from "../sessions/User";
+import User from "./rooster/User";
 import ClientPacketGameChangeFreeModType from "../packets/client/ClientPacketGameChangeFreeModType";
 import Logger from "../logging/Logger";
 

@@ -1,6 +1,6 @@
 import Privileges from "../enums/Privileges";
 import UserGroups from "../enums/UserGroups";
-import User from "../sessions/User";
+import User from "../handlers/rooster/User";
 
 export default abstract class BotCommand {
     /**

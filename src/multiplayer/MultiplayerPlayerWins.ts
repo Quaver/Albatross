@@ -1,5 +1,5 @@
 import { JsonObject, JsonProperty } from "json2typescript";
-import User from "../sessions/User";
+import User from "../handlers/rooster/User";
 
 @JsonObject("MultiplayerPlayerWins")
 export default class MultiplayerPlayerWins { 

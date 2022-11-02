@@ -1,5 +1,5 @@
 import ClientPacketListeningPartyStateUpdate from "../packets/client/ClientPacketListeningPartyStateUpdate";
-import User from "../sessions/User";
+import User from "./rooster/User";
 import Logger from "../logging/Logger";
 
 export default class ListeningPartyStateUpdateHandler {

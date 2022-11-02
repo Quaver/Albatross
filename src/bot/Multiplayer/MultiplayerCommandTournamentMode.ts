@@ -1,4 +1,4 @@
-import User from "../../sessions/User";
+import User from "../../handlers/rooster/User";
 import Privileges from "../../enums/Privileges";
 import UserGroups from "../../enums/UserGroups";
 import BotCommand from "../BotCommand";

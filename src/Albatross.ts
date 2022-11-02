@@ -10,7 +10,7 @@ import Bot from "./bot/Bot";
 import RedisHelper from "./database/RedisHelper";
 import ServerPacketUsersOnline from "./packets/server/ServerPacketUsersOnline";
 import Packet from "./packets/Packet";
-import User from "./sessions/User";
+import User from "./handlers/rooster/User";
 import ChatManager from "./chat/ChatManager";
 import PacketId from "./packets/PacketId";
 import Lobby from "./multiplayer/Lobby";
@@ -18,6 +18,7 @@ import MultiplayerGame from "./multiplayer/MultiplayerGame";
 import MultiplayerGameType from "./multiplayer/MultiplayerGameType";
 import MultiplayerGameRuleset from "./multiplayer/MultiplayerGameRuleset";
 import GameMode from "./enums/GameMode";
+import LobbyFixer from "./handlers/rooster/LobbyFixer";
 
 const config = require("./config/config.json");
 const express = require("express");
@@ -225,6 +226,8 @@ export default class Albatross {
                 // Ping the user if necessary
                 if (currentTime - user.LastPingTime >= this.PING_INTERVAL)
                     user.Ping();
+
+                 LobbyFixer.Fix(user);
 
                 // Timeout the socket if they haven't responding to our pings in a while.
                 if (currentTime - user.LastPongTime >= this.PING_TIMEOUT_TIME) 

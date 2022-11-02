@@ -1,4 +1,4 @@
-import User from "../sessions/User";
+import User from "./rooster/User";
 import ClientPacketRequestJoinChatChannel from "../packets/client/ClientPacketRequestJoinChatChannel";
 import ChatChannel from "../chat/ChatChannel";
 import ChatManager from "../chat/ChatManager";
